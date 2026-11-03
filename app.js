@@ -7,7 +7,7 @@ const STORAGE_KEYS = {
   onboarded: 'planejador_onboarded_v1'
 };
 const PERIODO_COND = 'Escolha Condicionada';
-const APP_VERSION = '1.9.5';
+const APP_VERSION = '1.9.6';
 const T = (key, params) => (window.I18N ? window.I18N.t(key, params) : String(key).replace(/\{(\w+)\}/g, (m, k) => (params && k in params ? params[k] : m)));
 const META_COND_CRED = 12;
 const META_COND_HORAS = 180;
