@@ -1,0 +1,50 @@
+/* janelas.css — Janelas flutuantes (cards de informação e anotações) e o balão "Fechar".
+ * Dentro do arquivo a ordem original foi mantida (regras posteriores vencem as anteriores). */
+
+/* =========================================================
+   Janelas flutuantes (cards de informação e anotações das disciplinas)
+   Sem sombra, sem desfoque: a tela de trás continua normal e tocável.
+   ========================================================= */
+.jw-layer { position: fixed; inset: 0; z-index: 95; pointer-events: none; }
+.jw {
+  position: absolute; left: 0; top: 0; width: min(92vw, 380px); max-height: min(72dvh, 560px);
+  display: flex; flex-direction: column; pointer-events: auto; overflow: hidden;
+  background: var(--pa-surface); color: var(--pa-ink); box-shadow: none !important;
+  border: 1.5px solid var(--pa-line); border-radius: 14px; transform-origin: 50% 50%;
+  opacity: 0; transition: opacity .16s ease, border-color .16s ease; touch-action: pan-x pan-y;
+}
+.jw.is-in { opacity: 1; }
+.jw.is-front { border-color: color-mix(in srgb, var(--pa-primary) 55%, var(--pa-line)); }
+.jw.is-closing { opacity: 0; pointer-events: none; }
+.jw-head {
+  position: relative; display: flex; align-items: center; gap: .5rem; padding: 1.05rem .55rem .5rem 1rem;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; border-bottom: 1px solid var(--pa-line);
+}
+.jw.is-moving .jw-head { cursor: grabbing; }
+.jw-grip { position: absolute; top: 7px; left: 50%; width: 34px; height: 4px; margin-left: -17px; border-radius: 2px; background: var(--pa-line); }
+.jw-titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.jw-label { font-size: .92rem; font-weight: 800; color: var(--pa-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jw-sub { font-size: .74rem; font-weight: 600; color: var(--pa-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jw-x { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--pa-surface-soft); color: var(--pa-muted); cursor: pointer; }
+.jw-x svg { width: 16px; height: 16px; }
+.jw-x:hover { color: var(--pa-danger); }
+.jw-x:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.jw-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .8rem 1.05rem 1.05rem; font-size: .9rem; }
+.jw-info h3 { font-size: 1.15rem !important; line-height: 1.25 !important; margin: 0 0 .7rem !important; padding: 0 !important; }
+.jw-info .space-y-4 > * + * { margin-top: .6rem; }
+.jw-info .pinfo-icon { margin-bottom: .55rem; }
+.jwk-note .jw-body { display: flex; flex-direction: column; gap: .35rem; padding-top: .6rem; }
+.jwk-note .notas-title-input, .jwk-note .notas-text { width: 100%; }
+.jwk-note .notas-text { min-height: 8.5rem; max-height: 38dvh; resize: none; }
+.jw-dismiss {
+  position: fixed; left: 50%; bottom: calc(28px + env(safe-area-inset-bottom)); z-index: 96; pointer-events: none;
+  display: flex; align-items: center; gap: .55rem; padding: .5rem 1.15rem .5rem .5rem; border-radius: 999px;
+  background: #232826; color: #fff; font-size: .95rem; font-weight: 700; letter-spacing: .01em; box-shadow: none;
+  opacity: 0; transform: translate(-50%, 26px) scale(.92); transition: opacity .16s ease, transform .2s cubic-bezier(.22, 1, .36, 1), background .16s ease;
+}
+.jw-dismiss.is-on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.jw-dismiss.is-hot { background: #7d2f2b; transform: translate(-50%, 0) scale(1.1); }
+.jw-dismiss-x { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+.jw-dismiss-x svg { width: 15px; height: 15px; }
+.jw-dismiss.is-hot .jw-dismiss-x { background: #e0564f; }
+.jwk-note .notas-foot { padding: .45rem 0 0; border-top: 0; }
