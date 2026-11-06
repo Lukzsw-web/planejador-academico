@@ -1,6 +1,3 @@
-/* avisos.js — Avisos: balão (toast), arrastar para dispensar e copiar para a área de transferência.
- * Cada seção abaixo era um arquivo próprio; a ordem das seções importa (scripts clássicos compartilham globais). */
-
 // =====================================================================
 // Avisos: balão de aviso (toast), arrastar para dispensar, copiar para a área de transferência e avisos de co-requisito.
 // =====================================================================
