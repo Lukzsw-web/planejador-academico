@@ -1,0 +1,122 @@
+/* notas.css — Notas: agenda central e botão flutuante.
+ * Dentro do arquivo a ordem original foi mantida (regras posteriores vencem as anteriores). */
+
+.staff-st.st-agendado { background: var(--pa-accent-soft); color: var(--pa-accent); }
+.planner-notes-btn .notes-ribbon { stroke: var(--pa-accent); }
+.planner-notes-btn .notes-count {
+  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box;
+  display: grid; place-items: center; border-radius: 5px; background: var(--pa-accent); color: #fff; font-size: .68rem; font-weight: 800; line-height: 1;
+}
+.planner-notes-btn .notes-count[hidden] { display: none; }
+.note-button.has-note { color: var(--pa-accent) !important; background: var(--pa-accent-soft) !important; }
+.notas-sheet {
+  position: relative; width: min(100%, 540px); max-height: min(88dvh, 660px); display: flex; flex-direction: column;
+  background: var(--pa-surface); color: var(--pa-ink); border: 1px solid var(--pa-line); border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(12, 31, 23, .24); overflow: hidden;
+}
+.notas-head { display: flex; align-items: center; justify-content: space-between; padding: .95rem 1.1rem .5rem; }
+.notas-heading { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -.01em; color: var(--pa-ink); }
+.notas-close { width: 36px; height: 36px; display: grid; place-items: center; border: 0; background: transparent; color: var(--pa-muted); border-radius: 8px; cursor: pointer; }
+.notas-close svg { width: 20px; height: 20px; }
+.notas-tabs { display: flex; gap: 2px; overflow-x: auto; padding: 0 1.1rem; border-bottom: 1px solid var(--pa-line); scrollbar-width: none; }
+.notas-tabs::-webkit-scrollbar { display: none; }
+.notas-tab {
+  position: relative; flex: 0 0 auto; border: 0; background: transparent; color: var(--pa-muted); cursor: pointer;
+  padding: .55rem .8rem .6rem; margin-bottom: -1px; border-bottom: 2px solid transparent; font-weight: 800; font-size: .9rem; font-family: inherit;
+}
+.notas-tab.is-disc { font-size: .76rem; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.notas-tab.is-on { color: var(--pa-ink); border-bottom-color: var(--pa-primary); }
+.notas-tab-dot { position: absolute; top: .5rem; right: .25rem; width: 5px; height: 5px; background: var(--pa-accent); border-radius: 1px; }
+.notas-add { color: var(--pa-primary); font-size: 1.15rem; line-height: 1; padding-left: .9rem; padding-right: .9rem; }
+.notas-page { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: .85rem 1.1rem 0; }
+.notas-sub { margin: 0 0 .15rem; font-size: .78rem; color: var(--pa-muted); }
+.notas-title-input {
+  width: 100%; box-sizing: border-box; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none !important;
+  padding: .2rem 0 .55rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; font-weight: 700; color: var(--pa-ink);
+}
+.notas-title-input::placeholder { color: var(--pa-muted); opacity: .7; }
+.notas-text {
+  flex: 1 1 auto; min-height: 240px; width: 100%; box-sizing: border-box; resize: none; border: 0 !important; outline: none !important; box-shadow: none !important;
+  background-color: transparent !important; color: var(--pa-ink); font: inherit; font-size: .98rem; line-height: 1.75rem; padding: 0 .1rem;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.75rem - 1px), var(--pa-line) calc(1.75rem - 1px), var(--pa-line) 1.75rem) !important;
+  background-attachment: local !important;
+}
+.notas-text::placeholder { color: var(--pa-muted); opacity: .75; }
+.notas-foot { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .6rem 1.1rem .8rem; border-top: 1px solid var(--pa-line); }
+.notas-status { font-size: .78rem; color: var(--pa-muted); min-width: 0; }
+.notas-status.is-warn { color: var(--pa-danger); }
+.notas-del { border: 0; background: transparent; color: var(--pa-muted); font-size: .8rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: .3rem .4rem; border-radius: 6px; }
+.notas-del.is-danger { background: var(--pa-danger); color: #fff; text-decoration: none; }
+/* =========================================================
+   v1.9.5: agenda central, card móvel, botão flutuante, cabeçalho de perfil
+   ========================================================= */
+/* Agenda: página inteira por cima da barra de navegação (a barra fica em z-index 90). */
+#modal-agenda {
+  z-index: 115 !important; padding: 0 !important; justify-content: center; align-items: stretch;
+  background: var(--pa-bg) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+.agenda-sheet {
+  position: relative; width: min(100%, 640px); height: 100%; display: flex; flex-direction: column;
+  color: var(--pa-ink); transform: translateY(18px); transition: transform .26s cubic-bezier(.22, 1, .36, 1);
+}
+#modal-agenda.active .agenda-sheet { transform: none; }
+.agenda-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: max(1.15rem, env(safe-area-inset-top)) 1rem .55rem 1.6rem; }
+.agenda-heading { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 1.95rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; color: var(--pa-ink); }
+.agenda-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .5rem 1rem calc(6.5rem + env(safe-area-inset-bottom)); }
+.ag-group { margin-bottom: 1.5rem; }
+.ag-month { margin: 0 0 .6rem .7rem; font-size: 1rem; font-weight: 800; letter-spacing: 0; color: var(--pa-ink); text-transform: none; }
+.ag-bubble {
+  display: flex; flex-direction: column; gap: .3rem; width: 100%; margin: 0 0 .65rem; padding: 1.1rem 1.4rem 1.25rem; text-align: left; cursor: pointer;
+  border: 1px solid var(--pa-line); border-radius: 26px; background: var(--pa-surface); color: var(--pa-ink); font: inherit;
+  -webkit-tap-highlight-color: transparent; transition: background-color .15s ease, transform .15s ease;
+}
+.ag-bubble:active { background: var(--pa-surface-soft); transform: scale(.992); }
+.ag-bubble:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.ag-title { font-family: Georgia, "Times New Roman", serif; font-size: 1.22rem; font-weight: 700; line-height: 1.25; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.ag-when { font-size: .74rem; line-height: 1.2; color: var(--pa-muted); font-variant-numeric: tabular-nums; margin-bottom: .55rem; }
+.ag-body { font-size: .96rem; line-height: 1.55; color: var(--pa-ink); white-space: pre-line; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; line-clamp: 5; overflow: hidden; }
+.agenda-empty { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: .4rem; padding: 0 2rem 7rem 1.7rem; color: var(--pa-muted); font-size: .95rem; line-height: 1.5; }
+.agenda-empty[hidden], .agenda-limit[hidden], .agenda-fab[hidden] { display: none !important; }
+.agenda-empty strong { font-family: Georgia, "Times New Roman", serif; font-size: 1.4rem; color: var(--pa-ink); font-weight: 700; }
+.agenda-limit { position: absolute; left: 1rem; right: 5.8rem; bottom: calc(1.6rem + env(safe-area-inset-bottom)); margin: 0; padding: .7rem .9rem; border-radius: 12px; background: var(--pa-surface); border: 1px solid var(--pa-danger); color: var(--pa-danger); font-size: .82rem; line-height: 1.35; }
+.agenda-new {
+  position: absolute; right: 1.25rem; bottom: calc(1.4rem + env(safe-area-inset-bottom)); width: 60px; height: 60px; display: grid; place-items: center; cursor: pointer;
+  border-radius: 50%; border: 1px solid var(--pa-line); background: var(--pa-primary-soft); color: var(--pa-primary-strong);
+  box-shadow: 0 8px 22px rgba(20, 44, 34, .24); -webkit-tap-highlight-color: transparent; transition: transform .15s ease;
+}
+html.dark .agenda-new { box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
+.agenda-new svg { width: 27px; height: 27px; }
+.agenda-new:active { transform: scale(.93); }
+.agenda-new:focus-visible { outline: none; box-shadow: var(--pa-focus), 0 8px 22px rgba(20, 44, 34, .24); }
+/* Botão flutuante da agenda (Acessibilidade) */
+.agenda-fab {
+  position: fixed; z-index: 95; width: 54px; height: 54px; display: grid; place-items: center; padding: 0; cursor: grab;
+  border-radius: 16px; border: 1px solid var(--pa-line); background: var(--pa-surface); color: var(--pa-primary);
+  box-shadow: 0 8px 22px rgba(20, 44, 34, .24); touch-action: none; user-select: none; -webkit-user-select: none;
+}
+html.dark .agenda-fab { box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
+.agenda-fab svg { width: 26px; height: 26px; pointer-events: none; }
+.agenda-fab .notes-ribbon { stroke: var(--pa-accent); }
+.agenda-fab:focus-visible { outline: none; box-shadow: var(--pa-focus), 0 8px 22px rgba(20, 44, 34, .24); }
+.agenda-fab.is-moving { cursor: grabbing; transform: scale(1.07); }
+/* Agenda central, no estilo de "Todas as notas": título grande ao centro, contagem embaixo, cards arredondados e compactos */
+.agenda-head { position: relative; flex-direction: column; justify-content: center; gap: .2rem; padding: max(1.1rem, env(safe-area-inset-top)) 1rem 1.1rem; text-align: center; }
+.agenda-head .agenda-close { position: absolute; left: .7rem; top: max(.8rem, env(safe-area-inset-top)); }
+.agenda-heading { margin-top: 2.6rem; font-family: inherit; font-size: 1.85rem; font-weight: 800; letter-spacing: -.035em; }
+.agenda-count { margin: 0; font-size: .95rem; font-weight: 700; color: var(--pa-muted); }
+.agenda-list { padding: .4rem .9rem calc(6.5rem + env(safe-area-inset-bottom)); }
+.ag-group { margin-bottom: 1.1rem; }
+.ag-month { margin: 0 0 .45rem .55rem; font-size: .92rem; font-weight: 800; color: var(--pa-ink); }
+.ag-bubble { gap: .12rem; margin: 0 0 .5rem; padding: .78rem 1rem .85rem; border-radius: 20px; border: 0; background: var(--pa-surface-soft); }
+.ag-title { font-family: inherit; font-size: .98rem; font-weight: 800; letter-spacing: -.01em; }
+.ag-when { font-size: .72rem; margin-bottom: .3rem; }
+.ag-body { font-size: .86rem; line-height: 1.45; -webkit-line-clamp: 3; line-clamp: 3; color: var(--pa-ink); }
+.agenda-new { width: 56px; height: 56px; box-shadow: none; }
+.agenda-new svg { width: 25px; height: 25px; }
+.agenda-head .agenda-close { width: 44px; height: 44px; border: 0 !important; border-radius: 50%; background: var(--pa-surface-soft) !important; color: var(--pa-ink); display: grid; place-items: center; }
+#modal-planner .planner-notes-btn .notes-ribbon { stroke: #c3e1b5; }
+#modal-planner .planner-notes-btn .notes-count { top: -7px; right: -7px; min-width: 22px; height: 22px; background: #2e7d4f !important; color: #fff !important; border: 2px solid #0f3b2a; font-weight: 800; }
+
+/* v1.9.7: anotação livre sem rótulo "Anotação A/B"; só título grande e área de escrita */
+.notas-sub:empty { display: none; }
+.notas-title-input { padding: .1rem 0 .7rem; font-size: 2rem; line-height: 1.15; font-weight: 800; letter-spacing: -.025em; }
