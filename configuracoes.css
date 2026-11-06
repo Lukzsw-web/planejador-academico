@@ -200,7 +200,7 @@ html.dark .profile-banner { background: #2a312e; }
   position: relative; width: 104px; height: 104px; margin: -52px auto 0; border-radius: 50%; overflow: hidden;
   background: #9ba7a1; border: 4px solid var(--pa-bg);
 }
-html.dark .profile-avatar { background: #4b5853; }
+html.dark .profile-avatar { background-color: #4b5853; }
 .profile-avatar svg { display: block; width: 100%; height: 100%; fill: #e8ece7; }
 html.dark .profile-avatar svg { fill: #cdd5d0; }
 .profile-hero-name {
@@ -352,7 +352,7 @@ html.dark #modal-settings .settings-action:not(#dockpref-reset) { color: #0f1a16
   background: #cdd1cc url("../imagens/banner-ccs.jpg") 50% 30% / cover no-repeat;
 }
 html.dark .profile-banner, html.dark #settings-view-profile .profile-banner { background-color: #2a312e; background-image: linear-gradient(rgba(10, 18, 15, .28), rgba(10, 18, 15, .28)), url("../imagens/banner-ccs.jpg"); background-position: 50% 30%; background-size: cover; }
-.profile-avatar.has-photo { background-size: cover; background-position: center; }
+.profile-avatar.has-photo, html.dark .profile-avatar.has-photo { background-size: cover; background-position: center; background-repeat: no-repeat; }
 .profile-avatar.has-photo svg { display: none; }
 .profile-avatar-wrap { position: relative; width: 104px; margin: 0 auto; }
 .profile-avatar-wrap .profile-avatar { margin: 0; }

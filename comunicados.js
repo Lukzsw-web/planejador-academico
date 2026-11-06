@@ -183,6 +183,10 @@
     }
     art.appendChild(date);
     const main = el('div', 'com-main'), ctr = { i: 0 };
+    // Etiqueta com o nome da primeira disciplina citada no aviso (só se o código existir no cadastro).
+    { const re = new RegExp(CODE_RE.source, 'g'), txt = c.titulo + ' ' + c.mensagem; let m, nm = null;
+      while (!nm && (m = re.exec(txt))) nm = codeName(m[0]);
+      if (nm) { const tag = el('span', 'com-tag'); tag.appendChild(el('span', '', nm)); main.appendChild(tag); } }
     const h3 = el('h3', 'com-title'); appendRich(h3, c.titulo, ctr); main.appendChild(h3);
     const body = el('div', 'com-body');
     c.mensagem.split(/\n{1,}/).forEach(line => { if (line.trim()) { const p = el('p'); appendRich(p, line, ctr); body.appendChild(p); } });

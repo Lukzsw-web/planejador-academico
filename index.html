@@ -262,11 +262,18 @@
   <!-- Aba Comunicados (dock) -->
   <div id="modal-comunicados" class="bottom-tab-page comunicados-page" role="tabpanel" aria-hidden="true">
     <div class="comunicados-screen modal-content">
+      <div class="com-deco" aria-hidden="true">
+        <svg class="cd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="cdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V150C346 138 308 160 252 156C190 152 150 128 96 140C54 150 24 166 0 156Z" fill="url(#cdg)"></path><path d="M0 52C34 70 70 62 98 92C122 118 104 150 62 160C34 166 12 160 0 154Z" fill="#fff" fill-opacity=".05"></path><path d="M206 0C236 28 292 24 330 60C358 86 380 82 390 76V0Z" fill="#fff" fill-opacity=".055"></path></svg>
+        <svg class="cd-blob cd-blob-a" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
+        <svg class="cd-blob cd-blob-b" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
+      </div>
       <header class="comunicados-head">
-        <span class="comunicados-head-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.2v3.6a1 1 0 0 0 1 1h2.3l5.2 3.9a.6.6 0 0 0 1-.5V5.8a.6.6 0 0 0-1-.5L6.8 9.2H4.5a1 1 0 0 0-1 1z"></path><path d="M16.6 9.2a4 4 0 0 1 0 5.6"></path><path d="M19.2 6.6a7.7 7.7 0 0 1 0 10.8"></path></svg></span>
-        <h2 class="comunicados-title">Comunicados</h2>
+        <div class="comunicados-head-main">
+          <div class="tab-title-row"><span class="comunicados-head-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.2v3.6a1 1 0 0 0 1 1h2.3l5.2 3.9a.6.6 0 0 0 1-.5V5.8a.6.6 0 0 0-1-.5L6.8 9.2H4.5a1 1 0 0 0-1 1z"></path><path d="M16.6 9.2a4 4 0 0 1 0 5.6"></path><path d="M19.2 6.6a7.7 7.7 0 0 1 0 10.8"></path></svg></span>
+          <h2 class="comunicados-title">Comunicados</h2></div>
+          <p class="comunicados-sub">Avisos da coordenação e da equipe do curso.</p>
+        </div>
       </header>
-      <p class="comunicados-sub">Avisos da coordenação e da equipe do curso.</p>
       <div class="comunicados-bar"><span id="comunicados-status" class="comunicados-status" role="status"></span><button type="button" id="comunicados-refresh" class="comunicados-refresh">Atualizar</button></div>
       <div id="comunicados-filters" class="comunicados-filters" role="group" aria-label="Filtrar por categoria"></div>
       <div id="comunicados-list" class="comunicados-list" aria-live="polite"></div>
@@ -480,14 +487,20 @@
     </div>
   </div>
 
-  <!-- FarmacIA: assistente de perguntas sobre a grade (sem IA generativa) -->
+  <!-- FarmacIA: grade e regras sem IA; conteúdo de Farmácia com material local e, se o aluno permitir, IA online -->
   <div id="modal-farmacia" class="bottom-tab-page farma-page" role="tabpanel" aria-hidden="true" aria-labelledby="farma-title">
     <div class="farma-screen" onclick="event.stopPropagation()">
+      <div class="farma-deco" aria-hidden="true">
+        <svg class="fd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="fdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#1a5c40"></stop></linearGradient></defs><path d="M0 0H390V132C340 150 300 128 238 138C176 148 128 176 76 168C40 162 16 150 0 160Z" fill="url(#fdg)"></path><path d="M232 0C262 34 318 40 346 74C366 98 382 96 390 90V0Z" fill="#fff" fill-opacity=".06"></path><circle cx="338" cy="36" r="1.6" fill="#fff" fill-opacity=".5"></circle><circle cx="356" cy="58" r="1.1" fill="#fff" fill-opacity=".4"></circle><circle cx="318" cy="22" r="1.1" fill="#fff" fill-opacity=".4"></circle></svg>
+        <svg class="fd-blob fd-blob-a" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
+        <svg class="fd-blob fd-blob-b" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
+      </div>
       <header class="farma-header">
         <div class="farma-header-main">
-          <div class="tab-title-row"><div class="tab-title-icon p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-500 flex-shrink-0">
+          <div class="tab-title-row"><div class="tab-title-icon farma-title-icon flex-shrink-0">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z"></path><path d="M12 15.2V19M8.2 20.5h7.6"></path></svg>
           </div><h2 id="farma-title" class="farma-title">FarmacIA</h2></div>
+          <p class="farma-subtitle">Grade, regras e Farmácia em conversa.</p>
         </div>
         <button id="farma-reset" class="farma-reset" type="button" aria-label="Nova conversa" title="Nova conversa">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
@@ -880,6 +893,15 @@
   <script src="js/tutorial.js"></script>
   <script src="js/nucleo.js"></script>
   <script src="js/farmacia.js"></script>
+  <script src="js/farmacia/configuracao.js"></script>
+  <script src="js/farmacia/conhecimento.js"></script>
+  <script src="js/farmacia/base-conhecimento.js"></script>
+  <script src="js/farmacia/busca.js"></script>
+  <script src="js/farmacia/interpretador.js"></script>
+  <script src="js/farmacia/contexto.js"></script>
+  <script src="js/farmacia/rag.js"></script>
+  <script src="js/farmacia/provedor-ia.js"></script>
+  <script src="js/farmacia/orquestrador.js"></script>
   <script src="js/comunicados.js"></script>
   <script src="js/notas.js"></script>
   <script src="js/janelas.js"></script>

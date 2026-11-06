@@ -344,7 +344,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     return null;
   }
 
-  window.FarmaRegras = { match: match, ids: ORDER.slice() };
+  window.FarmaRegras = { match: match, ids: ORDER.slice(), all: function () { return ORDER.map(function (id) { return { id: id, html: T[id].html, chips: T[id].chips }; }); } };
 })();
 
 // =====================================================================
@@ -691,6 +691,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     if (has(n, /\b(qual (e )?(o )?meu nome|sabe (o )?meu nome|como (voce )?me chama|lembra (do )?meu nome|quem sou eu)\b/)) return { id: 'myname' };
     if (has(n, /\b(me chama(r)? (de|por)|me chame (de|por)|pode me chamar|meu nome (e|eh)|(mudar|trocar|alterar) (o )?(meu )?nome|esquecer (o )?(meu )?nome|apagar (o )?(meu )?nome|quero ser chamad[oa])\b/)) return { id: 'setname' };
     if (has(n, /\b(me trat[ae]|trate me|meus pronomes|meu pronome|(mudar|trocar|alterar) (o )?(meu )?(pronome|genero)|no (masculino|feminino|neutro)|sou (homem|mulher|menino|menina|garoto|garota|rapaz|moca|nao binario|nao binaria|nao binarie))\b/)) return { id: 'setpron' };
+    if (has(n, /\b(sou (do|da) (turno )?(noturno|integral)|meu turno (e|eh)|estudo (no|de) (turno )?(noturno|integral)|turno (noturno|integral)|(mudar|trocar) (o )?(meu )?turno)\b/)) return { id: 'setshift', value: /noturn/.test(n) ? 'noturno' : /integral/.test(n) ? 'integral' : '' };
     if (has(n, /\b(meu periodo (e|eh|atual (e|eh))|estou (no|na|cursando o|cursando) \d|to (no|na) \d|sou do \d+|estou n[oa] \d+)\b/) && numberIn(n)) return { id: 'setperiod', value: numberIn(n) };
     if (!entityHint && has(n, /\b(quem (e|eh) (voce|farmacia)|quem (te )?(criou|fez|desenvolveu|programou)|qual (e )?(o )?seu nome|como (voce )?(se )?chama|o que (e|eh) (voce|a farmacia)|voce (e|eh) (uma )?(ia|robo|bot|humano|gente|pessoa)|(usa|tem) (ia|chatgpt|gpt|inteligencia artificial)|inteligencia artificial|e beta|beta)\b/)) return { id: 'who' };
     // 2b) Regras oficiais da UFRJ / PPC
@@ -956,7 +957,9 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
 
   function answerNextPeriod() {
     var n = getNextPlanningPeriod();
-    return R(p('Pelo que você marcou, o seu próximo período a completar é o <strong>' + n + 'º</strong> (o primeiro com obrigatória ainda não cursada).'),
+    var declared = userPeriod();
+    return R(p('Pelo que você marcou, o seu próximo período a completar é o <strong>' + n + 'º</strong> (o primeiro com obrigatória ainda não cursada).') +
+      (declared ? p('No seu perfil você informou o <strong>' + declared + 'º período</strong>' + (declared !== n ? ', que é diferente do que as suas marcações indicam. Vale conferir o que você já marcou como cursado.' : ', e isso bate com as suas marcações.')) : ''),
       [{ label: 'Ver matérias do ' + n + 'º', q: 'Matérias do ' + n + ' período' }]);
   }
 
@@ -965,6 +968,8 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   function userName() { var u = UP(); return u ? u.name() : ''; }
   function userPeriod() { var u = UP(); var v = u ? Number(u.period()) : 0; return v >= 1 ? v : 0; }
   function g(m, f, n, unset) { var u = UP(); return u ? u.gen(m, f, n, unset) : (unset !== undefined ? unset : n); }
+  function userShift() { var u = UP(); var v = u && u.shift ? u.shift() : ''; return v === 'noturno' || v === 'integral' ? v : ''; }
+  function shiftLabel(v) { return v === 'noturno' ? 'Noturno' : 'Integral'; }
   function nameHTML() { return '<strong>' + esc(userName()) + '</strong>'; }
   var SKIP_KEY = 'planejador_farma_skipname_v1';
   function nameSkipped() { try { return localStorage.getItem(SKIP_KEY) === '1'; } catch (e) { return false; } }
@@ -1057,8 +1062,14 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       ['Monte uma grade para o próximo período', 'Uma sugestão pronta'],
       ['O que você pode fazer?', 'Veja o que eu sei fazer']
     ];
-    return '<div class="farma-cards">' + cards.map(function (c) {
-      return '<button type="button" class="farma-card" data-farma-ask="' + esc(c[0]) + '"><strong>' + esc(c[0]) + '</strong><small>' + esc(c[1]) + '</small></button>';
+    var ICONS = [
+      '<path d="M5 12.5l4.2 4.2L19 7"></path><circle cx="12" cy="12" r="9.2"></circle>',
+      '<rect x="4.5" y="11" width="3.6" height="8" rx="1.2"></rect><rect x="10.2" y="5" width="3.6" height="14" rx="1.2"></rect><rect x="15.9" y="9" width="3.6" height="10" rx="1.2"></rect>',
+      '<rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M4 10h16M9 3.5v3M15 3.5v3"></path>',
+      '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"></path>'
+    ];
+    return '<p class="farma-cards-title">' + 'Sugestões rápidas' + '</p><div class="farma-cards">' + cards.map(function (c, i) {
+      return '<button type="button" class="farma-card" data-farma-ask="' + esc(c[0]) + '"><span class="farma-card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICONS[i % ICONS.length] + '</svg></span><span class="farma-card-txt"><strong>' + esc(c[0]) + '</strong><small>' + esc(c[1]) + '</small></span></button>';
     }).join('') + '</div>';
   }
 
@@ -1071,7 +1082,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
   function answerWho() {
     return R(p('Eu sou a <strong>FarmacIA</strong>, assistente dos alunos de Farmácia aqui dentro do Planejador Acadêmico.') +
-      p('Não sou uma IA generativa: não invento respostas. Eu leio a sua pergunta e consulto as regras e os dados do app (grade, pré-requisitos, seu progresso) e dos documentos oficiais da UFRJ.') +
+      p(window.FarmaMod ? 'Sobre a sua grade e as regras da UFRJ, eu <strong>não uso IA</strong>: consulto os dados do app e os documentos oficiais. Para explicar <strong>conteúdo de Farmácia</strong>, posso usar uma <strong>IA online</strong>, só se você permitir (pergunte “o que é enviado?”); sem internet, uso o material local.' : 'Não sou uma IA generativa: não invento respostas. Eu leio a sua pergunta e consulto as regras e os dados do app (grade, pré-requisitos, seu progresso) e dos documentos oficiais da UFRJ.') +
       p('Estou em <strong>beta</strong>: ainda erro e não entendo tudo. Quanto mais claro o pedido, melhor eu respondo.'),
       [{ label: 'O que você pode fazer?', q: 'O que você pode fazer?' }]);
   }
@@ -1089,7 +1100,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   function answerMyName() {
     if (!userName()) { awaiting = 'name'; return R(p('Ainda não sei o seu nome. <strong>Como posso te chamar?</strong>'), [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }]); }
     var pr = UP() ? UP().pronoun() : '';
-    var extra = (pr ? ' Vou me referir a você no ' + PRON_LABEL[pr] + '.' : '') + (userPeriod() ? ' Você está no ' + userPeriod() + 'º período.' : '');
+    var extra = (pr ? ' Vou me referir a você no ' + PRON_LABEL[pr] + '.' : '') + (userPeriod() ? ' Você está no ' + userPeriod() + 'º período.' : '') + (userShift() ? ' Seu turno é o ' + shiftLabel(userShift()).toLowerCase() + '.' : '');
     return R(p('Você é ' + nameHTML() + '.' + extra + ' Dá para mudar isso nas Configurações, em Usuário, ou me dizendo “me chama de ...”.'));
   }
   function answerSetName(raw) {
@@ -1115,6 +1126,21 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     }
     awaiting = 'pron'; pronTries = 0;
     return R(p('Como você prefere que eu me refira a você?'), [{ label: 'Ele', q: 'Ele' }, { label: 'Ela', q: 'Ela' }, { label: 'Neutro', q: 'Neutro' }]);
+  }
+  function answerSetShift(v) {
+    if (!v) { return R(p('Qual é o seu turno: <strong>integral</strong> ou <strong>noturno</strong>?'), [{ label: 'Integral', q: 'Sou do integral' }, { label: 'Noturno', q: 'Sou do noturno' }]); }
+    if (UP()) UP().set({ shift: v });
+    return R(p('Anotei: você é do turno <strong>' + shiftLabel(v).toLowerCase() + '</strong>. Vou usar isso para destacar o atendimento e as regras do seu turno.'), [{ label: 'Atendimento da coordenação', q: 'Atendimento da coordenação' }]);
+  }
+  // Destaca, numa regra que fala dos dois turnos, a linha do turno do perfil.
+  function shiftHighlight(html) {
+    var sh = userShift();
+    if (!sh) return '';
+    var key = '<strong>Turno ' + shiftLabel(sh) + ':</strong>';
+    var i = html.indexOf(key);
+    if (i < 0) return '';
+    var rest = html.slice(i), e = rest.search(/<br>|<\/p>/);
+    return p('Pelo seu perfil, você é do turno <strong>' + shiftLabel(sh).toLowerCase() + '</strong>. ' + (e > 0 ? rest.slice(0, e) : rest));
   }
   function answerSetPeriod(v) {
     if (v < 1 || v > 11) return R(p('Esse período não existe no curso. Me diga um número de 1 a 11.'));
@@ -1512,7 +1538,8 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       case 'setname': return answerSetName(raw);
       case 'setpron': return answerSetPron(raw);
       case 'setperiod': return answerSetPeriod(intent.value);
-      case 'rule': return R(intent.rule.html + p('<small>' + esc('Regras podem mudar: confirme na Secretaria Acadêmica ou com o seu orientador.') + '</small>'), intent.rule.chips);
+      case 'setshift': return answerSetShift(intent.value);
+      case 'rule': return R((intent.rule.id === 'coordenacao' ? shiftHighlight(intent.rule.html) : '') + intent.rule.html + p('<small>' + esc('Regras podem mudar: confirme na Secretaria Acadêmica ou com o seu orientador.') + '</small>'), intent.rule.chips);
       case 'glossary': return answerGlossary(intent.term);
       case 'plan': return answerPlan(intent.target);
       case 'priority': return answerPriority();
@@ -1538,7 +1565,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     }
   }
 
-  var NO_CTX = { reexplain: 1, why: 1, more: 1, invite: 1, thanks: 1, bye: 1, ack: 1, praise: 1, frustrated: 1, worry: 1, greet: 1, howare: 1, who: 1, about: 1, myname: 1, setname: 1, setpron: 1, setperiod: 1, empty: 1, unknown: 1, contacts: 1, offscope: 1 };
+  var NO_CTX = { reexplain: 1, why: 1, more: 1, invite: 1, thanks: 1, bye: 1, ack: 1, praise: 1, frustrated: 1, worry: 1, greet: 1, howare: 1, who: 1, about: 1, myname: 1, setname: 1, setpron: 1, setperiod: 1, setshift: 1, empty: 1, unknown: 1, contacts: 1, offscope: 1 };
   function answerText(text) {
     var picked = resolveChoice(text);
     var q = picked || text;
@@ -1677,10 +1704,18 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
         console.warn('FarmacIA:', err);
         res = R(p('Tive um problema para responder essa. Tente reformular a pergunta, por favor.'));
       }
-      typing.remove();
-      if (res) { addBot(res.html); setChips(res.chips); }
-      setPlaceholder();
-      busy = false;
+      var finish = function (r) {
+        typing.remove();
+        if (r) { addBot(r.html); setChips(r.chips); }
+        setPlaceholder();
+        busy = false;
+      };
+      // Camada v2 (js/farmacia/*): pode assumir perguntas de conteúdo (RAG + IA online) e devolve uma Promise.
+      var orq = window.FarmaMod && window.FarmaMod.orquestrador, pending = null;
+      try { pending = orq ? orq.interceptar(q, res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
+      if (pending && typeof pending.then === 'function') {
+        pending.then(function (r2) { finish(r2 || res); }, function (err3) { console.warn('FarmacIA v2:', err3); finish(res); });
+      } else finish(res);
     }, delay);
   }
 
@@ -1698,6 +1733,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     lastSubject = null; lastIntentId = null; choice = null; pronTries = 0; ctx = { id: null, subject: null, listed: [], res: null, rule: null };
     awaiting = needsName() ? 'name' : null;
     busy = false;
+    if (window.FarmaMod && window.FarmaMod.orquestrador) window.FarmaMod.orquestrador.reset();
     addBot(welcomeHTML());
     setChips(needsName() ? [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }] : []);
     setPlaceholder();
@@ -1769,6 +1805,11 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       if (btn) ask(btn.dataset.farmaAsk, btn.dataset.farmaLabel);
     });
     bindViewport();
+    // Perfil alterado nas Configurações: se eu esperava o nome e ele já foi informado lá, sigo em frente.
+    window.addEventListener('planejador:profile', function () {
+      if ((awaiting === 'name' || awaiting === 'newname' || awaiting === 'pron') && userName()) { awaiting = null; setSkip(false); }
+      setPlaceholder();
+    });
     // Sai do modo "digitando" ao trocar de aba.
     document.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('#bottom-nav')) root.classList.remove('farma-typing');
@@ -1776,7 +1817,11 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
 
   // API pública (usada pela navegação e pelos testes).
-  window.FarmacIA = { show: show, ask: ask, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; } };
+  window.FarmacIA = { show: show, ask: ask, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; },
+    // Ganchos para a camada v2 (js/farmacia/*): só leitura do que o assistente já sabe.
+    _findSubjects: findSubjects, _ctx: function () { return ctx; }, _R: R, _p: p, _esc: esc, _chips: exampleChips,
+    _perfil: function () { return { nome: userName(), periodo: userPeriod(), turno: userShift(), pronome: UP() ? UP().pronoun() : '' }; },
+    _gen: g };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

@@ -131,7 +131,7 @@
     if (!n) return;
     title.value = n.title; text.value = n.text;
     title.placeholder = n.code ? (discName(n.code) || n.code) : tr('Sem título');
-    sub.textContent = n.code ? n.code + (discName(n.code) ? ' · ' + discName(n.code) : '') : tr('Anotação {l}', { l: n.label });
+    sub.textContent = n.code ? n.code + (discName(n.code) ? ' · ' + discName(n.code) : '') : '';
     del.textContent = tr('Excluir anotação'); del.classList.remove('is-danger'); st.delArmed = null;
   }
   function flush() { if (st.timer) { clearTimeout(st.timer); st.timer = null; } if (st.dirty) { st.dirty = false; save(); refreshMarks(); } }

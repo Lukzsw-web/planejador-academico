@@ -230,7 +230,7 @@ button:not(.bottom-nav-item):not(.coreq-button):not(.planner-coreq-button) {
   padding: 1.2rem;
   border: 1px solid var(--planner-line);
   border-radius: 1.35rem;
-  background: #fff;
+  background: #FBFAF5;
   box-shadow: 0 5px 20px rgba(31, 54, 42, .035);
 }
 .dark #modal-planner .planner-summary-panel { background: #17241d; border-color: var(--planner-line); box-shadow: none; }
@@ -312,7 +312,7 @@ button:not(.bottom-nav-item):not(.coreq-button):not(.planner-coreq-button) {
   padding: 0 .85rem 0 1rem;
   border: 1px solid var(--planner-line);
   border-radius: 1.05rem;
-  background: #fff;
+  background: #FBFAF5;
   transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
 }
 .dark #modal-planner .planner-search-shell { background: #17241d; }
@@ -792,7 +792,7 @@ html.dark #pfilter-periods .pfilter-chip.is-on { color: #0f1a16 !important; }
    busca em pílula e grupos em cartões. (nomes de classes e ids preservados)
    ========================================================= */
 #modal-planner.planner-page {
-  --pq-ink: #123f2a; --pq-ink-soft: #4a6155; --pq-card: #fbfaf3; --pq-tile: #c3e1b5; --pq-line: #215732; --pq-bg: #f2f4ec; --pq-chip: #dcecd3;
+  --pq-ink: #123f2a; --pq-ink-soft: #4a6155; --pq-card: #FBFAF5; --pq-tile: #c3e1b5; --pq-line: #215732; --pq-bg: #f2f4ec; --pq-chip: #dcecd3;
   background: var(--pq-bg) !important;
 }
 html.dark #modal-planner.planner-page {

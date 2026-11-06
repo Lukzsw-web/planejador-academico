@@ -167,7 +167,7 @@ details[open] summary .accordion-chevron {
 }
 .subject-card {
   border: 1px solid rgba(17, 24, 39, 0.08);
-  background: #ffffff;
+  background: #FBFAF5;
 }
 .dark .subject-card.status-default {
   border-color: #2d313a !important;
@@ -573,7 +573,7 @@ body {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior-x: none !important;
-  background: #f9fafb !important;
+  background: #F4F3EB !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: none !important;
@@ -1122,7 +1122,7 @@ html.dark body {
 #home-page main > .bg-white.dark\:bg-darkCard {
   border-radius: 24px !important;
   border-color: #e5e7eb !important;
-  background: #ffffff !important;
+  background: #FBFAF5 !important;
   box-shadow: 0 5px 18px rgba(17,24,39,.065) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -1144,7 +1144,7 @@ html.dark body {
 .search-suggestions {
   border-radius: 18px !important;
   border-color: #e5e7eb !important;
-  background: #ffffff !important;
+  background: #FBFAF5 !important;
   box-shadow: 0 8px 24px rgba(17,24,39,.11) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -1217,7 +1217,7 @@ html.dark body {
 :root {
   color-scheme: light;
   --pa-bg: #f5f5ef;
-  --pa-surface: #fffefa;
+  --pa-surface: #FBFAF5;
   --pa-surface-soft: #f0f2eb;
   --pa-ink: #202c27;
   --pa-muted: #66736b;
@@ -1766,7 +1766,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   max-width: 380px;
   padding: 22px;
   border-radius: 20px;
-  background: #fff;
+  background: #FBFAF5;
   color: #1f2937;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   transform: scale(0.96);

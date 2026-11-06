@@ -493,6 +493,8 @@ window.I18N_ROWS = [
     ['FarmacIA', 'FarmacIA', 'FarmacIA'],
     ['Tire dúvidas sobre a sua grade. Respondo com os dados do app, sem IA generativa.', 'Ask about your course plan. I answer from the app\'s own data, with no generative AI.', 'Pregunta sobre tu malla. Respondo con los datos de la app, sin IA generativa.'],
     ['Nova conversa', 'New chat', 'Nueva conversación'],
+    ['Grade, regras e Farmácia em conversa.', 'Schedule, rules and Pharmacy, in a chat.', 'Malla, reglas y Farmacia en una conversación.'],
+    ['Sugestões rápidas', 'Quick suggestions', 'Sugerencias rápidas'],
     ['A FarmacIA entende perguntas em português.', 'FarmacIA understands questions in Portuguese.', 'FarmacIA entiende preguntas en portugués.'],
     ['Pergunte sobre a sua grade...', 'Ask about your course plan...', 'Pregunta sobre tu malla...'],
     ['Pergunte sobre a sua grade', 'Ask about your course plan', 'Pregunta sobre tu malla'],

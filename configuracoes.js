@@ -531,7 +531,6 @@ function setProfilePhotoFromFile(file) {
       const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S); ctx.drawImage(img, sx, sy, side, side, 0, 0, S, S);
       localStorage.setItem(PHOTO_KEY, c.toDataURL('image/jpeg', 0.85));
       applyProfilePhoto();
-      showToast({ text: T('Foto salva só neste aparelho.') });
     } catch (_) { showToast({ text: T('Não foi possível salvar a foto.'), mode: 'error' }); }
   };
   img.onerror = () => { URL.revokeObjectURL(src); showToast({ text: T('Não foi possível abrir essa imagem.'), mode: 'error' }); };

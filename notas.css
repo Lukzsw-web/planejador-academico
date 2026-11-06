@@ -116,3 +116,7 @@ html.dark .agenda-fab { box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
 .agenda-head .agenda-close { width: 44px; height: 44px; border: 0 !important; border-radius: 50%; background: var(--pa-surface-soft) !important; color: var(--pa-ink); display: grid; place-items: center; }
 #modal-planner .planner-notes-btn .notes-ribbon { stroke: #c3e1b5; }
 #modal-planner .planner-notes-btn .notes-count { top: -7px; right: -7px; min-width: 22px; height: 22px; background: #2e7d4f !important; color: #fff !important; border: 2px solid #0f3b2a; font-weight: 800; }
+
+/* v1.9.7: anotação livre sem rótulo "Anotação A/B"; só título grande e área de escrita */
+.notas-sub:empty { display: none; }
+.notas-title-input { padding: .1rem 0 .7rem; font-size: 2rem; line-height: 1.15; font-weight: 800; letter-spacing: -.025em; }
