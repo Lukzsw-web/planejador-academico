@@ -1,3 +1,121 @@
+/* base.css — Base do visual: fontes locais e animações (@keyframes), estilos gerais e navegação (dock inferior e trilho de abas).
+ * Cada seção abaixo era um arquivo próprio (fundamentos.css, base.css, navegacao.css); a ordem das regras foi mantida. */
+
+/* ===== Seção: fundamentos (fontes e @keyframes) ===== */
+/* ===== Seção: fontes ===== */
+/* fontes.css — fontes locais (arquivos na raiz do site). Mantêm a identidade tipográfica sem depender da rede. */
+@font-face {
+  font-family: Inter;
+  src: url("inter-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url("inter-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ===== Seção: animacoes ===== */
+/* animacoes.css — todos os @keyframes do site num lugar só.
+ * Quem usa cada animação continua nos arquivos de cada componente (propriedade `animation`), e as regras de
+ * "reduzir animações" também ficam junto do componente. */
+
+@keyframes sweep {
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes subject-unlocked-wave {
+  0% {
+    transform: scale(.985);
+    filter: brightness(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 5px 18px rgba(17,24,39,.06);
+  }
+  38% {
+    transform: scale(1.012);
+    filter: brightness(1.08);
+    box-shadow: 0 0 0 4px rgba(34,197,94,.16), 0 10px 30px rgba(34,197,94,.14);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow: 0 5px 18px rgba(17,24,39,.06);
+  }
+}
+
+@keyframes accordion-reveal {
+  from { opacity: .001; }
+  to { opacity: 1; }
+}
+
+@keyframes lock-swing-open {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  30%  { transform: translate(0, -4px) rotate(0deg); }
+  75%  { transform: translate(-8px, -4px) rotate(-14deg); }
+  100% { transform: translate(-8px, 0) rotate(0deg); }
+}
+
+@keyframes lock-swing-close {
+  0%   { transform: translate(-8px, 0) rotate(0deg); }
+  25%  { transform: translate(-8px, -4px) rotate(-14deg); }
+  70%  { transform: translate(0, -4px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes searchFocusPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(234,179,8,0), 0 2px 9px rgba(17,24,39,.055);
+  }
+  18% {
+    transform: scale(1.012);
+    box-shadow: 0 0 0 4px rgba(234,179,8,.30), 0 8px 24px rgba(234,179,8,.18);
+  }
+  45% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(234,179,8,.16), 0 6px 18px rgba(234,179,8,.10);
+  }
+  72% {
+    box-shadow: 0 0 0 4px rgba(234,179,8,.24), 0 8px 22px rgba(234,179,8,.14);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 9px rgba(17,24,39,.055);
+  }
+}
+
+@keyframes searchFocusPulseDark {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 9px rgba(0,0,0,.22); }
+  18% { transform: scale(1.012); box-shadow: 0 0 0 4px rgba(250,204,21,.30), 0 8px 24px rgba(250,204,21,.12); }
+  45% { transform: scale(1); box-shadow: 0 0 0 2px rgba(250,204,21,.15), 0 6px 18px rgba(250,204,21,.08); }
+  72% { box-shadow: 0 0 0 4px rgba(250,204,21,.22), 0 8px 22px rgba(250,204,21,.10); }
+}
+
+@keyframes mainSearchFocusPulse {
+  0% { transform: scale(.99); }
+  45% { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+
+@keyframes toast-progress-grow { from { width: 0; } to { width: 100%; } }
+
+@keyframes settings-spin { to { transform: rotate(360deg); } }
+
+@keyframes farmaSpark { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+@keyframes farmaIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@keyframes farmaDot { 0%, 100% { opacity: .35; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+@keyframes settingsViewIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+@keyframes com-marker { from { background-size: 0 .74em, 0 .34em; } }
+
+/* ===== Seção: base ===== */
 /* base.css — Base do site: reset, cards, sanfonas, progresso, busca, modais e componentes gerais.
  * Dentro do arquivo a ordem original foi mantida (regras posteriores vencem as anteriores). */
 
@@ -2098,3 +2216,329 @@ html.has-fsearch #home-page > header { padding-top: 1.25rem; }
 .profile-hero-label.is-empty, .is-static.is-empty { color: var(--pa-muted); }
 /* v1.9.5+: balão de aviso acompanha o dedo ao ser arrastado para baixo */
 #toast-copy { touch-action: pan-x; }
+
+/* ===== Seção: navegação (dock e trilho de abas) ===== */
+/* navegacao.css — Navegação: barra inferior (dock) e trilho de abas.
+ * Dentro do arquivo a ordem original foi mantida (regras posteriores vencem as anteriores). */
+
+/* =========================================================
+   Navegação inferior — linguagem One UI / Planejador
+   Barra mantida como navegação principal, agora integrada ao
+   visual sólido dos painéis do aplicativo.
+   ========================================================= */
+.bottom-liquid-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+}
+.bottom-liquid-nav::before { content: none; }
+.bottom-liquid-nav-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 2px;
+}
+.bottom-nav-item {
+  min-width: 0;
+  border: 0;
+  padding: 6px 4px 5px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  transition: transform .18s ease;
+}
+.bottom-nav-icon svg { width: 100%; height: 100%; }
+.bottom-nav-item.active .bottom-nav-icon { transform: translateY(-1px); }
+.bottom-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+html.theme-switching .bottom-liquid-nav,
+html.theme-switching .bottom-nav-item { transition: none !important; }
+@media (max-width: 390px) {
+  .bottom-nav-item {   padding-inline: 2px; }
+  .bottom-nav-icon { width: 22px; height: 22px; }
+  .bottom-nav-label { font-size: .57rem; }
+}
+@media (min-width: 768px) {
+  .bottom-liquid-nav { bottom: 16px; }
+  .bottom-nav-item { min-height: 60px; }
+  .bottom-nav-icon { width: 25px; height: 25px; }
+  .bottom-nav-label { font-size: .66rem; }
+}
+.home-tab-page.bottom-tab-current,
+.bottom-tab-page.bottom-tab-current {
+  pointer-events: auto !important;
+}
+.bottom-tab-page .modal-content {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100%;
+  max-height: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  padding-bottom: 120px !important;
+}
+.bottom-tab-page > .modal-content > button[aria-label="Fechar"] {
+  display: none !important;
+}
+.bottom-tab-page.bottom-tab-dragging,
+.home-tab-page.bottom-tab-dragging {
+  transition: none !important;
+  will-change: transform;
+}
+@media (min-width: 768px) {
+  .bottom-tab-page .modal-content { padding-bottom: 130px !important; }
+}
+/* Indicador ativo da barra: cápsula sólida no padrão One UI. */
+.bottom-nav-item.active {
+  position: relative;
+  isolation: auto;
+  overflow: hidden;
+}
+/* Barra inferior: mesma linguagem dos painéis, sem efeito de vidro. */
+.bottom-nav-item {
+  transition: background-color .16s ease, color .16s ease, transform .12s ease !important;
+}
+.bottom-nav-item:active {
+  transform: scale(.97) !important;
+}
+.dark .bottom-nav-item { color: #a6aab2 !important; }
+.dark .bottom-nav-item:hover {
+  background: #25272c !important;
+  color: #e5e7eb !important;
+}
+@media (max-width: 390px) {
+  .bottom-liquid-nav {
+    width: 94vw !important;
+    padding: 4px !important;
+    border-radius: 19px !important;
+  }
+  .bottom-nav-item {
+    min-height: 53px !important;
+    border-radius: 15px !important;
+  }
+}
+.bottom-liquid-nav {
+  width: min(92vw, 520px) !important;
+  bottom: max(14px, env(safe-area-inset-bottom)) !important;
+  padding: 5px !important;
+  border: 1px solid var(--pa-line) !important;
+  border-radius: 16px !important;
+  background: var(--pa-surface) !important;
+  box-shadow: 0 8px 26px rgba(20, 44, 34, .15) !important;
+  backdrop-filter: none !important;
+}
+.bottom-nav-item {
+  min-height: 54px !important;
+  border-radius: 10px !important;
+  gap: 4px !important;
+  color: var(--pa-muted) !important;
+  font-weight: 650 !important;
+}
+.bottom-nav-item:hover { background: var(--pa-surface-soft) !important; color: var(--pa-ink) !important; }
+.bottom-nav-item.active {
+  color: var(--pa-primary-strong) !important;
+  background: var(--pa-primary-soft) !important;
+  box-shadow: inset 0 0 0 1px rgba(36, 86, 75, .07) !important;
+}
+.dark .bottom-nav-item.active { color: #d4e9dc !important; background: #254337 !important; }
+.bottom-nav-icon { width: 21px !important; height: 21px !important; }
+.bottom-nav-label { font-size: .66rem !important; font-weight: 700 !important; letter-spacing: 0 !important; }
+.dark .bottom-liquid-nav { background: var(--pa-surface) !important; border-color: var(--pa-line) !important; box-shadow: 0 10px 30px rgba(0,0,0,.3) !important; }
+/* Telas secundárias e diálogos compartilham o mesmo sistema de superfícies. */
+.bottom-tab-page { color: var(--pa-ink); }
+.bottom-tab-page h2, .bottom-tab-page h3 { letter-spacing: -.025em; }
+/* =========================================================
+   Ajustes finais — dock médio, ícone de informação, foco das
+   buscas e respiro da aba de contatos.
+   ========================================================= */
+.bottom-liquid-nav {
+  width: min(94vw, 560px) !important;
+  padding: 6px !important;
+  border-radius: 20px !important;
+}
+.bottom-nav-item {
+  min-height: 64px !important;
+  gap: 5px !important;
+  border-radius: 14px !important;
+}
+.bottom-nav-icon { width: 26px !important; height: 26px !important; }
+.bottom-nav-label { font-size: .72rem !important; font-weight: 700 !important; }
+@media (max-width: 640px) {
+  .bottom-liquid-nav {
+    width: calc(100% - 1rem) !important;
+    max-width: 520px !important;
+    padding: 5px !important;
+    border-radius: 18px !important;
+  }
+  .bottom-nav-item { min-height: 60px !important; border-radius: 13px !important; }
+  .bottom-nav-icon { width: 24px !important; height: 24px !important; }
+  .bottom-nav-label { font-size: .66rem !important; }
+}
+@media (max-width: 370px) {
+  .bottom-nav-icon { width: 22px !important; height: 22px !important; }
+  .bottom-nav-label { font-size: .58rem !important; }
+}
+/* Causa do vazio no topo: a classe scale-95 (propriedade `scale`) encolhia a página
+   toda a partir do centro. Nas abas ela precisa ficar neutra. */
+.bottom-tab-page .modal-content { scale: none !important; }
+/* Cabeçalho das abas: [ícone] [título], igual a "Contatos Importantes" */
+.tab-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: .45rem; }
+.tab-title-row .tab-title-icon { width: 40px; height: 40px; display: grid; place-items: center; padding: 0 !important; }
+@media (max-width: 640px) {
+  /* No celular a dock sobe ~2 cm: no iPhone ela ficava colada na borda e no indicador inicial. */
+  :root { --dock-lift: 2cm; }
+}
+.bottom-liquid-nav {
+  bottom: var(--dock-bottom) !important;
+  width: min(94vw, 560px) !important;
+  padding: 6px !important;
+  border-radius: 30px !important;
+}
+.bottom-liquid-nav-inner { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 1px !important; }
+.bottom-nav-item {
+  min-height: 62px !important;
+  border-radius: 24px !important;
+  padding-inline: 1px !important;
+  gap: 4px !important;
+}
+.bottom-nav-icon { width: 24px !important; height: 24px !important; }
+.bottom-nav-label { font-size: .64rem !important; letter-spacing: -.01em !important; }
+@media (max-width: 640px) {
+  .bottom-liquid-nav { width: calc(100% - 1rem) !important; max-width: 520px !important; padding: 5px !important; border-radius: 28px !important; }
+  .bottom-nav-item { min-height: 58px !important; border-radius: 22px !important; }
+  .bottom-nav-icon { width: 23px !important; height: 23px !important; }
+  .bottom-nav-label { font-size: .6rem !important; }
+}
+@media (max-width: 390px) {
+  .bottom-liquid-nav { width: calc(100% - .75rem) !important; padding: 4px !important; border-radius: 26px !important; }
+  .bottom-nav-item { min-height: 54px !important; border-radius: 20px !important; }
+  .bottom-nav-icon { width: 21px !important; height: 21px !important; }
+  .bottom-nav-label { font-size: .55rem !important; }
+}
+@media (max-width: 340px) {
+  .bottom-nav-label { font-size: .5rem !important; }
+}
+@media (min-width: 768px) {
+  .bottom-liquid-nav { bottom: max(16px, var(--dock-bottom)) !important; }
+}
+.bottom-tab-page .modal-content { padding-bottom: calc(120px + var(--dock-lift)) !important; }
+.bottom-liquid-nav { transition: opacity .18s ease, transform .22s ease; }
+@media (max-width: 390px) { .bottom-nav-item { min-height: 58px !important; } }
+html[data-dock-radius] .bottom-liquid-nav { border-radius: var(--dock-radius) !important; }
+html[data-dock-radius] .bottom-nav-item { border-radius: max(8px, calc(var(--dock-radius) - 6px)) !important; }
+html[data-dock-size] .bottom-nav-item { min-height: calc(62px * var(--dock-scale)) !important; }
+html[data-dock-size] .bottom-nav-icon { width: calc(24px * var(--dock-scale)) !important; height: calc(24px * var(--dock-scale)) !important; }
+html[data-dock-size] .bottom-nav-label { font-size: calc(.64rem * var(--dock-scale)) !important; }
+@media (max-width: 640px) {
+  html[data-dock-size] .bottom-nav-item { min-height: calc(58px * var(--dock-scale)) !important; }
+  html[data-dock-size] .bottom-nav-icon { width: calc(23px * var(--dock-scale)) !important; height: calc(23px * var(--dock-scale)) !important; }
+  html[data-dock-size] .bottom-nav-label { font-size: calc(.6rem * var(--dock-scale)) !important; }
+}
+@media (max-width: 390px) {
+  html[data-dock-size] .bottom-nav-label { font-size: calc(.55rem * var(--dock-scale)) !important; }
+}
+/* ---------- Tela de ajustes da dock ---------- */
+.dockpref-stage {
+  padding: 1.1rem .9rem; background: var(--pa-surface-soft); border-bottom: 1px solid var(--pa-line);
+}
+.dockpref-dock {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; padding: 5px;
+  background: color-mix(in srgb, var(--pa-surface) 88%, transparent); border: 1px solid var(--pa-line);
+  box-shadow: var(--pa-shadow); border-radius: var(--dock-radius);
+  transition: border-radius .18s ease;
+}
+.dockpref-dock-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: calc(58px * var(--dock-scale)); color: var(--pa-muted);
+  border-radius: max(8px, calc(var(--dock-radius) - 6px));
+  transition: min-height .18s ease, border-radius .18s ease;
+}
+.dockpref-dock-item.is-active { background: var(--pa-primary-soft); color: var(--pa-primary-strong); }
+.dockpref-dock-item svg { width: calc(23px * var(--dock-scale)); height: calc(23px * var(--dock-scale)); }
+.dockpref-dock-item span { font-size: calc(.6rem * var(--dock-scale)); font-weight: 700; line-height: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dockpref-slider { display: flex; align-items: center; gap: .85rem; }
+.dockpref-slider input[type="range"] {
+  flex: 1; min-width: 0; height: 30px; margin: 0; background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; touch-action: none;
+}
+.dockpref-slider input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: var(--pa-line); }
+.dockpref-slider input[type="range"]::-moz-range-track { height: 6px; border-radius: 999px; background: var(--pa-line); }
+.dockpref-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%;
+  background: var(--pa-primary); border: 3px solid var(--pa-surface); box-shadow: 0 1px 5px rgba(0,0,0,.28);
+}
+.dockpref-slider input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--pa-primary); border: 3px solid var(--pa-surface); box-shadow: 0 1px 5px rgba(0,0,0,.28); }
+.dockpref-slider input[type="range"]:focus-visible { outline: none; }
+.dockpref-slider input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: var(--pa-focus); }
+.dockpref-slider output { flex: 0 0 auto; min-width: 3.6rem; text-align: right; font-weight: 800; font-size: .86rem; color: var(--pa-primary); font-variant-numeric: tabular-nums; }
+.dockpref-order { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.dockpref-item {
+  display: flex; align-items: center; gap: .6rem; padding: .35rem .45rem; border-radius: 14px;
+  border: 1px solid var(--pa-line); background: var(--pa-surface);
+}
+.dockpref-item.is-dragging { box-shadow: var(--pa-shadow); border-color: var(--pa-primary); background: var(--pa-primary-soft); }
+.dockpref-grip, .dockpref-move button {
+  display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 0;
+  background: transparent; color: var(--pa-muted); cursor: pointer; flex: 0 0 auto;
+}
+.dockpref-grip { cursor: grab; touch-action: none; }
+.dockpref-grip:active { cursor: grabbing; }
+.dockpref-grip svg, .dockpref-move svg { width: 18px; height: 18px; }
+.dockpref-grip:focus-visible, .dockpref-move button:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.dockpref-move button:disabled { opacity: .3; cursor: default; }
+.dockpref-item-icon { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--pa-primary-soft); color: var(--pa-primary-strong); flex: 0 0 auto; }
+.dockpref-item-icon svg { width: 18px; height: 18px; }
+.dockpref-item-label { flex: 1; min-width: 0; font-weight: 700; font-size: .92rem; color: var(--pa-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dockpref-move { display: inline-flex; gap: .1rem; }
+/* "(beta)" sob o nome da FarmacIA na dock */
+.bottom-nav-beta { display: block; margin-top: -3px; font-size: .5rem; font-weight: 700; line-height: 1; text-align: center; opacity: .75; letter-spacing: .01em; }
+.bottom-nav-text { display: flex; flex-direction: column; align-items: center; }
+.dockpref-beta { font-style: normal; font-size: calc(.5rem * var(--dock-scale)); font-weight: 700; line-height: 1; margin-top: -3px; opacity: .75; }
+.dockpref-slider input[type="range"]::-webkit-slider-runnable-track { height: 2px; border-radius: 0; background: var(--pa-muted); opacity: .6; }
+.dockpref-slider input[type="range"]::-moz-range-track { height: 2px; border-radius: 0; background: var(--pa-muted); opacity: .6; }
+.dockpref-slider input[type="range"]::-webkit-slider-thumb { width: 16px; height: 22px; margin-top: -10px; border-radius: 4px; background: var(--pa-primary); border: 0; box-shadow: 0 0 0 3px var(--pa-surface); }
+.dockpref-slider input[type="range"]::-moz-range-thumb { width: 16px; height: 22px; border-radius: 4px; background: var(--pa-primary); border: 0; box-shadow: 0 0 0 3px var(--pa-surface); }
+.dockpref-slider output { min-width: 3.2rem; font-weight: 600; font-size: .88rem; color: var(--pa-ink); }
+#dockpref-reset { background: transparent !important; color: var(--pa-primary) !important; box-shadow: inset 0 0 0 1px var(--pa-line); }
+/* =========================================================
+   v1.9.5: dock — ícones e rótulos nunca passam do espaço do próprio botão
+   ========================================================= */
+.bottom-liquid-nav { --dl: .64rem; --di: 24px; }
+@media (max-width: 640px) { .bottom-liquid-nav { --dl: .6rem; --di: 23px; } }
+@media (max-width: 390px) { .bottom-liquid-nav { --dl: .55rem; --di: 21px; } }
+@media (max-width: 340px) { .bottom-liquid-nav { --dl: .5rem; } }
+.bottom-liquid-nav .bottom-nav-item { container-type: inline-size; overflow: hidden; }
+html .bottom-liquid-nav .bottom-nav-label { font-size: min(calc(var(--dl) * var(--dock-scale, 1)), 13cqw) !important; text-overflow: clip; }
+html .bottom-liquid-nav .bottom-nav-icon { width: min(calc(var(--di) * var(--dock-scale, 1)), 40cqw) !important; height: min(calc(var(--di) * var(--dock-scale, 1)), 40cqw) !important; }
+html .bottom-liquid-nav .bottom-nav-beta { font-size: min(calc(.5rem * var(--dock-scale, 1)), 11cqw); }
+html .bottom-liquid-nav .bottom-nav-beta { margin-top: 1px; line-height: 1; }
+html .bottom-liquid-nav .bottom-nav-text { gap: 0; }
+
+/* Zoom por pinça: libera o arrasto horizontal e vertical nas telas (o padrão pan-y só é útil sem zoom,
+   para o gesto de trocar de aba). Ver isPageZoomed() em navegacao.js. */
+html.pa-zoomed :is(.home-tab-page, .bottom-tab-page),
+html.pa-zoomed :is(.home-tab-page, .bottom-tab-page) *:not(.dockpref-grip):not([type="range"]),
+html.pa-zoomed .search-suggestions,
+html.pa-zoomed #search-suggestions {
+  touch-action: pan-x pan-y pinch-zoom !important;
+}
