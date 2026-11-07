@@ -1,0 +1,114 @@
+/* fundamentos.css — fontes locais (@font-face) e todos os @keyframes do site. */
+
+/* ===== Seção: fontes ===== */
+/* fontes.css — fontes locais (arquivos na raiz do site). Mantêm a identidade tipográfica sem depender da rede. */
+@font-face {
+  font-family: Inter;
+  src: url("inter-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url("inter-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ===== Seção: animacoes ===== */
+/* animacoes.css — todos os @keyframes do site num lugar só.
+ * Quem usa cada animação continua nos arquivos de cada componente (propriedade `animation`), e as regras de
+ * "reduzir animações" também ficam junto do componente. */
+
+@keyframes sweep {
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes subject-unlocked-wave {
+  0% {
+    transform: scale(.985);
+    filter: brightness(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 5px 18px rgba(17,24,39,.06);
+  }
+  38% {
+    transform: scale(1.012);
+    filter: brightness(1.08);
+    box-shadow: 0 0 0 4px rgba(34,197,94,.16), 0 10px 30px rgba(34,197,94,.14);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow: 0 5px 18px rgba(17,24,39,.06);
+  }
+}
+
+@keyframes accordion-reveal {
+  from { opacity: .001; }
+  to { opacity: 1; }
+}
+
+@keyframes lock-swing-open {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  30%  { transform: translate(0, -4px) rotate(0deg); }
+  75%  { transform: translate(-8px, -4px) rotate(-14deg); }
+  100% { transform: translate(-8px, 0) rotate(0deg); }
+}
+
+@keyframes lock-swing-close {
+  0%   { transform: translate(-8px, 0) rotate(0deg); }
+  25%  { transform: translate(-8px, -4px) rotate(-14deg); }
+  70%  { transform: translate(0, -4px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes searchFocusPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(234,179,8,0), 0 2px 9px rgba(17,24,39,.055);
+  }
+  18% {
+    transform: scale(1.012);
+    box-shadow: 0 0 0 4px rgba(234,179,8,.30), 0 8px 24px rgba(234,179,8,.18);
+  }
+  45% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(234,179,8,.16), 0 6px 18px rgba(234,179,8,.10);
+  }
+  72% {
+    box-shadow: 0 0 0 4px rgba(234,179,8,.24), 0 8px 22px rgba(234,179,8,.14);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 9px rgba(17,24,39,.055);
+  }
+}
+
+@keyframes searchFocusPulseDark {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 9px rgba(0,0,0,.22); }
+  18% { transform: scale(1.012); box-shadow: 0 0 0 4px rgba(250,204,21,.30), 0 8px 24px rgba(250,204,21,.12); }
+  45% { transform: scale(1); box-shadow: 0 0 0 2px rgba(250,204,21,.15), 0 6px 18px rgba(250,204,21,.08); }
+  72% { box-shadow: 0 0 0 4px rgba(250,204,21,.22), 0 8px 22px rgba(250,204,21,.10); }
+}
+
+@keyframes mainSearchFocusPulse {
+  0% { transform: scale(.99); }
+  45% { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+
+@keyframes toast-progress-grow { from { width: 0; } to { width: 100%; } }
+
+@keyframes settings-spin { to { transform: rotate(360deg); } }
+
+@keyframes farmaSpark { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+@keyframes farmaIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@keyframes farmaDot { 0%, 100% { opacity: .35; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+@keyframes settingsViewIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+
+@keyframes com-marker { from { background-size: 0 .74em, 0 .34em; } }
