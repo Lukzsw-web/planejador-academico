@@ -1,6 +1,3 @@
-/* app.js — Base do app: constantes/versão e utilidades gerais.
- * Cada seção abaixo era um arquivo próprio; a ordem das seções importa (scripts clássicos compartilham globais). */
-
 // =====================================================================
 // Seção: app
 // =====================================================================
