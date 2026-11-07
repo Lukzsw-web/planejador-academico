@@ -39,7 +39,6 @@ const normalizeStr = (s = '') =>
     .replace(/\s+/g, '')
     .toLowerCase();
 
-// Igual à anterior, mas preserva (um único) espaço entre as palavras.
 // A busca precisa das palavras separadas para comparar termo a termo e montar siglas.
 const normalizeKeepSpaces = (s = '') =>
   String(s)
@@ -93,8 +92,7 @@ function extractCodes(str) {
   return str ? (str.match(/[A-Z]{3}[A-Z0-9]{3}|MACF/g) || []) : [];
 }
 
-// Índices internos de desempenho. Não alteram nem duplicam a fonte de dados;
-// apenas evitam buscas repetidas por toda a lista de disciplinas.
+// Índices internos de desempenho. Apenas evitam buscas repetidas por toda a lista de disciplinas.
 const disciplinasPorCodigo = new Map();
 const preRequisitosPorCodigo = new Map();
 const corequisitosPorCodigo = new Map();
@@ -147,8 +145,7 @@ function hoursOf(mat) {
   return mat.ch || creditsOf(mat) * 15;
 }
 
-// Totais do curso (usam as funções acima, por isso ficam aqui e não no app.js).
-// Usado só na estimativa de conclusão mostrada nos ajustes (não é regra do curso).
+// Totais do curso.
 
 const TOTAL_OBRIG_CRED = (typeof disciplinas !== 'undefined' ? disciplinas : [])
   .filter(d => !periodIsCond(d.periodo))
