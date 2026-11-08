@@ -474,7 +474,7 @@
 
         <details class="planner-group">
           <summary class="planner-group-summary">
-            <span class="planner-group-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 10.4 12 6l9.4 4.4L12 14.8z"></path><path d="M6.4 12.5v4.2c0 1.3 2.5 2.8 5.6 2.8s5.6-1.5 5.6-2.8v-4.2"></path><path d="M21.4 10.4V15"></path><circle cx="21.7" cy="2.5" r="3.3" class="pg-badge" stroke-width="1.3"></circle><path d="M20.3 1.1l2.8 2.8M23.1 1.1l-2.8 2.8" stroke-width="1.25"></path></svg></span><span class="planner-group-title">Escolha condicionada</span>
+            <span class="planner-group-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g transform="translate(.6 4.2) scale(.82)" stroke-width="2.3"><path d="M2.6 10.4 12 6l9.4 4.4L12 14.8z"></path><path d="M6.4 12.5v4.2c0 1.3 2.5 2.8 5.6 2.8s5.6-1.5 5.6-2.8v-4.2"></path><path d="M21.4 10.4V15"></path></g><path d="M17.5 1.9l5 5M22.5 1.9l-5 5" stroke-width="2.3"></path></svg></span><span class="planner-group-title">Escolha condicionada</span>
             <span class="planner-group-end"><span id="planner-cond-group-count" class="planner-group-count">0</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></span>
           </summary>
           <div id="planner-cond-container" class="planner-group-content accordion-content"></div>
@@ -503,9 +503,17 @@
           </div><h2 id="farma-title" class="farma-title">FarmacIA</h2></div>
           <p class="farma-subtitle">Grade, regras e Farmácia em conversa.</p>
         </div>
-        <button id="farma-reset" class="farma-reset" type="button" aria-label="Nova conversa" title="Nova conversa">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>
-        </button>
+        <div class="farma-tools">
+          <div class="farma-capsule">
+            <button id="farma-menu-btn" class="farma-tool" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="farma-menu" aria-label="Opções da FarmacIA" title="Opções">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.2"></circle><circle cx="12" cy="12" r="1.2"></circle><circle cx="19" cy="12" r="1.2"></circle></svg>
+            </button>
+            <span class="farma-capsule-sep" aria-hidden="true"></span>
+            <button id="farma-reset" class="farma-reset farma-tool" type="button" aria-label="Nova conversa" title="Nova conversa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+            </button>
+          </div>
+        </div>
       </header>
       <p id="farma-lang-note" class="farma-lang-note" hidden>A FarmacIA entende perguntas em português.</p>
       <div id="farma-messages" class="farma-messages" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
@@ -852,6 +860,19 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Chapéu e X redesenhados</h4><ul class="release-list"><li>No ícone de Escolha condicionada em "O que puxar?", o chapéu ficou um pouco menor e o X ganhou lugar próprio no canto superior direito, sem círculo e sem encostar na ponta do capelo.</li></ul></div>
+          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">IA online quando o material local não basta</h4><ul class="release-list"><li>A FarmacIA continua respondendo primeiro com o que sabe no aparelho; só quando não entende uma pergunta de conteúdo, e se você permitir, ela consulta uma IA online.</li><li>Novo item "IA online" no menu ⋯: mostra se está ativada, desativada ou esgotada hoje, explica o que é enviado e liga ou desliga com um toque.</li><li>Quando a cota gratuita diária acaba, a FarmacIA avisa e volta a responder só com o material local até o dia seguinte.</li><li>Grade, regras da UFRJ e dados pessoais continuam sendo tratados só no aparelho.</li></ul></div>
+          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Respostas como página de consulta</h4><ul class="release-list">
+<li>As respostas correm pela página, sem balão e sem o cálice repetido; uma margem verde acompanha cada resposta e os títulos usam letra serifada. Suas mensagens ficam à direita, em verde suave.</li>
+<li>O cabeçalho ganhou uma cápsula com três pontinhos e atualizar, separados por um divisor. O atualizar continua funcionando sozinho.</li>
+<li>Menu dos três pontinhos: Tamanho do conteúdo (Compacto, Padrão, Ampliado, com prévia ao vivo isolada da conversa), Tema (só o verde por enquanto, já preparado para outros) e Histórico.</li>
+<li>Histórico de conversas guardado só neste aparelho, funciona sem internet: título, data, prévia, busca, continuar conversa e excluir (com confirmação).</li>
+<li>Novos blocos de resposta: Definição, Conceito importante, Atenção, Alerta, Observação, Dica, Exemplo e Resumo; comparação lado a lado (estilos A e C, escolhidos pela quantidade de informação); tabelas com copiar e, quando grandes, busca, ordenação e "mostrar mais"; gráficos de barras, linhas e setores com leitura de valores, teclado e "ver como tabela"; fórmulas; fluxogramas; mapas conceituais; código com botão de copiar.</li>
+<li>Gráficos e diagramas só aparecem com dados reais e completos; sem isso, a FarmacIA explica em texto em vez de inventar números.</li>
+<li>Perguntas sobre farmacocinética × farmacodinâmica, etapas do corpo (absorção a excreção), meia-vida e volume de distribuição agora mostram comparação, etapas e fórmulas, usando só o que o glossário já dizia.</li>
+<li>Sem bibliotecas novas e sem internet: tudo é feito com HTML, CSS e SVG próprios. Todo conteúdo passa por sanitização antes de aparecer.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Menos arquivos, mesmo site</h4><ul class="release-list"><li>Os arquivos pequenos de estilo e de código foram reunidos por assunto: fontes, animações e navegação agora moram no base.css; Comunicados, Configurações e Notas dividem o paginas.css; avisos, cards e o núcleo do site ficam no nucleo.js; agenda e janelas flutuantes ficam no notas-janelas.js.</li><li>Nada mudou no uso: as regras e funções foram apenas reunidas, na mesma ordem de antes, e o site continua funcionando sem internet.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Zoom e perfil</h4><ul class="release-list"><li>Com a tela ampliada pela pinça, agora dá para arrastar para os lados sem a página travar e voltar ao ponto de origem.</li><li>O banner do Centro de Ciências da Saúde voltou a aparecer no perfil.</li><li>O ícone de Escolha condicionada em "O que puxar?" ganhou um X mais fino e afastado do chapéu.</li></ul></div>
           <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Respostas da FarmacIA mais organizadas</h4><ul class="release-list"><li>As explicações da FarmacIA agora aparecem com títulos, listas, tabelas, citações, links e blocos de código com cores, tudo com conteúdo filtrado por segurança.</li><li>A formatação funciona sem internet depois do primeiro acesso.</li></ul></div>
           <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Fluxograma do curso na FarmacIA</h4><ul class="release-list"><li>Nas sugestões rápidas da FarmacIA, o card "Fluxograma do curso" mostra a grade do currículo novo direto no chat. Toque na imagem para ampliar e use os botões para baixar ou abrir o PDF.</li><li>O fluxograma também fica disponível sem internet depois do primeiro acesso.</li></ul></div>
           <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda de verdade</h4><ul class="release-list"><li>A agenda virou uma aba inteira, por cima da barra, no estilo de "Todas as notas": título grande no meio, contagem de anotações, balões menores e arredondados separados por "Este mês" e pelos meses anteriores. No cantinho tem um botão redondo pra escrever uma nova.</li><li>Anotar de dentro de uma disciplina e abrir o card de informações (segurando o dedo na matéria) agora viram janelinhas flutuantes: arraste com um dedo, estique ou encolha com a pinça.</li><li>Dá pra deixar até 2 janelas abertas ao mesmo tempo, e elas continuam lá quando você troca de aba. Pra fechar, toque no X ou arraste a janela até o balãozinho "Fechar" que aparece embaixo, no meio da tela.</li><li>Quer a agenda sempre à mão? Em Acessibilidade tem um botão flutuante pra você largar onde preferir.</li></ul></div>

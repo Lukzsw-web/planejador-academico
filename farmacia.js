@@ -1732,7 +1732,6 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
 
   // ---------- interface ----------
-  var AVATAR = '<span class="farma-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z"></path><path d="M12 15.2V19M8.2 20.5h7.6"></path></svg></span>';
   var started = false;
   var busy = false;
   var reduceMotion = function () { return document.documentElement.classList.contains('no-anim') || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); };
@@ -1767,9 +1766,10 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var div = document.createElement('div');
     div.className = 'farma-msg is-bot' + (extraClass ? ' ' + extraClass : '');
     var actions = extraClass === 'is-typing' ? '' : '<div class="farma-actions"><button type="button" class="farma-act" data-farma-copy aria-label="' + esc(tr('Copiar resposta')) + '" title="' + esc(tr('Copiar resposta')) + '">' + COPY_ICON + '</button></div>';
-    div.innerHTML = AVATAR + '<div class="farma-body"><div class="farma-bubble" data-no-i18n>' + html + '</div>' + actions + '</div>';
+    div.innerHTML = '<div class="farma-body"><div class="farma-bubble" data-no-i18n>' + html + '</div>' + actions + '</div>';
     el.appendChild(div);
     if (extraClass === 'is-typing') { scrollDown(); return div; }
+    if (window.FarmaVisual) { try { window.FarmaVisual.aprimorar(div); } catch (errV) { console.warn('FarmacIA visual:', errV); } }
     scrollToMessage(div);
     return div;
   }
@@ -1788,6 +1788,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     if (!q || busy) return;
     busy = true;
     addUser(display || q);
+    if (window.FarmaVisual) window.FarmaVisual.registrarUsuario(display || q);
     setChips([]);
     var typing = addBot('<span class="farma-typing" aria-label="FarmacIA está digitando"><i></i><i></i><i></i></span>', 'is-typing');
     var delay = reduceMotion() ? 0 : 380;
@@ -1799,7 +1800,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       }
       var finish = function (r) {
         typing.remove();
-        if (r) { addBot(r.html); setChips(r.chips); }
+        if (r) { addBot(r.html); setChips(r.chips); if (window.FarmaVisual) window.FarmaVisual.registrarResposta(r.html, r.chips); }
         setPlaceholder();
         busy = false;
       };
@@ -1823,6 +1824,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var el = messagesEl();
     if (!el) return;
     el.innerHTML = '';
+    if (window.FarmaVisual) window.FarmaVisual.novaConversa();
     lastSubject = null; lastIntentId = null; choice = null; pronTries = 0; ctx = { id: null, subject: null, listed: [], res: null, rule: null };
     awaiting = needsName() ? 'name' : null;
     busy = false;
@@ -1830,6 +1832,34 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     addBot(welcomeHTML());
     setChips(needsName() ? [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }] : []);
     setPlaceholder();
+  }
+
+  // Continua uma conversa guardada no histórico: recoloca as mensagens (HTML passa pelo DOMPurify) e segue dali.
+  function restaurar(conv) {
+    var el = messagesEl();
+    if (!el || !conv) return;
+    el.innerHTML = '';
+    lastSubject = null; lastIntentId = null; choice = null; pronTries = 0; ctx = { id: null, subject: null, listed: [], res: null, rule: null };
+    awaiting = null; busy = false;
+    if (window.FarmaMod && window.FarmaMod.orquestrador) window.FarmaMod.orquestrador.reset();
+    var VZ = window.FarmaVisual;
+    (conv.msgs || []).forEach(function (m) {
+      var div = document.createElement('div');
+      if (m.r === 'u') {
+        div.className = 'farma-msg is-user';
+        div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + esc(m.t || '') + '</div>';
+      } else {
+        div.className = 'farma-msg is-bot';
+        var safe = VZ ? VZ.htmlSeguro(m.h || ('<p>' + esc(m.t || '') + '</p>')) : '<p>' + esc(m.t || '') + '</p>';
+        div.innerHTML = '<div class="farma-body"><div class="farma-bubble" data-no-i18n>' + safe + '</div><div class="farma-actions"><button type="button" class="farma-act" data-farma-copy aria-label="' + esc(tr('Copiar resposta')) + '" title="' + esc(tr('Copiar resposta')) + '">' + COPY_ICON + '</button></div></div>';
+      }
+      div.style.animation = 'none';
+      el.appendChild(div);
+      if (VZ && m.r !== 'u') { try { VZ.aprimorar(div); } catch (e1) { /* segue sem o componente */ } }
+    });
+    setChips(conv.chips || []);
+    setPlaceholder();
+    el.scrollTop = el.scrollHeight;
   }
 
   function show() {
@@ -1863,6 +1893,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var input = $('farma-input');
     var send = $('farma-send');
     if (!form || !input) return;
+    if (window.FarmaVisual) window.FarmaVisual.aoContinuar = restaurar;
     var note = $('farma-lang-note');
     if (note && window.I18N && window.I18N.lang !== 'pt') note.hidden = false;
 
@@ -1889,9 +1920,11 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       var cp = e.target.closest('[data-farma-copy]');
       if (cp) {
         var bubble = cp.closest('.farma-body').querySelector('.farma-bubble');
-        var txt = bubble ? bubble.innerText.trim() : '';
-        var done = function () { if (typeof showToast === 'function') showToast({ text: tr('Resposta copiada.') }); };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () {});
+        var VZc = window.FarmaVisual;
+        var txt = bubble ? (VZc ? VZc.textoDaResposta(bubble) : bubble.innerText.trim()) : '';
+        var done = function () { cp.classList.add('is-done'); window.setTimeout(function () { cp.classList.remove('is-done'); }, 1500); if (typeof showToast === 'function') showToast({ text: tr('Resposta copiada.') }); };
+        if (VZc) VZc.copiarTexto(txt).then(done, function () {});
+        else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () {});
         return;
       }
       if (e.target.closest('[data-farma-flux]')) { openFluxViewer(); return; }
@@ -1911,7 +1944,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
 
   // API pública (usada pela navegação e pelos testes).
-  window.FarmacIA = { show: show, ask: ask, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; },
+  window.FarmacIA = { show: show, restaurar: restaurar, ask: ask, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; },
     // Ganchos para a camada v2 (farmacia-ia.js): só leitura do que o assistente já sabe.
     _findSubjects: findSubjects, _ctx: function () { return ctx; }, _R: R, _p: p, _esc: esc, _chips: exampleChips,
     _perfil: function () { return { nome: userName(), periodo: userPeriod(), turno: userShift(), pronome: UP() ? UP().pronoun() : '' }; },
