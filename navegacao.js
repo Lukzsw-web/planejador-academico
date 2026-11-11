@@ -24,6 +24,12 @@ let bottomSwipeTracking = false;
 let bottomSwipeLocked = false;
 let bottomSwipeJustDragged = false;
 let bottomTabTransitionTimer = null;
+let bottomSwipeDrawer = false;        // o gesto em andamento abre o menu lateral (primeira aba)
+let bottomSwipeStartTarget = null;
+let bottomSwipeStartedAtEdge = false;
+let bottomSwipeFrame = 0, bottomSwipePendingDx = 0, bottomSwipeNavShown = null;
+const NAV_EDGE_GUARD = 20;            // px: borda reservada ao gesto de voltar do sistema
+const NAV_GESTURE_RATIO = 1.4;        // |dx| precisa superar |dy| por esta razão para abrir o menu
 
 function setBottomNavActive(id) {
   document.querySelectorAll('.bottom-nav-item').forEach(item => {
@@ -66,6 +72,7 @@ function setBottomTrackPosition(activeIndex, dragX = 0, transition = false) {
   });
 }
 
+let lastPersistedTabId = null;
 function normalizeBottomTabs(activeId, instant = true) {
   const activeIndex = getBottomTabIndex(activeId);
   if (activeIndex < 0) return;
@@ -86,7 +93,11 @@ function normalizeBottomTabs(activeId, instant = true) {
   setBottomTrackPosition(activeIndex, 0, !instant);
   setBottomNavActive(bottomTabNavIds[activeId]);
   document.body.style.overflow = activeId === 'home-page' ? '' : 'hidden';
-  try { localStorage.setItem('planejador_active_tab_v1', activeId); } catch (_) {}
+  // Escrita síncrona no localStorage só quando a aba mudou (antes ocorria a cada resize).
+  if (lastPersistedTabId !== activeId) {
+    lastPersistedTabId = activeId;
+    try { localStorage.setItem('planejador_active_tab_v1', activeId); } catch (_) {}
+  }
 }
 
 function prepareBottomTabForDrag(tab, pointerEvents = true) {
@@ -131,14 +142,30 @@ function updateBottomSwipe(dx) {
   const progress = Math.max(0, Math.min(1, (-dx * bottomSwipeDirection) / width));
   setBottomTrackPosition(bottomSwipeStartIndex, dx, false);
   const targetIndex = bottomSwipeStartIndex + bottomSwipeDirection;
-  setBottomNavActive(
-    progress >= 0.5
-      ? bottomTabNavIds[bottomTabIds[targetIndex]]
-      : bottomTabNavIds[bottomTabIds[bottomSwipeStartIndex]]
-  );
+  const navId = progress >= 0.5
+    ? bottomTabNavIds[bottomTabIds[targetIndex]]
+    : bottomTabNavIds[bottomTabIds[bottomSwipeStartIndex]];
+  // O destaque do dock só muda ao cruzar a metade: evita varrer o DOM a cada movimento do dedo.
+  if (navId !== bottomSwipeNavShown) { bottomSwipeNavShown = navId; setBottomNavActive(navId); }
+}
+
+// No máximo uma atualização de posição por quadro (o ponteiro pode disparar bem mais que isso).
+function scheduleBottomSwipeUpdate(dx) {
+  bottomSwipePendingDx = dx;
+  if (bottomSwipeFrame) return;
+  bottomSwipeFrame = requestAnimationFrame(() => {
+    bottomSwipeFrame = 0;
+    if (bottomSwipeDirection) updateBottomSwipe(bottomSwipePendingDx);
+  });
+}
+function cancelBottomSwipeFrame() {
+  if (bottomSwipeFrame) { cancelAnimationFrame(bottomSwipeFrame); bottomSwipeFrame = 0; }
 }
 
 function clearBottomSwipeState() {
+  cancelBottomSwipeFrame();
+  bottomSwipeNavShown = null;
+  bottomSwipeDrawer = false;
   bottomSwipePointerId = null;
   bottomSwipeDirection = 0;
   bottomSwipeWidth = 0;
@@ -149,6 +176,18 @@ function clearBottomSwipeState() {
 
 function finishBottomSwipe(clientX, clientY, cancelled = false) {
   if (!bottomSwipeTracking && !bottomSwipeDirection) return;
+
+  if (bottomSwipeDrawer) {                       // gesto da primeira aba que abre o menu lateral
+    bottomSwipeJustDragged = Math.abs(clientX - bottomSwipeStartX) > 12;
+    bottomSwipeTracking = false;
+    bottomSwipeLocked = false;
+    bottomSwipePointerId = null;
+    bottomSwipeDrawer = false;
+    navDragEnd(cancelled);
+    return;
+  }
+  cancelBottomSwipeFrame();
+  bottomSwipeNavShown = null;
 
   const dx = clientX - bottomSwipeStartX;
   const dy = clientY - bottomSwipeStartY;
@@ -208,8 +247,28 @@ const bottomSwipeActivePointers = new Set();
 // Página ampliada (pinça): o arrasto de um dedo pertence ao zoom, nunca ao pager de abas.
 // Sem isso o gesto virava "deslizar de aba", travava e voltava à posição original.
 function isPageZoomed() { const vv = window.visualViewport; return !!vv && vv.scale > 1.02; }
-function syncZoomState() { document.documentElement.classList.toggle('pa-zoomed', isPageZoomed()); }
+let lastLayoutWidth = getViewportWidth();
+function syncZoomState() {
+  const zoomed = isPageZoomed();
+  document.documentElement.classList.toggle('pa-zoomed', zoomed);
+  // Se a largura do layout mudou enquanto ampliada (ex.: girou o aparelho), refaz o trilho ao sair do zoom.
+  if (!zoomed && getViewportWidth() !== lastLayoutWidth) scheduleTabsRelayout();
+}
 window.visualViewport?.addEventListener('resize', syncZoomState, { passive: true });
+
+// 'resize' só reposiciona as telas quando a LARGURA do layout mudou e o usuário não está ampliando
+// nem arrastando. Antes, cada evento refazia o estilo das 5 telas e gravava no localStorage.
+let tabsRelayoutFrame = 0;
+function scheduleTabsRelayout() {
+  if (tabsRelayoutFrame) return;
+  tabsRelayoutFrame = requestAnimationFrame(() => {
+    tabsRelayoutFrame = 0;
+    const width = getViewportWidth();
+    if (width === lastLayoutWidth || isPageZoomed() || bottomSwipeDirection || bottomTabTransitionTimer !== null) return;
+    lastLayoutWidth = width;
+    normalizeBottomTabs(activeBottomTabId, true);
+  });
+}
 function handleBottomSwipeStart(event) {
   if (event.pointerType === 'mouse' && event.button !== 0) return;
   if (isPageZoomed()) return;
@@ -223,6 +282,8 @@ function handleBottomSwipeStart(event) {
   const activePage = getBottomTabElement(activeBottomTabId);
   if (!activePage) return;
 
+  bottomSwipeStartTarget = event.target;
+  bottomSwipeStartedAtEdge = event.clientX < NAV_EDGE_GUARD;
   bottomSwipePointerId = event.pointerId;
   bottomSwipeStartX = event.clientX;
   bottomSwipeStartY = event.clientY;
@@ -252,19 +313,51 @@ function handleBottomSwipeMove(event) {
       return;
     }
 
-    const direction = dx < 0 ? 1 : -1;
-    if (!beginBottomSwipe(direction)) {
-      bottomSwipeTracking = false;
-      bottomSwipePointerId = null;
-      return;
+    if (dx > 0 && activeBottomTabId === 'home-page') {
+      // Primeira aba: puxar para a direita abre o menu lateral (não há aba anterior).
+      // Critério mais rígido que o do pager: só confirma com movimento claramente horizontal.
+      if (dx < 14 || dx < Math.abs(dy) * NAV_GESTURE_RATIO) return;   // ainda indefinido: segue observando
+      if (!canOpenDrawerByGesture() || !navDragBegin()) {
+        bottomSwipeTracking = false;
+        bottomSwipePointerId = null;
+        return;
+      }
+      bottomSwipeDrawer = true;
+      bottomSwipeLocked = true;
+      try { getBottomTabElement(activeBottomTabId)?.setPointerCapture?.(event.pointerId); } catch (_) {}
+    } else {
+      const direction = dx < 0 ? 1 : -1;
+      if (!beginBottomSwipe(direction)) {
+        bottomSwipeTracking = false;
+        bottomSwipePointerId = null;
+        return;
+      }
+      bottomSwipeLocked = true;
+      try { getBottomTabElement(activeBottomTabId)?.setPointerCapture?.(event.pointerId); } catch (_) {}
     }
-    bottomSwipeLocked = true;
-    try { getBottomTabElement(activeBottomTabId)?.setPointerCapture?.(event.pointerId); } catch (_) {}
   }
 
   event.preventDefault();
   bottomSwipeJustDragged = true;
-  updateBottomSwipe(dx);
+  if (bottomSwipeDrawer) navDragMove(dx);
+  else scheduleBottomSwipeUpdate(dx);
+}
+
+// O gesto global da primeira aba respeita seleção de texto, rolagem horizontal interna,
+// janelas/botão flutuante da agenda, modais abertos e a borda reservada ao voltar do sistema.
+function canOpenDrawerByGesture() {
+  if (navDrawerOpen || bottomSwipeStartedAtEdge || activeBottomTabId !== 'home-page') return false;
+  if (typeof modalStack !== 'undefined' && modalStack.length) return false;
+  const sel = window.getSelection?.();
+  if (sel && sel.type === 'Range' && !sel.isCollapsed) return false;
+  for (let el = bottomSwipeStartTarget; el && el.nodeType === 1 && el !== document.body; el = el.parentElement) {
+    if (el.matches?.('.agenda-fab, .jw')) return false;
+    if (el.scrollWidth > el.clientWidth + 1) {
+      const ox = getComputedStyle(el).overflowX;
+      if (ox === 'auto' || ox === 'scroll') return false;
+    }
+  }
+  return true;
 }
 
 // Pinça (dois dedos) é zoom, nunca troca de aba: qualquer segundo toque cancela o gesto.
@@ -284,7 +377,7 @@ document.addEventListener('pointerdown', event => {
   if (bottomSwipeActivePointers.size > 1) return;
   handleBottomSwipeStart(event);
 }, { passive: true, capture: true });
-window.addEventListener('resize', () => normalizeBottomTabs(activeBottomTabId, true), { passive: true });
+window.addEventListener('resize', scheduleTabsRelayout, { passive: true });
 document.addEventListener('pointermove', handleBottomSwipeMove, { passive: false, capture: true });
 document.addEventListener('pointerup', event => {
   if (event.pointerId !== bottomSwipePointerId) return;
@@ -414,6 +507,7 @@ const NAV_DRAWER_TARGETS = {
   planner: () => activateBottomTab('modal-planner'),
   farmacia: () => activateBottomTab('modal-farmacia'),
   comunicados: () => activateBottomTab('modal-comunicados'),
+  contacts: () => openContactsPage(),            // mesma rota da página existente; nada duplicado
   settings: () => { activateBottomTab('modal-settings'); showSettingsView('hub'); },
   appearance: () => { activateBottomTab('modal-settings'); showSettingsView('appearance'); },
   support: () => { activateBottomTab('modal-settings'); showSettingsView('support'); },
@@ -424,13 +518,16 @@ let navDrawerOpen = false;
 let navDrawerCloseTimer = null;
 
 function navDrawerEls() {
-  return { drawer: document.getElementById('nav-drawer'), scrim: document.getElementById('nav-scrim'), opener: document.getElementById('nav-open') };
+  return { drawer: document.getElementById('nav-drawer'), scrim: document.getElementById('nav-scrim'), opener: document.getElementById('nav-open'), handle: document.getElementById('nav-handle') };
 }
 
 function updateNavDrawerUser() {
+  const name = window.UserProfile ? window.UserProfile.name() : '';
+  // Identificação compacta do cabeçalho: sem nome, fica só avatar + seta.
+  const headName = document.getElementById('nav-open-name');
+  if (headName) { headName.textContent = name; headName.hidden = !name; }
   const nameEl = document.getElementById('nav-user-name');
   if (!nameEl) return;
-  const name = window.UserProfile ? window.UserProfile.name() : '';
   nameEl.textContent = name || T('Sem nome');
   nameEl.classList.toggle('is-empty', !name);
 }
@@ -438,7 +535,7 @@ function updateNavDrawerUser() {
 function updateNavDrawerCurrent() {
   const current = NAV_DRAWER_CURRENT[activeBottomTabId]
     || (activeBottomTabId === 'modal-settings' && typeof settingsView !== 'undefined'
-      ? ({ appearance: 'appearance', support: 'support', profile: 'profile' }[settingsView] || 'settings') : '');
+      ? ({ appearance: 'appearance', support: 'support', profile: 'profile', contacts: 'contacts' }[settingsView] || 'settings') : '');
   document.querySelectorAll('#nav-drawer .nav-item').forEach(btn => {
     const on = btn.dataset.value === current;
     btn.classList.toggle('is-current', on);
@@ -446,30 +543,42 @@ function updateNavDrawerCurrent() {
   });
 }
 
-function openNavDrawer() {
-  const { drawer, scrim, opener } = navDrawerEls();
+// fromDrag: o painel já está visível e posicionado pelo dedo (alça ou gesto da primeira aba);
+// em vez de recomeçar do zero, a transição continua da posição atual até aberto.
+function openNavDrawer(fromDrag = false) {
+  const { drawer, scrim, opener, handle } = navDrawerEls();
   if (!drawer || !scrim || navDrawerOpen) return;
   clearTimeout(navDrawerCloseTimer);
   updateNavDrawerUser();
   updateNavDrawerCurrent();
-  drawer.style.transform = ''; scrim.style.opacity = '';
-  drawer.hidden = false; scrim.hidden = false;
-  void drawer.offsetWidth;                       // força o ponto de partida antes da transição
+  if (fromDrag) {
+    drawer.classList.remove('is-dragging');
+    drawer.style.transform = ''; scrim.style.opacity = '';
+  } else {
+    drawer.style.transform = ''; scrim.style.opacity = '';
+    drawer.hidden = false; scrim.hidden = false;
+    void drawer.offsetWidth;                     // força o ponto de partida antes da transição
+  }
   drawer.classList.add('is-open'); scrim.classList.add('is-open');
   document.documentElement.classList.add('nav-open');
   if (opener) opener.setAttribute('aria-expanded', 'true');
+  if (handle) handle.setAttribute('aria-expanded', 'true');
   navDrawerOpen = true;
   (drawer.querySelector('.nav-item.is-current') || drawer.querySelector('.nav-close'))?.focus({ preventScroll: true });
 }
 
 function closeNavDrawer(returnFocus = true) {
-  const { drawer, scrim, opener } = navDrawerEls();
+  const { drawer, scrim, opener, handle } = navDrawerEls();
   if (!drawer || !navDrawerOpen) return;
   navDrawerOpen = false;
   drawer.classList.remove('is-open'); scrim.classList.remove('is-open');
   drawer.style.transform = ''; scrim.style.opacity = '';
   document.documentElement.classList.remove('nav-open');
-  if (opener) { opener.setAttribute('aria-expanded', 'false'); if (returnFocus) opener.focus({ preventScroll: true }); }
+  if (handle) handle.setAttribute('aria-expanded', 'false');
+  // Devolve o foco a quem abriu: o botão do cabeçalho só existe visível na primeira aba.
+  const focusTarget = activeBottomTabId === 'home-page' ? opener : handle;
+  if (opener) opener.setAttribute('aria-expanded', 'false');
+  if (focusTarget && returnFocus) focusTarget.focus({ preventScroll: true });
   const finish = () => { if (!navDrawerOpen) { drawer.hidden = true; scrim.hidden = true; } };
   const still = animationsOff() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   clearTimeout(navDrawerCloseTimer);
@@ -481,6 +590,89 @@ function navDrawerGo(target) {
   if (!go) return;
   closeNavDrawer(false);                         // nunca fica aberto depois de navegar
   go();
+}
+
+// ---- Abertura por arrasto (alça lateral e gesto da primeira aba) ----------------------------
+// Os dois caminhos usam estes três passos e terminam em openNavDrawer(true): mesmo painel, mesmo
+// fechamento, mesma animação. O painel acompanha o dedo; ao soltar, abre ou volta.
+const navDrag = { on: false, dx: 0, w: 0, t0: 0, frame: 0 };
+
+function navDragApply() {
+  navDrag.frame = 0;
+  const { drawer, scrim } = navDrawerEls();
+  if (!drawer || !scrim || !navDrag.on) return;
+  drawer.style.transform = `translateX(${navDrag.dx - navDrag.w}px)`;
+  scrim.style.opacity = String(Math.min(1, navDrag.dx / navDrag.w));
+}
+
+function navDragBegin() {
+  const { drawer, scrim } = navDrawerEls();
+  if (!drawer || !scrim || navDrawerOpen || navDrag.on) return false;
+  clearTimeout(navDrawerCloseTimer);
+  navDrag.on = true; navDrag.dx = 0; navDrag.t0 = performance.now();
+  drawer.classList.add('is-dragging');
+  drawer.style.transform = 'translateX(-100%)'; scrim.style.opacity = '0';
+  drawer.hidden = false; scrim.hidden = false;
+  navDrag.w = Math.max(1, drawer.offsetWidth);   // só dá para medir depois de exibido
+  return true;
+}
+
+function navDragMove(dx) {
+  if (!navDrag.on) return;
+  navDrag.dx = Math.max(0, Math.min(navDrag.w, dx));
+  if (!navDrag.frame) navDrag.frame = requestAnimationFrame(navDragApply);
+}
+
+function navDragEnd(cancelled) {
+  if (!navDrag.on) return;
+  if (navDrag.frame) { cancelAnimationFrame(navDrag.frame); navDrag.frame = 0; }
+  navDragApply();                    // posição final exata antes de decidir
+  const { drawer, scrim } = navDrawerEls();
+  const dx = navDrag.dx, fast = dx / Math.max(1, performance.now() - navDrag.t0) > 0.5;
+  navDrag.on = false;
+  if (!cancelled && (dx > navDrag.w * 0.3 || (fast && dx > 24))) { openNavDrawer(true); return; }
+  // Não passou do limiar: volta fechando com a mesma transição do fechamento normal.
+  drawer.classList.remove('is-dragging');
+  drawer.style.transform = ''; scrim.style.opacity = '';
+  const still = animationsOff() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const finish = () => { if (!navDrawerOpen && !navDrag.on) { drawer.hidden = true; scrim.hidden = true; } };
+  clearTimeout(navDrawerCloseTimer);
+  if (still) finish(); else navDrawerCloseTimer = setTimeout(finish, 300);
+}
+
+// Alça: área própria (data-no-tab-swipe), portanto o pager de abas nunca a vê. touch-action:none
+// vale só para ela, então rolagem e zoom do resto da página ficam com o navegador.
+function initNavHandle() {
+  const { handle } = navDrawerEls();
+  if (!handle || handle.dataset.navBound) return;
+  handle.dataset.navBound = '1';
+  let g = null;
+  handle.addEventListener('pointerdown', event => {
+    if (navDrawerOpen || g || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    g = { id: event.pointerId, x: event.clientX, y: event.clientY, active: false };
+    try { handle.setPointerCapture(event.pointerId); } catch (_) {}
+  });
+  handle.addEventListener('pointermove', event => {
+    if (!g || event.pointerId !== g.id) return;
+    const dx = event.clientX - g.x, dy = event.clientY - g.y;
+    if (!g.active) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      if (dx <= 0 || Math.abs(dy) > dx) { g = null; return; }       // só puxar para a direita
+      if (!navDragBegin()) { g = null; return; }
+      g.active = true;
+    }
+    navDragMove(dx);
+  });
+  const end = cancelled => event => {
+    if (!g || event.pointerId !== g.id) return;
+    const was = g; g = null;
+    if (was.active) { navDragEnd(cancelled); return; }
+    if (!cancelled && Math.abs(event.clientX - was.x) < 8 && Math.abs(event.clientY - was.y) < 8) openNavDrawer();   // toque
+  };
+  handle.addEventListener('pointerup', end(false));
+  handle.addEventListener('pointercancel', end(true));
+  // Teclado e leitor de tela ativam por clique sem ponteiro (detail 0); o toque já foi tratado acima.
+  handle.addEventListener('click', event => { if (event.detail === 0) openNavDrawer(); });
 }
 
 function initNavDrawer() {
@@ -534,4 +726,5 @@ function initNavDrawer() {
   drawer.addEventListener('pointerup', endDrag(false));
   drawer.addEventListener('pointercancel', endDrag(true));
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initNavDrawer); else initNavDrawer();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initNavDrawer(); initNavHandle(); });
+else { initNavDrawer(); initNavHandle(); }

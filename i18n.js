@@ -527,6 +527,7 @@ window.I18N_ROWS = [
     ['Ajuda e suporte', 'Help and support', 'Ayuda y soporte'],
     ['Fechar menu', 'Close menu', 'Cerrar menú'],
     ['Abrir menu', 'Open menu', 'Abrir menú'],
+    ['Mais', 'More', 'Más'],
     ['Editar perfil', 'Edit profile', 'Editar perfil'],
     ['Feito de aluno para aluno · UFRJ', 'Made by students, for students · UFRJ', 'Hecho por estudiantes, para estudiantes · UFRJ'],
     ['Seções do planejador', 'Planner sections', 'Secciones del planificador']

@@ -677,10 +677,25 @@ function initIOSStandaloneFix() {
   window.addEventListener('pageshow', kick);
   window.addEventListener('orientationchange', () => window.setTimeout(kick, 150));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') kick(); });
-  window.visualViewport?.addEventListener('resize', () => {
-    if (typeof isPageZoomed === 'function' && isPageZoomed()) return; // zoom por pinça não é mudança de layout
-    if (!document.documentElement.classList.contains('farma-typing')) kick();
-  });
+  // A pinça dispara visualViewport.resize a cada quadro (muda a escala, não o layout). Antes, os primeiros
+  // quadros (escala ≤ 1,02) passavam pelo filtro e cada um refazia o estilo das telas, forçava layout
+  // (offsetHeight) e deslocava a composição: o engasgo no início do zoom. Agora eventos em que a escala
+  // mudou são ignorados e os demais (teclado, barra de endereço) são agrupados em um quadro.
+  const vv = window.visualViewport;
+  if (vv) {
+    let lastScale = vv.scale, frame = 0;
+    vv.addEventListener('resize', () => {
+      const scaleChanged = Math.abs(vv.scale - lastScale) > 0.001;
+      lastScale = vv.scale;
+      if (scaleChanged || vv.scale > 1.02) return;
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (typeof isPageZoomed === 'function' && isPageZoomed()) return;
+        if (!document.documentElement.classList.contains('farma-typing')) kick();
+      });
+    }, { passive: true });
+  }
 }
 
 // =====================================================================
