@@ -546,6 +546,9 @@ function handleActionClick(event) {
     case 'note-open': window.Notas?.openFor(el.dataset.codigo); break;
     case 'check-update': checkForUpdate(); break;
     case 'copy-email': copyTextToClipboard(SUPPORT_EMAIL, T('E-mail'), event); break;
+    case 'drawer-open': openNavDrawer(); break;
+    case 'drawer-close': closeNavDrawer(true); break;
+    case 'drawer-go': navDrawerGo(el.dataset.value); break;
     default: break;
   }
 }

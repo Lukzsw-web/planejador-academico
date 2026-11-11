@@ -1558,9 +1558,10 @@
 
   // ---------- preferências: tamanho do conteúdo e tema ----------
   var TAMANHOS = [
-    { id: 'compacto', nome: 'Compacto', desc: 'Mais conteúdo por tela' },
-    { id: 'padrao', nome: 'Padrão', desc: 'Leitura equilibrada' },
-    { id: 'ampliado', nome: 'Ampliado', desc: 'Letras e espaços maiores' }
+    // Os ids ficam como estão (já gravados no aparelho de quem usa e usados no CSS); só os nomes mudam.
+    { id: 'compacto', nome: 'Pequeno' },
+    { id: 'padrao', nome: 'Padrão' },
+    { id: 'ampliado', nome: 'Grande' }
   ];
   // Temas disponíveis. Só entram aqui os que já estão prontos no CSS ([data-farma-theme="..."]).
   // Para criar o azul ou o vermelho: definir as variáveis --fm-* no CSS e acrescentar uma linha aqui;
@@ -1673,24 +1674,27 @@
     while (menu.firstChild) menu.removeChild(menu.firstChild);
     if (vista === 'raiz') {
       menu.setAttribute('aria-label', 'Opções da FarmacIA');
+      var cap = h('div', 'fm-menu-cap', 'Opções da FarmacIA'); cap.setAttribute('role', 'presentation'); menu.appendChild(cap);
       var tema = TEMAS.filter(function (t) { return t.id === prefs.tema; })[0] || TEMAS[0], sw = h('span', 'fm-row-sw'); sw.appendChild(h('i', 'fm-swatch')); sw.firstChild.style.background = tema.cor; sw.appendChild(doc.createTextNode(tema.nome));
-      menu.appendChild(linhaMenu('size', 'Tamanho do conteúdo', 'Letras e espaçamento', nomeDe(TAMANHOS, prefs.tamanho), function () { vista = 'tamanho'; desenharMenu(true); }));
-      menu.appendChild(linhaMenu('theme', 'Tema', TEMAS.length > 1 ? 'Cores da FarmacIA' : 'Mais cores em breve', sw, TEMAS.length > 1 ? function () { vista = 'tema'; desenharMenu(true); } : null));
+      menu.appendChild(linhaMenu('size', 'Tamanho da fonte', null, nomeDe(TAMANHOS, prefs.tamanho), function () { vista = 'tamanho'; desenharMenu(true); }));
+      menu.appendChild(linhaMenu('theme', 'Tema', null, sw, TEMAS.length > 1 ? function () { vista = 'tema'; desenharMenu(true); } : null));
       var ia = window.FarmaMod && FarmaMod.ia, iaPode = ia && ia.pode();
       var iaValor = !ia || (iaPode && iaPode.motivo === 'desabilitado') ? 'Indisponível' : ia.esgotada() ? 'Esgotada hoje' : ia.ativada() ? 'Ativada' : 'Desativada';
-      menu.appendChild(linhaMenu('spark', 'IA online', 'Só quando o material local não basta', iaValor, iaValor === 'Indisponível' ? null : function () { vista = 'ia'; desenharMenu(true); }));
-      menu.appendChild(linhaMenu('hist', 'Histórico', conversas.length ? conversas.length + (conversas.length === 1 ? ' conversa salva' : ' conversas salvas') : 'Conversas anteriores', 'Abrir', function () { fecharMenu(false); abrirHistorico(); }));
+      menu.appendChild(linhaMenu('spark', 'IA online', null, iaValor, iaValor === 'Indisponível' ? null : function () { vista = 'ia'; desenharMenu(true); }));
+      var sep = h('div', 'fm-sep'); sep.setAttribute('role', 'separator'); menu.appendChild(sep);
+      menu.appendChild(linhaMenu('hist', 'Histórico', null, conversas.length ? String(conversas.length) : '', function () { fecharMenu(false); abrirHistorico(); }));
     } else if (vista === 'ia') {
       desenharIA();
     } else {
       var lista = vista === 'tamanho' ? TAMANHOS : TEMAS, atualId = vista === 'tamanho' ? prefs.tamanho : prefs.tema;
-      menu.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho do conteúdo' : 'Tema');
+      menu.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema');
       var topo = h('div', 'fm-sub-head'), voltar = h('button', 'fm-back'); voltar.type = 'button'; voltar.setAttribute('aria-label', 'Voltar ao menu'); voltar.appendChild(ico('back'));
-      voltar.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); }); topo.appendChild(voltar); topo.appendChild(h('strong', null, vista === 'tamanho' ? 'Tamanho do conteúdo' : 'Tema')); menu.appendChild(topo);
-      var grupo = h('div', 'fm-opts'); grupo.setAttribute('role', 'radiogroup'); grupo.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho do conteúdo' : 'Tema');
+      voltar.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); }); topo.appendChild(voltar); topo.appendChild(h('strong', null, vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema')); menu.appendChild(topo);
+      var grupo = h('div', 'fm-opts'); grupo.setAttribute('role', 'radiogroup'); grupo.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema'); if (vista === 'tamanho') grupo.className += ' fm-opts-size';
       var previa = null;
       lista.forEach(function (o) {
         var b = h('button', 'fm-opt' + (o.id === atualId ? ' is-on' : '')); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(o.id === atualId)); b.tabIndex = o.id === atualId ? 0 : -1; b.setAttribute('data-id', o.id);
+        if (vista === 'tamanho') { var aa = h('span', 'fm-opt-aa', 'Aa'); aa.setAttribute('aria-hidden', 'true'); aa.setAttribute('data-sz', o.id); b.appendChild(aa); }
         b.appendChild(h('span', 'fm-opt-n', o.nome)); if (o.desc) b.appendChild(h('small', null, o.desc));
         b.addEventListener('click', function () {
           if (vista === 'tamanho') prefs.tamanho = o.id; else prefs.tema = o.id;

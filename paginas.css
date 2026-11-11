@@ -817,3 +817,12 @@ html.dark .agenda-fab { box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
 .jw-dismiss-x svg { width: 15px; height: 15px; }
 .jw-dismiss.is-hot .jw-dismiss-x { background: #e0564f; }
 .jwk-note .notas-foot { padding: .45rem 0 0; border-top: 0; }
+/* Marca-texto no modo escuro: o tom areia anterior ficava barrento sobre o fundo verde-escuro e o texto claro perdia contraste.
+   Agora é um âmbar mais vivo, porém translúcido (mesma técnica de duas passadas); contraste do texto sobre a marca >= 4,5:1. */
+html.dark .com-disc {
+  --hl: 240, 184, 60;
+  background-image:
+    linear-gradient(98deg, rgba(var(--hl), 0) 0, rgba(var(--hl), .40) .45em, rgba(var(--hl), .34) calc(100% - .9em), rgba(var(--hl), 0) 100%),
+    linear-gradient(102deg, rgba(var(--hl), 0) 0, rgba(var(--hl), .16) .6em, rgba(var(--hl), .12) calc(100% - .4em), rgba(var(--hl), 0) 100%);
+  color: #f7f3e6;
+}

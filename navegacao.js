@@ -204,8 +204,15 @@ function isBottomNavInteractiveTarget(target) {
 }
 
 const bottomSwipeActivePointers = new Set();
+
+// Página ampliada (pinça): o arrasto de um dedo pertence ao zoom, nunca ao pager de abas.
+// Sem isso o gesto virava "deslizar de aba", travava e voltava à posição original.
+function isPageZoomed() { const vv = window.visualViewport; return !!vv && vv.scale > 1.02; }
+function syncZoomState() { document.documentElement.classList.toggle('pa-zoomed', isPageZoomed()); }
+window.visualViewport?.addEventListener('resize', syncZoomState, { passive: true });
 function handleBottomSwipeStart(event) {
   if (event.pointerType === 'mouse' && event.button !== 0) return;
+  if (isPageZoomed()) return;
   if (isBottomNavInteractiveTarget(event.target) || event.target?.closest?.('#search-wrapper, #planner-search-wrapper, #search-suggestions')) return;
   if (bottomTabTransitionTimer !== null) {
     clearTimeout(bottomTabTransitionTimer);
@@ -228,6 +235,12 @@ function handleBottomSwipeStart(event) {
 
 function handleBottomSwipeMove(event) {
   if (!bottomSwipeTracking || event.pointerId !== bottomSwipePointerId) return;
+  if (isPageZoomed()) {
+    if (bottomSwipeLocked) finishBottomSwipe(bottomSwipeStartX, bottomSwipeStartY, true);
+    bottomSwipeTracking = false;
+    bottomSwipePointerId = null;
+    return;
+  }
   const dx = event.clientX - bottomSwipeStartX;
   const dy = event.clientY - bottomSwipeStartY;
 
@@ -389,3 +402,136 @@ function openBottomSettings() {
   if (activeBottomTabId === 'modal-settings' && settingsView !== 'hub') { closeSettingsView(); return; }
   activateBottomTab('modal-settings');
 }
+
+// =====================================================================
+// Seção: menu-lateral
+// =====================================================================
+// Menu lateral aberto pela foto de perfil (aba Planejador). Só reaproveita o que já existe:
+// as abas (activateBottomTab), as telas de Configurações (showSettingsView) e a foto/nome do perfil
+// (applyProfilePhoto / UserProfile). Não guarda nada no aparelho.
+const NAV_DRAWER_TARGETS = {
+  home: () => activateBottomTab('home-page'),
+  planner: () => activateBottomTab('modal-planner'),
+  farmacia: () => activateBottomTab('modal-farmacia'),
+  comunicados: () => activateBottomTab('modal-comunicados'),
+  settings: () => { activateBottomTab('modal-settings'); showSettingsView('hub'); },
+  appearance: () => { activateBottomTab('modal-settings'); showSettingsView('appearance'); },
+  support: () => { activateBottomTab('modal-settings'); showSettingsView('support'); },
+  profile: () => { activateBottomTab('modal-settings'); showSettingsView('profile'); }
+};
+const NAV_DRAWER_CURRENT = { 'home-page': 'home', 'modal-planner': 'planner', 'modal-farmacia': 'farmacia', 'modal-comunicados': 'comunicados' };
+let navDrawerOpen = false;
+let navDrawerCloseTimer = null;
+
+function navDrawerEls() {
+  return { drawer: document.getElementById('nav-drawer'), scrim: document.getElementById('nav-scrim'), opener: document.getElementById('nav-open') };
+}
+
+function updateNavDrawerUser() {
+  const nameEl = document.getElementById('nav-user-name');
+  if (!nameEl) return;
+  const name = window.UserProfile ? window.UserProfile.name() : '';
+  nameEl.textContent = name || T('Sem nome');
+  nameEl.classList.toggle('is-empty', !name);
+}
+
+function updateNavDrawerCurrent() {
+  const current = NAV_DRAWER_CURRENT[activeBottomTabId]
+    || (activeBottomTabId === 'modal-settings' && typeof settingsView !== 'undefined'
+      ? ({ appearance: 'appearance', support: 'support', profile: 'profile' }[settingsView] || 'settings') : '');
+  document.querySelectorAll('#nav-drawer .nav-item').forEach(btn => {
+    const on = btn.dataset.value === current;
+    btn.classList.toggle('is-current', on);
+    if (on) btn.setAttribute('aria-current', 'page'); else btn.removeAttribute('aria-current');
+  });
+}
+
+function openNavDrawer() {
+  const { drawer, scrim, opener } = navDrawerEls();
+  if (!drawer || !scrim || navDrawerOpen) return;
+  clearTimeout(navDrawerCloseTimer);
+  updateNavDrawerUser();
+  updateNavDrawerCurrent();
+  drawer.style.transform = ''; scrim.style.opacity = '';
+  drawer.hidden = false; scrim.hidden = false;
+  void drawer.offsetWidth;                       // força o ponto de partida antes da transição
+  drawer.classList.add('is-open'); scrim.classList.add('is-open');
+  document.documentElement.classList.add('nav-open');
+  if (opener) opener.setAttribute('aria-expanded', 'true');
+  navDrawerOpen = true;
+  (drawer.querySelector('.nav-item.is-current') || drawer.querySelector('.nav-close'))?.focus({ preventScroll: true });
+}
+
+function closeNavDrawer(returnFocus = true) {
+  const { drawer, scrim, opener } = navDrawerEls();
+  if (!drawer || !navDrawerOpen) return;
+  navDrawerOpen = false;
+  drawer.classList.remove('is-open'); scrim.classList.remove('is-open');
+  drawer.style.transform = ''; scrim.style.opacity = '';
+  document.documentElement.classList.remove('nav-open');
+  if (opener) { opener.setAttribute('aria-expanded', 'false'); if (returnFocus) opener.focus({ preventScroll: true }); }
+  const finish = () => { if (!navDrawerOpen) { drawer.hidden = true; scrim.hidden = true; } };
+  const still = animationsOff() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  clearTimeout(navDrawerCloseTimer);
+  if (still) finish(); else navDrawerCloseTimer = setTimeout(finish, 300);
+}
+
+function navDrawerGo(target) {
+  const go = NAV_DRAWER_TARGETS[target];
+  if (!go) return;
+  closeNavDrawer(false);                         // nunca fica aberto depois de navegar
+  go();
+}
+
+function initNavDrawer() {
+  const { drawer } = navDrawerEls();
+  if (!drawer || drawer.dataset.navBound) return;
+  drawer.dataset.navBound = '1';
+  window.addEventListener('planejador:profile', updateNavDrawerUser);
+  updateNavDrawerUser();
+
+  document.addEventListener('keydown', event => {
+    if (!navDrawerOpen) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeNavDrawer(true); return; }
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(drawer.querySelectorAll('button:not([disabled])'));
+    if (!focusable.length) return;
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    else if (!drawer.contains(document.activeElement)) { event.preventDefault(); first.focus(); }
+  });
+
+  // Deslizar para a esquerda fecha: o painel acompanha o dedo e, ao soltar, fecha ou volta.
+  let drag = null;
+  drawer.addEventListener('pointerdown', event => {
+    if (!navDrawerOpen || (event.pointerType === 'mouse')) return;
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, t: performance.now(), dx: 0, active: false };
+  });
+  drawer.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    if (!drag.active) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (dx < 0 && Math.abs(dx) > Math.abs(dy) * 1.2) { drag.active = true; try { drawer.setPointerCapture(event.pointerId); } catch (_) {} drawer.classList.add('is-dragging'); }
+      else { drag = null; return; }
+    }
+    drag.dx = Math.min(0, dx);
+    drawer.style.transform = `translateX(${drag.dx}px)`;
+    const scrim = document.getElementById('nav-scrim');
+    if (scrim) scrim.style.opacity = String(Math.max(0, 1 - Math.abs(drag.dx) / drawer.offsetWidth));
+  });
+  const endDrag = cancelled => event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.active) return;
+    drawer.classList.remove('is-dragging');
+    const fast = Math.abs(d.dx) / Math.max(1, performance.now() - d.t) > 0.5;
+    if (!cancelled && (Math.abs(d.dx) > drawer.offsetWidth * 0.3 || fast)) closeNavDrawer(true);
+    else { drawer.style.transform = ''; const s = document.getElementById('nav-scrim'); if (s) s.style.opacity = ''; }
+    // com o ponteiro capturado pelo painel, o clique final cai no próprio painel e não aciona nenhum item
+  };
+  drawer.addEventListener('pointerup', endDrag(false));
+  drawer.addEventListener('pointercancel', endDrag(true));
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initNavDrawer); else initNavDrawer();

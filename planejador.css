@@ -869,7 +869,7 @@ html.dark #modal-planner .planner-group { box-shadow: none !important; border: 1
 #modal-planner .planner-group-summary { display: flex; align-items: center; gap: .85rem; padding: .75rem .9rem .75rem .75rem !important; min-height: 70px; background: transparent !important; cursor: pointer; list-style: none; }
 #modal-planner .planner-group-summary::-webkit-details-marker { display: none; }
 .planner-group-ico { flex: 0 0 auto; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 15px; background: #c3e1b5; color: #215732; }
-.planner-group-ico svg { width: 27px; height: 27px; }
+.planner-group-ico svg { width: 27px; height: 27px; overflow: visible; }
 .planner-group-ico .pg-badge { fill: #c3e1b5; }
 html.dark .planner-group-ico { background: #c3e1b5; color: #215732; }
 #modal-planner .planner-group-title { flex: 1 1 auto; font-size: 1.15rem; font-weight: 800; letter-spacing: -.03em; color: var(--pq-ink) !important; }
@@ -883,3 +883,17 @@ html.dark #modal-planner .planner-group-count { color: #b4d8c8 !important; }
 #modal-planner .planner-summary-header > div { text-align: left !important; }
 #modal-planner .planner-page-subtitle { max-width: none; }
 #modal-planner .planner-group-content, #modal-planner .accordion-content { background: transparent !important; border: 0 !important; }
+
+/* =========================================================
+   "O que puxar?": cabeçalhos das sanfonas (Obrigatórias / Escolha Condicionada) mais enxutos.
+   O ícone, o título e o contador mantêm a mesma hierarquia, só em escala menor.
+   ========================================================= */
+#modal-planner .planner-group { margin-top: .6rem; border-radius: 18px !important; }
+#modal-planner .planner-group-summary { gap: .65rem; min-height: 54px; padding: .5rem .75rem .5rem .55rem !important; }
+.planner-group-ico { width: 36px; height: 36px; border-radius: 12px; }
+.planner-group-ico svg { width: 21px; height: 21px; }
+#modal-planner .planner-group-title { font-size: 1rem; letter-spacing: -.02em; }
+#modal-planner .planner-group-end { gap: .4rem; }
+#modal-planner .planner-group-count { min-width: 30px; height: 26px; padding: 0 .55rem; font-size: .85rem; }
+#modal-planner .planner-group-end svg { width: 18px; height: 18px; }
+#modal-planner .planner-group-content { padding: .1rem .65rem .65rem; }

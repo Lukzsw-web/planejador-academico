@@ -644,3 +644,25 @@ html.farma-typing #modal-farmacia .farma-messages { margin-top: 0; }
 .fm-ia-btn { justify-self: start; min-height: 44px; padding: .55rem 1rem; border-radius: 10px; border: 1.5px solid var(--fm-deep); background: var(--fm-deep); color: var(--fm-paper); font: inherit; font-weight: 800; font-size: .85rem; cursor: pointer; }
 .fm-ia-btn.is-off { background: transparent; color: var(--fm-deep); border-color: var(--fm-deep); }
 .fm-ia-btn:focus-visible { outline: 3px solid var(--fm-deep); outline-offset: 2px; }
+
+/* ---------- menu ⋯ (revisão): linhas limpas, ícone solto, valor à direita; separador só entre grupos ---------- */
+.fm-menu { width: min(19.5rem, calc(100vw - 2rem)); padding: .4rem; border-radius: 16px; box-shadow: 0 12px 30px rgba(18, 63, 42, .14); }
+html.dark .fm-menu { box-shadow: 0 14px 32px rgba(0, 0, 0, .4); }
+.fm-menu-cap { padding: .5rem .75rem .45rem; font-size: .78rem; font-weight: 600; letter-spacing: .01em; color: var(--fm-soft); }
+.fm-row { grid-template-columns: 22px minmax(0, 1fr) auto; gap: .85rem; min-height: 48px; padding: .45rem .75rem; border-radius: 11px; }
+.fm-row + .fm-row { box-shadow: none; }
+.fm-row-ico { width: 22px; height: 22px; border-radius: 0; background: transparent; color: var(--fm-ink); }
+.fm-row-ico .fm-ico svg { width: 22px; height: 22px; stroke-width: 1.9; }
+.fm-row-txt strong { font-size: .95rem; font-weight: 650; letter-spacing: -.005em; }
+.fm-row-val { gap: .15rem; font-size: .84rem; font-weight: 600; color: var(--fm-soft); }
+.fm-row-val .fm-ico svg { width: 16px; height: 16px; opacity: .8; }
+.fm-sep { height: 1px; margin: .35rem .75rem; background: var(--fm-line); }
+/* tamanho da fonte: três opções lado a lado, cada uma mostrando o "Aa" no tamanho que representa */
+.fm-opts-size { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; padding: .1rem .25rem; }
+.fm-opts-size .fm-opt { justify-items: center; grid-template-rows: 2rem auto; align-content: center; gap: .2rem; min-height: 76px; padding: .6rem .3rem .55rem; text-align: center; }
+.fm-opts-size .fm-opt.is-on { box-shadow: none; border-color: var(--fm-deep); background: var(--fm-chip); }
+.fm-opt-aa { align-self: end; font-family: var(--fm-serif, Georgia, serif); font-weight: 600; line-height: 1; color: var(--fm-soft); }
+.fm-opt-aa[data-sz="compacto"] { font-size: 1.05rem; }
+.fm-opt-aa[data-sz="padrao"] { font-size: 1.4rem; }
+.fm-opt-aa[data-sz="ampliado"] { font-size: 1.85rem; }
+.fm-opt.is-on .fm-opt-aa { color: var(--fm-deep); }

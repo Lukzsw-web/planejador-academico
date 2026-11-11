@@ -2542,3 +2542,110 @@ html.pa-zoomed .search-suggestions,
 html.pa-zoomed #search-suggestions {
   touch-action: pan-x pan-y pinch-zoom !important;
 }
+
+/* =========================================================
+   Menu lateral (aba Planejador → foto de perfil)
+   Cores: tokens --pa-*; fundo próximo de #f7f9f5 no claro.
+   ========================================================= */
+.nav-open {
+  position: absolute; z-index: 12; top: max(.85rem, env(safe-area-inset-top)); left: max(1rem, env(safe-area-inset-left));
+  width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.nav-open .profile-avatar {
+  display: block; width: 38px; height: 38px; margin: 0; border: 2px solid rgba(255, 255, 255, .55); background-color: rgba(255, 255, 255, .22);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.nav-open .profile-avatar svg { fill: rgba(255, 255, 255, .85); }
+.nav-open:hover .profile-avatar { border-color: rgba(255, 255, 255, .85); }
+.nav-open:active .profile-avatar { transform: scale(.94); }
+.nav-open:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+html.nav-open, html.nav-open body { overflow: hidden !important; }
+.nav-scrim {
+  position: fixed; inset: 0; z-index: 900; background: rgba(16, 27, 24, .4); opacity: 0; transition: opacity .22s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-scrim.is-open { opacity: 1; }
+.nav-scrim[hidden], .nav-drawer[hidden] { display: none; }
+.nav-drawer {
+  --nd-bg: #f7f9f5;
+  position: fixed; z-index: 901; top: 0; bottom: 0; left: 0; width: min(78vw, 21rem); display: flex; flex-direction: column;
+  padding: max(.9rem, env(safe-area-inset-top)) .75rem max(.9rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  background: var(--nd-bg); color: var(--pa-ink); border-right: 1px solid var(--pa-line);
+  transform: translateX(-102%); transition: transform .26s cubic-bezier(.22, .8, .3, 1);
+  overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch;
+}
+html.dark .nav-drawer { --nd-bg: #13211c; }
+.nav-drawer.is-open { transform: translateX(0); }
+.nav-drawer.is-dragging { transition: none; }
+.nav-top { display: flex; align-items: center; gap: .35rem; padding-bottom: .85rem; margin-bottom: .6rem; border-bottom: 1px solid var(--pa-line); }
+.nav-user {
+  flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: .7rem; padding: .35rem .4rem; border: 0; border-radius: 12px;
+  background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.nav-user:hover { background: var(--pa-surface-soft); }
+.nav-user-photo { flex: 0 0 auto; display: block; width: 46px; height: 46px; }
+.nav-user-photo .profile-avatar { display: block; width: 46px; height: 46px; margin: 0; border: 1px solid var(--pa-line); }
+.nav-user-text { flex: 1 1 auto; min-width: 0; display: grid; gap: .1rem; }
+.nav-user-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1rem; font-weight: 750; letter-spacing: -.01em; line-height: 1.2; }
+.nav-user-name.is-empty { color: var(--pa-muted); font-weight: 650; }
+.nav-user-sub { font-size: .78rem; color: var(--pa-muted); line-height: 1.2; }
+.nav-user-chev { flex: 0 0 auto; width: 16px; height: 16px; color: var(--pa-muted); transform: rotate(-90deg); }
+.nav-close {
+  flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent;
+  color: var(--pa-muted); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.nav-close svg { width: 18px; height: 18px; }
+.nav-close:hover { background: var(--pa-surface-soft); color: var(--pa-ink); }
+.nav-list { display: grid; gap: .15rem; }
+.nav-item {
+  display: flex; align-items: center; gap: .85rem; width: 100%; min-height: 46px; padding: .5rem .7rem; border: 0; border-radius: 12px;
+  background: transparent; color: var(--pa-ink); font: inherit; font-size: .97rem; font-weight: 600; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: background-color .15s ease;
+}
+.nav-item-ico { flex: 0 0 auto; width: 22px; height: 22px; display: grid; place-items: center; color: var(--pa-muted); }
+.nav-item-ico svg { width: 22px; height: 22px; display: block; }
+.nav-item:hover { background: var(--pa-surface-soft); }
+.nav-item:active { background: var(--pa-primary-soft); }
+.nav-item.is-current { background: var(--pa-primary-soft); color: var(--pa-primary); font-weight: 750; }
+.nav-item.is-current .nav-item-ico { color: var(--pa-primary); }
+.nav-group { margin: 1.1rem .7rem .35rem; padding-top: 1rem; border-top: 1px solid var(--pa-line); font-size: .72rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; color: var(--pa-muted); }
+.nav-foot { margin-top: auto; padding: 1rem .7rem 0; display: grid; gap: .1rem; font-size: .76rem; line-height: 1.35; color: var(--pa-muted); }
+.nav-foot strong { font-size: .82rem; font-weight: 750; color: var(--pa-ink); }
+.nav-item:focus-visible, .nav-user:focus-visible, .nav-close:focus-visible { outline: 2px solid var(--pa-primary); outline-offset: 1px; }
+@media (min-width: 768px) { .nav-drawer { width: 20rem; } }
+@media (prefers-reduced-motion: reduce) { .nav-drawer, .nav-scrim { transition: none; } }
+html.no-anim .nav-drawer, html.no-anim .nav-scrim { transition: none; }
+
+/* Título da aba Planejador: dá respiro para a foto do menu lateral. */
+#home-page > header h1 { margin-top: 3.4rem; }
+
+/* =========================================================
+   Sanfonas de matérias (aba Planejador): cartões mais compactos.
+   Antes: ícone sozinho numa linha, "Pré-req." em outra, margem dupla entre cartões e rodapé alto.
+   ========================================================= */
+#accordions-container details > summary { min-height: 52px !important; padding-block: .65rem !important; }
+#accordions-container details .accordion-content { display: flex; flex-direction: column; gap: .5rem; padding: .6rem .7rem .7rem !important; }
+#accordions-container details .accordion-content > * { margin: 0 !important; }
+#accordions-container .accordion-content > .flex.gap-2.mb-3 > button { padding: .4rem .7rem !important; font-size: .78rem !important; }
+#accordions-container .accordion-content > .subject-card { margin-bottom: 0 !important; padding: .6rem .75rem !important; border-radius: 12px !important; }
+/* nome ao lado do cadeado (o ícone não vai mais para uma linha própria quando o nome é longo) */
+#accordions-container .subject-card .flex-1 > div:first-child { flex-wrap: nowrap; align-items: flex-start; gap: .45rem; }
+#accordions-container .subject-card .subject-status-icon { flex: 0 0 auto; margin-top: -.02rem; }
+#accordions-container .subject-card .subject-name { flex: 1 1 auto; min-width: 0; }
+#accordions-container .subject-card .coreq-button { flex: 0 0 auto; }
+/* linha de código, créditos e horas */
+#accordions-container .subject-card .flex-1 > div:nth-child(2) { margin-top: .1rem; gap: .1rem .5rem; }
+#accordions-container .subject-card button.copy-code-button,
+#accordions-container .subject-card button.card-info-button { width: 24px !important; height: 24px !important; }
+#accordions-container .subject-card button.copy-code-button svg,
+#accordions-container .subject-card button.card-info-button svg { width: 14px !important; height: 14px !important; flex-basis: 14px; }
+#accordions-container .subject-card .unlock-chip { padding: .08rem .5rem; font-size: .68rem; line-height: 1.35; }
+#accordions-container .subject-card .items-center.h-full { padding-top: 0; }
+/* Sem as barras verticais entre código, créditos e horas: o espaço vai para o "Pré-req." caber na mesma linha. */
+#accordions-container .subject-card .flex-1 > div:nth-child(2) > .text-gray-300 { display: none; }
+#accordions-container .subject-card .flex-1 > div:nth-child(2) { gap: .1rem .6rem; }
+#accordions-container .subject-card .unlock-chip { margin-left: auto; }
+.nav-user-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 340px) { .nav-user-chev { display: none; } }

@@ -520,7 +520,16 @@ window.I18N_ROWS = [
     ['Ajuste os períodos no ícone de filtro para ver mais.', 'Adjust the terms with the filter icon to see more.', 'Ajusta los períodos con el icono de filtro para ver más.'],
     ['Nenhuma obrigatória disponível agora.', 'No required course available right now.', 'Ninguna obligatoria disponible ahora.'],
     ['1 disciplina na lista', '1 course in the list', '1 asignatura en la lista'],
-    ['{n} disciplinas na lista', '{n} courses in the list', '{n} asignaturas en la lista']
+    ['{n} disciplinas na lista', '{n} courses in the list', '{n} asignaturas en la lista'],
+    // ---- Menu lateral ----
+    ['Início', 'Home', 'Inicio'],
+    ['Preferências', 'Preferences', 'Preferencias'],
+    ['Ajuda e suporte', 'Help and support', 'Ayuda y soporte'],
+    ['Fechar menu', 'Close menu', 'Cerrar menú'],
+    ['Abrir menu', 'Open menu', 'Abrir menú'],
+    ['Editar perfil', 'Edit profile', 'Editar perfil'],
+    ['Feito de aluno para aluno · UFRJ', 'Made by students, for students · UFRJ', 'Hecho por estudiantes, para estudiantes · UFRJ'],
+    ['Seções do planejador', 'Planner sections', 'Secciones del planificador']
 ];
 
 // =====================================================================
