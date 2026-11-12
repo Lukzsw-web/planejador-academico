@@ -617,6 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
   dockPrefs = loadDockPrefs();
   applyDockPrefs();
   loadUserProfile();
+  updateNavDrawerUser();   // initNavDrawer rodou antes de loadUserProfile: sem isto o nome ficava oculto até o próximo evento
   initSettings();
   initDockSettings();
   initProfileSettings();

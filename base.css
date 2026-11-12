@@ -2581,7 +2581,7 @@ html.pa-zoomed #search-suggestions {
     position: absolute; top: max(.8rem, env(safe-area-inset-top)); left: max(1.25rem, calc((100vw - 1120px) / 2), env(safe-area-inset-left));
     align-self: auto; margin: 0; max-width: none;
   }
-  .nav-open-name { max-width: clamp(0px, calc(50vw - 17rem), 14rem); }
+  .nav-open-name { max-width: clamp(5rem, calc(50vw - 17rem), 14rem); }
 }
 
 html.nav-open, html.nav-open body { overflow: hidden !important; }
@@ -2696,3 +2696,11 @@ html.no-anim .nav-handle-grip { animation: none; }
 #accordions-container .subject-card .unlock-chip { margin-left: auto; }
 .nav-user-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 340px) { .nav-user-chev { display: none; } }
+
+/* Zoom: overlays de modal fechados (opacity 0) não precisam de desfoque de fundo; cada um mantinha uma camada
+   com backdrop-filter que era recomposta a cada quadro da pinça. Visualmente idêntico (estão invisíveis). */
+.modal-overlay:not(.active) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Alça lateral: na aba inicial o menu já abre pela foto do cabeçalho e pelo arrasto; a pílula verde fixa
+   ficava sobre a borda do cartão de progresso como uma faixa lateral. Continua nas demais abas. */
+#home-page.bottom-tab-current ~ #nav-handle { opacity: 0; pointer-events: none; }

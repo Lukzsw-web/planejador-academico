@@ -1872,6 +1872,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var page = $('modal-farmacia');
     if (!vv || !page) return;
     var adjust = function () {
+      if (!document.documentElement.classList.contains('farma-typing') && !page.style.height) return;  // pinça/rolagem: nada a ajustar
       if (document.documentElement.classList.contains('farma-typing')) {
         page.style.setProperty('height', vv.height + 'px', 'important');
         page.style.setProperty('top', vv.offsetTop + 'px', 'important');

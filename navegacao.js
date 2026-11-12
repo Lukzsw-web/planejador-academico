@@ -248,9 +248,20 @@ const bottomSwipeActivePointers = new Set();
 // Sem isso o gesto virava "deslizar de aba", travava e voltava à posição original.
 function isPageZoomed() { const vv = window.visualViewport; return !!vv && vv.scale > 1.02; }
 let lastLayoutWidth = getViewportWidth();
+let zoomSyncFrame = 0;
 function syncZoomState() {
-  const zoomed = isPageZoomed();
-  document.documentElement.classList.toggle('pa-zoomed', zoomed);
+  // Um evento por quadro; a classe só muda ao cruzar o limiar (com histerese), pois cada troca
+  // recalcula o estilo de todos os elementos (touch-action universal em .pa-zoomed).
+  if (zoomSyncFrame) return;
+  zoomSyncFrame = requestAnimationFrame(applyZoomState);
+}
+function applyZoomState() {
+  zoomSyncFrame = 0;
+  const root = document.documentElement;
+  const scale = window.visualViewport ? window.visualViewport.scale : 1;
+  const was = root.classList.contains('pa-zoomed');
+  const zoomed = was ? scale > 1.005 : scale > 1.02;
+  if (zoomed !== was) root.classList.toggle('pa-zoomed', zoomed);
   // Se a largura do layout mudou enquanto ampliada (ex.: girou o aparelho), refaz o trilho ao sair do zoom.
   if (!zoomed && getViewportWidth() !== lastLayoutWidth) scheduleTabsRelayout();
 }
