@@ -666,3 +666,12 @@ html.dark .fm-menu { box-shadow: 0 14px 32px rgba(0, 0, 0, .4); }
 .fm-opt-aa[data-sz="padrao"] { font-size: 1.4rem; }
 .fm-opt-aa[data-sz="ampliado"] { font-size: 1.85rem; }
 .fm-opt.is-on .fm-opt-aa { color: var(--fm-deep); }
+
+/* ===== Revisão 0.5.1 — escala dos textos da FarmacIA ===== */
+html #modal-farmacia .farma-header .farma-title { font-size: 1.3rem !important; }
+#modal-farmacia .farma-subtitle { font-size: .78rem; }
+#modal-farmacia .farma-bubble { font-size: .86rem; }
+#modal-farmacia .farma-bubble p { font-size: inherit; }
+#modal-farmacia .farma-card strong { font-size: .82rem; }
+#modal-farmacia .farma-card small { font-size: .7rem; }
+#modal-farmacia .farma-chip, #modal-farmacia .farma-act { font-size: .74rem; }

@@ -910,3 +910,22 @@ html.dark #modal-planner .planner-group-count { color: #b4d8c8 !important; }
 html.dark #modal-planner .planner-group-count { background: #24352c !important; color: #b4d8c8 !important; }
 #modal-planner .planner-group-end svg { transition: transform .26s cubic-bezier(.22, .8, .3, 1); }
 #modal-planner .planner-group-content { padding: .1rem .85rem .55rem; }
+
+/* ===== Revisão 0.5.1 — escala dos textos e das sanfonas de "O que puxar?" ===== */
+html #modal-planner .planner-page-title { font-size: 1.3rem !important; }
+html #modal-planner .planner-page-subtitle { font-size: .8rem !important; }
+html #modal-planner .planner-summary-kicker { font-size: .74rem !important; }
+html #modal-planner .planner-period-label { font-size: 1.1rem !important; }
+html #modal-planner .planner-summary-stat strong { font-size: 1.7rem !important; }
+html #modal-planner .planner-limit-warning { font-size: .76rem !important; }
+html #modal-planner .planner-search-results { font-size: .84rem !important; }
+html #modal-planner .planner-search-input, html #modal-planner .planner-search-shell input { font-size: max(16px, .95rem) !important; }
+html #modal-planner h3 { font-size: 1.05rem !important; }
+html #modal-planner .planner-subject-name { font-size: .82rem !important; }
+/* Sanfonas Obrigatórias / Condicionadas: mais baixas e com títulos menores. */
+html #modal-planner details.planner-group > .planner-group-summary { min-height: 52px !important; padding: .4rem .75rem .4rem .6rem !important; gap: .6rem; }
+html #modal-planner .planner-group-ico { width: 32px; height: 32px; }
+html #modal-planner .planner-group-ico svg { width: 19px; height: 19px; }
+html #modal-planner .planner-group-title { font-size: .92rem !important; }
+html #modal-planner .planner-group-count { font-size: .72rem; }
+html #modal-planner .planner-group { margin-top: .5rem; }

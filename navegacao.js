@@ -216,6 +216,7 @@ function finishBottomSwipe(clientX, clientY, cancelled = false) {
       true
     );
     setBottomNavActive(bottomTabNavIds[targetId]);
+    if (targetId === 'modal-settings' && activeBottomTabId !== targetId) showSettingsView('hub');   // deslizar até Configurações também começa na lista
     activeBottomTabId = targetId;
     document.body.style.overflow = targetId === 'home-page' ? '' : 'hidden';
 
@@ -434,6 +435,7 @@ function activateBottomTab(id, instant = false) {
   dismissRegularModalsForBottomNavigation();
   const currentId = activeBottomTabId;
   if (currentId === id) return;
+  if (id === 'modal-settings') showSettingsView('hub');   // entrar em Configurações começa sempre na lista (o menu lateral troca a subpágina logo depois)
 
   const currentIndex = getBottomTabIndex(currentId);
   const targetIndex = getBottomTabIndex(id);
@@ -647,7 +649,7 @@ function updateNavDrawerCurrent() {
   const current = (document.getElementById('modal-agenda')?.classList.contains('active') ? 'agenda' : '')
     || NAV_DRAWER_CURRENT[activeBottomTabId]
     || (activeBottomTabId === 'modal-settings' && typeof settingsView !== 'undefined'
-      ? ({ appearance: 'appearance', access: 'access', profile: 'profile', contacts: 'contacts' }[settingsView] || '') : '');
+      ? ({ appearance: 'appearance', access: 'access', profile: 'profile', contacts: 'contacts' }[settingsView] || 'settings') : '');
   document.querySelectorAll('#nav-drawer .nav-item').forEach(btn => {
     const on = btn.dataset.value === current;
     btn.classList.toggle('is-current', on);
