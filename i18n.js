@@ -530,7 +530,12 @@ window.I18N_ROWS = [
     ['Mais', 'More', 'Más'],
     ['Editar perfil', 'Edit profile', 'Editar perfil'],
     ['Feito de aluno para aluno · UFRJ', 'Made by students, for students · UFRJ', 'Hecho por estudiantes, para estudiantes · UFRJ'],
-    ['Seções do planejador', 'Planner sections', 'Secciones del planificador']
+    ['Seções do planejador', 'Planner sections', 'Secciones del planificador'],
+    ['Perfil', 'Profile', 'Perfil'],
+    ['Agenda', 'Agenda', 'Agenda'],
+    ['Acessibilidade', 'Accessibility', 'Accesibilidad'],
+    ['Abrir perfil', 'Open profile', 'Abrir perfil'],
+    ['Tema do site: {modo}. Tocar para trocar', 'Site theme: {modo}. Tap to change', 'Tema del sitio: {modo}. Toca para cambiar']
 ];
 
 // =====================================================================

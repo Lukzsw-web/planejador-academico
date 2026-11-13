@@ -549,6 +549,8 @@ function handleActionClick(event) {
     case 'drawer-open': openNavDrawer(); break;
     case 'drawer-close': closeNavDrawer(true); break;
     case 'drawer-go': navDrawerGo(el.dataset.value); break;
+    case 'drawer-tag': toggleNavTagBubble(); break;
+    case 'drawer-theme': navThemeCycle(); break;
     default: break;
   }
 }

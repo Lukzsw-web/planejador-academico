@@ -1,3 +1,6 @@
+/* app.js — Base do app: constantes/versão e utilidades gerais.
+ * Cada seção abaixo era um arquivo próprio; a ordem das seções importa (scripts clássicos compartilham globais). */
+
 // =====================================================================
 // Seção: app
 // =====================================================================
@@ -10,8 +13,8 @@ const STORAGE_KEYS = {
   onboarded: 'planejador_onboarded_v1'
 };
 const PERIODO_COND = 'Escolha Condicionada';
-// ÚNICA fonte da versão do site.
-const APP_VERSION = '0.5.0';
+// ÚNICA fonte da versão do site: index.html, sw.js e o botão "Verificar atualização" leem daqui.
+const APP_VERSION = '0.5.1';
 const T = (key, params) => (window.I18N ? window.I18N.t(key, params) : String(key).replace(/\{(\w+)\}/g, (m, k) => (params && k in params ? params[k] : m)));
 const META_COND_CRED = 12;
 const META_COND_HORAS = 180;
@@ -39,6 +42,7 @@ const normalizeStr = (s = '') =>
     .replace(/\s+/g, '')
     .toLowerCase();
 
+// Igual à anterior, mas preserva (um único) espaço entre as palavras.
 // A busca precisa das palavras separadas para comparar termo a termo e montar siglas.
 const normalizeKeepSpaces = (s = '') =>
   String(s)
@@ -92,7 +96,8 @@ function extractCodes(str) {
   return str ? (str.match(/[A-Z]{3}[A-Z0-9]{3}|MACF/g) || []) : [];
 }
 
-// Índices internos de desempenho. Apenas evitam buscas repetidas por toda a lista de disciplinas.
+// Índices internos de desempenho. Não alteram nem duplicam a fonte de dados;
+// apenas evitam buscas repetidas por toda a lista de disciplinas.
 const disciplinasPorCodigo = new Map();
 const preRequisitosPorCodigo = new Map();
 const corequisitosPorCodigo = new Map();
@@ -145,7 +150,8 @@ function hoursOf(mat) {
   return mat.ch || creditsOf(mat) * 15;
 }
 
-// Totais do curso.
+// Totais do curso (usam as funções acima, por isso ficam aqui e não no app.js).
+// Usado só na estimativa de conclusão mostrada nos ajustes (não é regra do curso).
 
 const TOTAL_OBRIG_CRED = (typeof disciplinas !== 'undefined' ? disciplinas : [])
   .filter(d => !periodIsCond(d.periodo))

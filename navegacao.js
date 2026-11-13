@@ -520,6 +520,8 @@ const NAV_DRAWER_TARGETS = {
   comunicados: () => activateBottomTab('modal-comunicados'),
   contacts: () => openContactsPage(),            // mesma rota da página existente; nada duplicado
   settings: () => { activateBottomTab('modal-settings'); showSettingsView('hub'); },
+  agenda: () => { if (window.Notas && window.Notas.open) window.Notas.open(); },   // mesma agenda do botão de anotações; nada duplicado
+  access: () => { activateBottomTab('modal-settings'); showSettingsView('access'); },
   appearance: () => { activateBottomTab('modal-settings'); showSettingsView('appearance'); },
   support: () => { activateBottomTab('modal-settings'); showSettingsView('support'); },
   profile: () => { activateBottomTab('modal-settings'); showSettingsView('profile'); }
@@ -532,11 +534,102 @@ function navDrawerEls() {
   return { drawer: document.getElementById('nav-drawer'), scrim: document.getElementById('nav-scrim'), opener: document.getElementById('nav-open'), handle: document.getElementById('nav-handle') };
 }
 
+// ---- Tag de período (só existe quando a pessoa informa o período no perfil) ----------------------
+// Calouro 1º · Calouro plus 2º · Calouro premium 3º · Veterano mirim 4º · Veterano do 5º em diante.
+// A concordância segue o pronome do perfil (mesma regra do restante do site: sem pronome, forma neutra).
+const NAV_TAG_TIERS = [
+  { label: ['Calouro', 'Caloura', 'Caloure'],
+    msg: ['Calourinho desse ta se achando muito em', 'Calourinha dessa ta se achando muito em', 'Calourinhe desse ta se achando muito em'] },
+  { label: ['Calouro plus', 'Caloura plus', 'Caloure plus'],
+    msg: ['Ta quase! Mas ainda é calourinho viu', 'Ta quase! Mas ainda é calourinha viu', 'Ta quase! Mas ainda é calourinhe viu'] },
+  { label: ['Calouro premium', 'Caloura premium', 'Caloure premium'],
+    msg: ['Ta quase virando da casa', 'Ta quase virando da casa', 'Ta quase virando da casa'] },
+  { label: ['Veterano mirim', 'Veterana mirim', 'Veterane mirim'],
+    msg: ['FOFO JA EH DE CASA', 'FOFA JA EH DE CASA', 'FOFE JA EH DE CASA'] },
+  { label: ['Veterano', 'Veterana', 'Veterane'],
+    msg: ['burro véi desse ta fazendo ugue ainda?', 'burra véia dessa ta fazendo ugue ainda?', 'burre véi desse ta fazendo ugue ainda?'] }
+];
+function navTagInfo() {
+  const p = window.UserProfile ? Number(window.UserProfile.period()) : 0;
+  if (!Number.isInteger(p) || p < 1) return null;
+  const tier = Math.min(p, 5);
+  const g = window.UserProfile.pronoun() === 'm' ? 0 : window.UserProfile.pronoun() === 'f' ? 1 : 2;
+  const t = NAV_TAG_TIERS[tier - 1];
+  return { tier, label: t.label[g], msg: t.msg[g] };
+}
+
+let navTagTimer = null;
+function hideNavTagBubble() {
+  clearTimeout(navTagTimer);
+  const bubble = document.getElementById('nav-tag-bubble');
+  const tag = document.getElementById('nav-tag');
+  if (bubble) { bubble.hidden = true; bubble.classList.remove('is-in'); }
+  if (tag) tag.setAttribute('aria-expanded', 'false');
+}
+// Balãozinho de brincadeira em cima da tag: aparece ao tocar, some sozinho (ou ao tocar de novo / em outro lugar).
+function toggleNavTagBubble() {
+  const info = navTagInfo();
+  const bubble = document.getElementById('nav-tag-bubble');
+  const tag = document.getElementById('nav-tag');
+  if (!info || !bubble || !tag) return;
+  if (!bubble.hidden) { hideNavTagBubble(); return; }
+  bubble.textContent = info.msg;
+  bubble.hidden = false;
+  void bubble.offsetWidth;
+  bubble.classList.add('is-in');
+  tag.setAttribute('aria-expanded', 'true');
+  clearTimeout(navTagTimer);
+  navTagTimer = setTimeout(hideNavTagBubble, 3800);
+}
+
+// ---- Botão de tema (canto inferior esquerdo): escuro → claro → automático → escuro ---------------
+const NAV_THEME_NEXT = { dark: 'light', light: 'auto', auto: 'dark' };
+const NAV_THEME_TEXT = { dark: 'Escuro', light: 'Claro', auto: 'Automático' };
+function navThemeMode() { return typeof getThemePref === 'function' ? getThemePref() : 'auto'; }
+function paintNavTheme(mode, animate) {
+  const btn = document.getElementById('nav-theme');
+  if (!btn) return;
+  btn.dataset.mode = mode;
+  const lab = document.getElementById('nav-theme-label');
+  if (lab) lab.textContent = T(NAV_THEME_TEXT[mode]);
+  btn.setAttribute('aria-label', T('Tema do site: {modo}. Tocar para trocar', { modo: T(NAV_THEME_TEXT[mode]).toLowerCase() }));
+  if (animate) { btn.classList.remove('is-flip'); void btn.offsetWidth; btn.classList.add('is-flip'); }
+}
+function navThemeCycle() {
+  const next = NAV_THEME_NEXT[navThemeMode()] || 'dark';
+  setThemePref(next);
+  // setTheme() desliga transições por 2 quadros (html.theme-switching); a animação do ícone espera isso acabar.
+  let tries = 0;
+  const go = () => {
+    if (document.documentElement.classList.contains('theme-switching') && tries++ < 12) { requestAnimationFrame(go); return; }
+    paintNavTheme(next, true);
+  };
+  requestAnimationFrame(go);
+}
+
 function updateNavDrawerUser() {
   const name = window.UserProfile ? window.UserProfile.name() : '';
   // Identificação compacta do cabeçalho: sem nome, fica só avatar + seta.
   const headName = document.getElementById('nav-open-name');
   if (headName) { headName.textContent = name; headName.hidden = !name; }
+  const tag = document.getElementById('nav-tag');
+  if (tag) {
+    const info = navTagInfo();
+    tag.hidden = !info;
+    if (info) { document.getElementById('nav-tag-text').textContent = info.label; tag.dataset.tier = String(info.tier); }
+    else hideNavTagBubble();
+  }
+  const shiftEl = document.getElementById('nav-shift');
+  if (shiftEl) {
+    const shift = window.UserProfile ? window.UserProfile.shift() : '';
+    shiftEl.textContent = '';
+    shiftEl.hidden = !shift;
+    if (shift) {
+      const strong = document.createElement('strong');
+      strong.textContent = shift === 'noturno' ? 'noturno' : 'Integral';
+      shiftEl.append('Cria do ', strong);
+    }
+  }
   const nameEl = document.getElementById('nav-user-name');
   if (!nameEl) return;
   nameEl.textContent = name || T('Sem nome');
@@ -544,9 +637,10 @@ function updateNavDrawerUser() {
 }
 
 function updateNavDrawerCurrent() {
-  const current = NAV_DRAWER_CURRENT[activeBottomTabId]
+  const current = (document.getElementById('modal-agenda')?.classList.contains('active') ? 'agenda' : '')
+    || NAV_DRAWER_CURRENT[activeBottomTabId]
     || (activeBottomTabId === 'modal-settings' && typeof settingsView !== 'undefined'
-      ? ({ appearance: 'appearance', support: 'support', profile: 'profile', contacts: 'contacts' }[settingsView] || 'settings') : '');
+      ? ({ appearance: 'appearance', access: 'access', profile: 'profile', contacts: 'contacts' }[settingsView] || '') : '');
   document.querySelectorAll('#nav-drawer .nav-item').forEach(btn => {
     const on = btn.dataset.value === current;
     btn.classList.toggle('is-current', on);
@@ -562,6 +656,7 @@ function openNavDrawer(fromDrag = false) {
   clearTimeout(navDrawerCloseTimer);
   updateNavDrawerUser();
   updateNavDrawerCurrent();
+  paintNavTheme(navThemeMode(), false);
   if (fromDrag) {
     drawer.classList.remove('is-dragging');
     drawer.style.transform = ''; scrim.style.opacity = '';
@@ -582,6 +677,7 @@ function closeNavDrawer(returnFocus = true) {
   const { drawer, scrim, opener, handle } = navDrawerEls();
   if (!drawer || !navDrawerOpen) return;
   navDrawerOpen = false;
+  hideNavTagBubble();
   drawer.classList.remove('is-open'); scrim.classList.remove('is-open');
   drawer.style.transform = ''; scrim.style.opacity = '';
   document.documentElement.classList.remove('nav-open');
@@ -692,6 +788,8 @@ function initNavDrawer() {
   drawer.dataset.navBound = '1';
   window.addEventListener('planejador:profile', updateNavDrawerUser);
   updateNavDrawerUser();
+  // Tocar fora da tag fecha o balãozinho.
+  drawer.addEventListener('pointerdown', event => { if (!event.target.closest('#nav-tag')) hideNavTagBubble(); });
 
   document.addEventListener('keydown', event => {
     if (!navDrawerOpen) return;
