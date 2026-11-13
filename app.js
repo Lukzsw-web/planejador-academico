@@ -1,6 +1,3 @@
-/* app.js — Base do app: constantes/versão e utilidades gerais.
- * Cada seção abaixo era um arquivo próprio; a ordem das seções importa (scripts clássicos compartilham globais). */
-
 // =====================================================================
 // Seção: app
 // =====================================================================
@@ -13,8 +10,7 @@ const STORAGE_KEYS = {
   onboarded: 'planejador_onboarded_v1'
 };
 const PERIODO_COND = 'Escolha Condicionada';
-// ÚNICA fonte da versão do site: index.html, sw.js e o botão "Verificar atualização" leem daqui.
-const APP_VERSION = '0.5.1';
+const APP_VERSION = '0.5.0';
 const T = (key, params) => (window.I18N ? window.I18N.t(key, params) : String(key).replace(/\{(\w+)\}/g, (m, k) => (params && k in params ? params[k] : m)));
 const META_COND_CRED = 12;
 const META_COND_HORAS = 180;
