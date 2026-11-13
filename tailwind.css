@@ -1,6 +1,6 @@
 /*! tailwindcss v4.1.10 | MIT License | https://tailwindcss.com */
 :root, :host {
-    --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+    --font-sans: Chirp, "Chirp Regular", Inter, ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --color-red-50: oklch(97.1% 0.013 17.38);
@@ -609,13 +609,13 @@ button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-se
     border-radius: 0.25rem;
   }
 .rounded-2xl {
-    border-radius: var(--radius-2xl);
+    border-radius: 0.75rem;
   }
 .rounded-\[2rem\] {
-    border-radius: 2rem;
+    border-radius: 0.75rem;
   }
 .rounded-full {
-    border-radius: calc(infinity * 1px);
+    border-radius: 0.625rem;
   }
 .rounded-lg {
     border-radius: var(--radius-lg);
@@ -627,12 +627,12 @@ button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-se
     border-radius: var(--radius-xl);
   }
 .rounded-t-2xl {
-    border-top-left-radius: var(--radius-2xl);
-    border-top-right-radius: var(--radius-2xl);
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
   }
 .rounded-b-\[2\.5rem\] {
-    border-bottom-right-radius: 2.5rem;
-    border-bottom-left-radius: 2.5rem;
+    border-bottom-right-radius: 0.75rem;
+    border-bottom-left-radius: 0.75rem;
   }
 .border {
     border-style: var(--tw-border-style);

@@ -201,15 +201,14 @@ function initSettings() {
 const DOCK_KEY = 'planejador_dock_v1';
 const DOCK_DEFAULT_ORDER = ['home-page', 'modal-planner', 'modal-farmacia', 'modal-comunicados', 'modal-settings'];
 const DOCK_LIMITS = { radius: [8, 36], size: [85, 120], lift: [0, 40] };
-const DOCK_RADIUS_DEFAULT = 28;
+const DOCK_RADIUS_DEFAULT = 12;
 const DOCK_GRIP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
 const DOCK_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>';
 const DOCK_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 let dockPrefs = {};
 
 function dockDefaultLift() {
-  const mobile = window.matchMedia ? window.matchMedia('(max-width: 640px)').matches : true;
-  return mobile ? 20 : 0;
+  return 0;   // a barra nasce rente à borda (0,0 cm); quem quiser sobe pelo controle de Altura
 }
 function dockClamp(key, value) {
   const [min, max] = DOCK_LIMITS[key];

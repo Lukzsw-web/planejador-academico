@@ -547,7 +547,7 @@ function handleActionClick(event) {
     case 'check-update': checkForUpdate(); break;
     case 'copy-email': copyTextToClipboard(SUPPORT_EMAIL, T('E-mail'), event); break;
     case 'drawer-open': openNavDrawer(); break;
-    case 'drawer-close': closeNavDrawer(true); break;
+    case 'drawer-close': if (el.id === 'nav-scrim' && performance.now() - navOpenedAt < 400) break; closeNavDrawer(true); break;   // ignora o clique sintético do toque que abriu o menu
     case 'drawer-go': navDrawerGo(el.dataset.value); break;
     case 'drawer-tag': toggleNavTagBubble(); break;
     case 'drawer-theme': navThemeCycle(); break;

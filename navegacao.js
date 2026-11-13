@@ -497,8 +497,8 @@ function openBottomComunicados() {
   activateBottomTab('modal-comunicados');
 }
 // Contatos importantes: página dentro de Configurações (acima de Atualizações).
-function openContactsPage() {
-  activateBottomTab('modal-settings');
+function openContactsPage(instant) {
+  activateBottomTab('modal-settings', instant === true);
   showSettingsView('contacts');
 }
 function openBottomContacts() { openContactsPage(); }
@@ -513,21 +513,24 @@ function openBottomSettings() {
 // Menu lateral aberto pela foto de perfil (aba Planejador). Só reaproveita o que já existe:
 // as abas (activateBottomTab), as telas de Configurações (showSettingsView) e a foto/nome do perfil
 // (applyProfilePhoto / UserProfile). Não guarda nada no aparelho.
+// Pelo menu lateral a troca é imediata (sem o trilho "correndo" entre as abas): a tela nova já está
+// no lugar quando o painel termina de sair.
 const NAV_DRAWER_TARGETS = {
-  home: () => activateBottomTab('home-page'),
-  planner: () => activateBottomTab('modal-planner'),
-  farmacia: () => activateBottomTab('modal-farmacia'),
-  comunicados: () => activateBottomTab('modal-comunicados'),
-  contacts: () => openContactsPage(),            // mesma rota da página existente; nada duplicado
-  settings: () => { activateBottomTab('modal-settings'); showSettingsView('hub'); },
-  agenda: () => { if (window.Notas && window.Notas.open) window.Notas.open(); },   // mesma agenda do botão de anotações; nada duplicado
-  access: () => { activateBottomTab('modal-settings'); showSettingsView('access'); },
-  appearance: () => { activateBottomTab('modal-settings'); showSettingsView('appearance'); },
-  support: () => { activateBottomTab('modal-settings'); showSettingsView('support'); },
-  profile: () => { activateBottomTab('modal-settings'); showSettingsView('profile'); }
+  home: () => activateBottomTab('home-page', true),
+  planner: () => activateBottomTab('modal-planner', true),
+  farmacia: () => activateBottomTab('modal-farmacia', true),
+  comunicados: () => activateBottomTab('modal-comunicados', true),
+  contacts: () => openContactsPage(true),        // mesma rota da página existente; nada duplicado
+  settings: () => { activateBottomTab('modal-settings', true); showSettingsView('hub'); },
+  agenda: () => { if (window.Notas && window.Notas.open) window.Notas.open(); },   // mesma agenda do botão de anotações
+  access: () => { activateBottomTab('modal-settings', true); showSettingsView('access'); },
+  appearance: () => { activateBottomTab('modal-settings', true); showSettingsView('appearance'); },
+  support: () => { activateBottomTab('modal-settings', true); showSettingsView('support'); },
+  profile: () => { activateBottomTab('modal-settings', true); showSettingsView('profile'); }
 };
 const NAV_DRAWER_CURRENT = { 'home-page': 'home', 'modal-planner': 'planner', 'modal-farmacia': 'farmacia', 'modal-comunicados': 'comunicados' };
 let navDrawerOpen = false;
+let navOpenedAt = 0;
 let navDrawerCloseTimer = null;
 
 function navDrawerEls() {
@@ -574,7 +577,11 @@ function toggleNavTagBubble() {
   if (!info || !bubble || !tag) return;
   if (!bubble.hidden) { hideNavTagBubble(); return; }
   bubble.textContent = info.msg;
+  bubble.classList.remove('is-below');
   bubble.hidden = false;
+  // Sem espaço acima da tag (topo da tela), o balão desce para o lado de baixo.
+  const room = tag.getBoundingClientRect().top - bubble.offsetHeight - 12;
+  if (room < 4) bubble.classList.add('is-below');
   void bubble.offsetWidth;
   bubble.classList.add('is-in');
   tag.setAttribute('aria-expanded', 'true');
@@ -670,6 +677,7 @@ function openNavDrawer(fromDrag = false) {
   if (opener) opener.setAttribute('aria-expanded', 'true');
   if (handle) handle.setAttribute('aria-expanded', 'true');
   navDrawerOpen = true;
+  navOpenedAt = performance.now();
   (drawer.querySelector('.nav-item.is-current') || drawer.querySelector('.nav-close'))?.focus({ preventScroll: true });
 }
 
@@ -695,8 +703,8 @@ function closeNavDrawer(returnFocus = true) {
 function navDrawerGo(target) {
   const go = NAV_DRAWER_TARGETS[target];
   if (!go) return;
-  closeNavDrawer(false);                         // nunca fica aberto depois de navegar
-  go();
+  go();                                          // troca a tela por trás do painel...
+  closeNavDrawer(false);                         // ...e só então o painel sai (nunca fica aberto depois de navegar)
 }
 
 // ---- Abertura por arrasto (alça lateral e gesto da primeira aba) ----------------------------
@@ -749,6 +757,7 @@ function navDragEnd(cancelled) {
 
 // Alça: área própria (data-no-tab-swipe), portanto o pager de abas nunca a vê. touch-action:none
 // vale só para ela, então rolagem e zoom do resto da página ficam com o navegador.
+let navHandleDragged = -1000;
 function initNavHandle() {
   const { handle } = navDrawerEls();
   if (!handle || handle.dataset.navBound) return;
@@ -773,13 +782,14 @@ function initNavHandle() {
   const end = cancelled => event => {
     if (!g || event.pointerId !== g.id) return;
     const was = g; g = null;
-    if (was.active) { navDragEnd(cancelled); return; }
-    if (!cancelled && Math.abs(event.clientX - was.x) < 8 && Math.abs(event.clientY - was.y) < 8) openNavDrawer();   // toque
+    if (was.active) { navHandleDragged = performance.now(); navDragEnd(cancelled); }
+    // Toque simples: quem abre é o "click" logo abaixo. Abrir já no pointerup fazia o clique sintético do toque
+    // cair no fundo escuro recém-aberto e fechar o menu na hora.
   };
   handle.addEventListener('pointerup', end(false));
   handle.addEventListener('pointercancel', end(true));
-  // Teclado e leitor de tela ativam por clique sem ponteiro (detail 0); o toque já foi tratado acima.
-  handle.addEventListener('click', event => { if (event.detail === 0) openNavDrawer(); });
+  // Toque, mouse, teclado e leitor de tela: um clique na alça abre o menu. Depois de arrastar, o clique é ignorado.
+  handle.addEventListener('click', () => { if (performance.now() - navHandleDragged > 400) openNavDrawer(); });
 }
 
 function initNavDrawer() {
