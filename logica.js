@@ -423,6 +423,8 @@ function updateDashboard() {
   const pCond = Math.min(100, Math.min(pCondCred, pCondHoras));
   const barCond = document.getElementById('bar-cond');
   if(barCond) barCond.style.width = pCond + '%';
+  const percentCond = document.getElementById('percent-cond');
+  if(percentCond) percentCond.textContent = Math.round(pCond) + '%';
   updateProgressAccessibility('bar-cond', pCond, T('Progresso das disciplinas de Escolha Condicionada: {p}%', { p: Math.round(pCond) }));
 
   const condMeta = document.getElementById('text-cond-meta');

@@ -49,10 +49,6 @@
   </div>
 
   <div id="home-page" class="home-tab-page bottom-tab-current" role="tabpanel" aria-hidden="false">
-  <div class="home-deco" aria-hidden="true">
-    <svg class="hd-blob hd-blob-b" viewBox="0 0 240 210" focusable="false"><path d="M44 52C78 14 152 6 198 36C238 62 238 126 206 164C174 202 104 208 62 182C20 156 14 88 44 52Z"></path></svg>
-    <svg class="hd-blob hd-blob-a" viewBox="0 0 250 230" focusable="false"><path d="M58 34C100 4 170 8 208 46C242 80 236 138 206 172C176 206 118 220 76 198C34 176 8 126 20 86C27 62 40 48 58 34Z"></path></svg>
-  </div>
   <header class="bg-[#fce98a] dark:bg-[#c99522] text-gray-800 dark:text-white pt-8 pb-10 px-6 shadow-xl rounded-b-[2.5rem] mb-10 relative flex flex-col items-center overflow-hidden">
     <button type="button" id="nav-open" class="nav-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span id="nav-open-name" class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
     <div class="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 50% 0%, #fff 0%, transparent 70%);"></div>
@@ -127,6 +123,7 @@
         <div>
           <div class="flex justify-between items-end text-sm font-bold mb-2 gap-3 flex-wrap">
             <span class="text-gray-700 dark:text-gray-300">Condicionadas <span class="text-gray-400 text-xs font-medium ml-1">(<span id="count-cond-feitas" aria-live="polite">0</span> / <span id="count-cond-faltam" aria-live="polite">0</span> restam)</span></span>
+            <span id="percent-cond" class="text-yellowTheme-600 dark:text-yellowTheme-400" aria-live="polite">0%</span>
             <div id="text-cond-meta-container" class="flex items-center gap-2">
               <span id="text-cond-meta" class="text-[0.65rem] px-2 py-0.5 bg-yellow-100 text-yellow-800 border border-yellow-300 dark:bg-yellow-900/60 dark:border-yellow-600/50 dark:text-yellow-100 rounded-md font-bold uppercase">Meta: 12 créd. / 180h</span>
               <span id="text-cond-progress" class="text-xs text-gray-500 font-semibold" aria-live="polite">0 créd. • 0h</span>
@@ -142,16 +139,6 @@
       </div>
 
       <div class="dashboard-after-progress relative z-10">
-        <button id="clear-all-button" type="button" class="dashboard-clear-button" onclick="clearAllConcluded()" aria-label="Limpar tudo: desmarcar todas as disciplinas concluídas">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 7h16"></path>
-            <path d="M9 7V4h6v3"></path>
-            <path d="M7 7l1 13h8l1-13"></path>
-            <path d="M10 11v5M14 11v5"></path>
-          </svg>
-          <span>Limpar tudo</span>
-        </button>
-
         <div class="status-legend" aria-label="Legenda dos estados das disciplinas">
           <div class="status-legend-item">
             <span class="status-legend-dot status-legend-passed" aria-hidden="true"></span>
@@ -267,7 +254,7 @@
   <div id="modal-comunicados" class="bottom-tab-page comunicados-page" role="tabpanel" aria-hidden="true">
     <div class="comunicados-screen modal-content">
       <div class="com-deco" aria-hidden="true">
-        <svg class="cd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="cdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V150C346 138 308 160 252 156C190 152 150 128 96 140C54 150 24 166 0 156Z" fill="url(#cdg)"></path><path d="M0 52C34 70 70 62 98 92C122 118 104 150 62 160C34 166 12 160 0 154Z" fill="#fff" fill-opacity=".05"></path><path d="M206 0C236 28 292 24 330 60C358 86 380 82 390 76V0Z" fill="#fff" fill-opacity=".055"></path></svg>
+        <svg class="cd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="cdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V155C346 143 308 165 252 161C190 157 150 133 96 145C54 155 24 171 0 155Z" fill="url(#cdg)"></path><path d="M0 52C34 70 70 62 98 92C122 118 104 150 62 160C34 166 12 160 0 154Z" fill="#fff" fill-opacity=".05"></path><path d="M206 0C236 28 292 24 330 60C358 86 380 82 390 76V0Z" fill="#fff" fill-opacity=".055"></path></svg>
         <svg class="cd-blob cd-blob-a" viewBox="0 0 260 240" focusable="false"><path d="M30 28C86 -6 186 8 222 74C256 136 206 214 128 230C60 244 4 206 4 142C4 96 -4 58 30 28Z"></path></svg>
         <svg class="cd-blob cd-blob-b" viewBox="0 0 240 300" focusable="false"><path d="M210 12C150 -4 84 40 78 108C72 166 14 190 12 238C10 282 64 304 124 296C196 286 236 236 236 160C236 96 262 30 210 12Z"></path></svg>
       </div>
@@ -388,7 +375,7 @@
   <div id="modal-planner" class="bottom-tab-page planner-page" role="tabpanel" aria-hidden="true">
     <div class="planner-screen" onclick="event.stopPropagation()">
       <div class="planner-deco" aria-hidden="true">
-        <svg class="pd-head" viewBox="0 0 390 270" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="pdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#16553a"></stop></linearGradient></defs><path d="M0 0H390V196C352 188 318 212 262 222C196 234 148 206 92 214C52 220 22 236 0 250Z" fill="url(#pdg)"></path><path d="M168 0C204 44 262 52 300 92C334 128 372 118 390 100V0Z" fill="#fff" fill-opacity=".055"></path><path d="M0 70C40 96 78 88 112 126C142 160 120 206 66 226C34 238 12 232 0 226Z" fill="#fff" fill-opacity=".045"></path></svg>
+        <svg class="pd-head" viewBox="0 0 390 270" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="pdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V148C352 140 318 164 262 174C196 186 148 158 92 166C52 172 22 150 0 148Z" fill="url(#pdg)"></path><path d="M168 0C204 44 262 52 300 92C334 128 372 118 390 100V0Z" fill="#fff" fill-opacity=".055"></path><path d="M0 70C40 96 78 88 112 126C142 160 120 206 66 226C34 238 12 232 0 226Z" fill="#fff" fill-opacity=".045"></path></svg>
         <svg class="pd-blob pd-blob-a" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
         <svg class="pd-blob pd-blob-b" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
       </div>
@@ -502,7 +489,7 @@
   <div id="modal-farmacia" class="bottom-tab-page farma-page" role="tabpanel" aria-hidden="true" aria-labelledby="farma-title">
     <div class="farma-screen" onclick="event.stopPropagation()">
       <div class="farma-deco" aria-hidden="true">
-        <svg class="fd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="fdg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#1a5c40"></stop></linearGradient></defs><path d="M0 0H390V132C340 150 300 128 238 138C176 148 128 176 76 168C40 162 16 150 0 160Z" fill="url(#fdg)"></path><path d="M232 0C262 34 318 40 346 74C366 98 382 96 390 90V0Z" fill="#fff" fill-opacity=".06"></path><circle cx="338" cy="36" r="1.6" fill="#fff" fill-opacity=".5"></circle><circle cx="356" cy="58" r="1.1" fill="#fff" fill-opacity=".4"></circle><circle cx="318" cy="22" r="1.1" fill="#fff" fill-opacity=".4"></circle></svg>
+        <svg class="fd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="fdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V155C340 173 300 151 238 161C176 171 128 177 76 171C40 166 16 150 0 155Z" fill="url(#fdg)"></path><path d="M232 0C262 34 318 40 346 74C366 98 382 96 390 90V0Z" fill="#fff" fill-opacity=".06"></path><circle cx="338" cy="36" r="1.6" fill="#fff" fill-opacity=".5"></circle><circle cx="356" cy="58" r="1.1" fill="#fff" fill-opacity=".4"></circle><circle cx="318" cy="22" r="1.1" fill="#fff" fill-opacity=".4"></circle></svg>
         <svg class="fd-blob fd-blob-a" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
         <svg class="fd-blob fd-blob-b" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
       </div>
