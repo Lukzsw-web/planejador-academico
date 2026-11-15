@@ -2811,3 +2811,120 @@ html.no-anim .nav-handle-grip { animation: none; }
 /* Sanfonas dos períodos: o "space-y-4" do Tailwind somava uma margem ao gap da grade. */
 #accordions-container { gap: 8px !important; }
 #accordions-container > details { margin: 0 !important; }
+
+/* Fim da aba Planejador: 45 px entre a nota de rodapé e o topo da dock. O espaço que a dock ocupa (--dock-h = altura + distância da borda) é medido em navegacao.js; as margens/paddings antigos (rodapé 6,3 rem + main 136 px) foram zerados. */
+#home-page > main { padding-bottom: calc(45px + var(--dock-h, calc(76px * var(--dock-scale, 1)))) !important; }
+#home-page > main .site-footer { margin-bottom: 0 !important; }
+
+/* =========================================================
+   Início — cabeçalho compacto e fundo orgânico
+   Mesmo vocabulário de "O que puxar?" e Comunicados (tokens --pq-*, manchas verde-pastel), mas as manchas aqui são
+   formas fechadas, inteiras e dentro da tela (nunca cortadas na borda). Foto + nome + seta à esquerda, título ao centro;
+   a busca vem logo abaixo, como a segunda linha de uma barra de topo. IDs, classes e data-* preservados.
+   ========================================================= */
+#home-page {
+  --pq-ink: #123f2a; --pq-ink-soft: #43584b; --pq-tile: #c3e1b5; --pq-line: #215732; --pq-bg: #f2f4ec;
+  --home-sub: #46564d;
+  background: var(--pq-bg) !important;
+  isolation: isolate;
+}
+html.dark #home-page { --pq-ink: #e4efe7; --pq-ink-soft: #b3c3b9; --pq-bg: #0f1a16; --home-sub: #b3c3b9; }
+#home-page > .home-deco { position: absolute; top: 0; left: 0; right: 0; height: 0; z-index: 0; pointer-events: none; }
+#home-page > main { position: relative; z-index: 1; }
+.home-deco .hd-blob { position: absolute; display: block; height: auto; fill: var(--pq-tile); }
+.home-deco .hd-blob-a { right: 4%; top: .4rem; width: min(44vw, 220px); opacity: .62; }
+.home-deco .hd-blob-b { right: 27%; top: 2.9rem; width: min(36vw, 180px); opacity: .34; }
+html.dark .home-deco .hd-blob-a { opacity: .11; }
+html.dark .home-deco .hd-blob-b { opacity: .07; }
+
+/* barra de topo: [foto · nome ⌄]  [título]  [respiro] */
+#home-page > header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center !important;
+  column-gap: .25rem;
+  min-height: 0 !important;
+  /* faixa fixa no topo (como a do X): a página rola por baixo, vista através de um fundo translúcido */
+  position: sticky; top: 0; z-index: 70;
+  padding: max(.5rem, env(safe-area-inset-top)) .8rem .5rem !important;
+  background: color-mix(in srgb, var(--pq-bg) 90%, transparent) !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--pq-line) 8%, transparent), 0 6px 14px -10px rgba(18, 63, 42, .28) !important;
+  color: var(--pq-ink) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--pq-line) 13%, transparent);
+}
+html.dark #home-page > header { background: color-mix(in srgb, var(--pq-bg) 78%, transparent) !important; background-image: none !important; }
+#home-page > header > div.absolute { display: none !important; }
+#home-page > header > button.nav-open {
+  gap: .3rem; position: relative; top: auto; left: auto; grid-column: 1; grid-row: 1; justify-self: start;
+  margin: 0 0 0 -.2rem; max-width: 100%; min-height: 44px; padding: 2px .2rem 2px .25rem; color: var(--pq-ink);
+}
+#home-page > header > button.nav-open .profile-avatar { width: 36px; height: 36px; background-color: #cfd8cf; }
+#home-page > header > button.nav-open .profile-avatar svg { fill: #f4f7f2; }
+html.dark #home-page > header > button.nav-open .profile-avatar { background-color: #3a4b43; }
+/* nome longo: quebra em até 2 linhas (e só então reticências), em vez de ser cortado na primeira */
+#home-page > header .nav-open-name {
+  color: var(--pq-ink); font-size: .8rem; font-weight: 600; line-height: 1.15; max-width: none;
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+#home-page > header .nav-open-name[hidden] { display: none; }
+#home-page > header .nav-open-chev { width: 14px; height: 14px; color: var(--pq-ink); opacity: .78; }
+button.nav-open:focus-visible { outline-color: var(--pq-line); }
+html.dark button.nav-open:focus-visible { outline-color: #e4efe7; }
+#home-page > header > h1 {
+  grid-column: 2; grid-row: 1; margin: 0 !important; max-width: 5.7em; text-align: center;
+  color: var(--pq-ink) !important; font-size: 1.15rem !important; font-weight: 600 !important; line-height: 1.12 !important;
+  letter-spacing: -.025em !important; text-wrap: balance;
+}
+/* "Farmácia – UFRJ" e saudação: a faixa é fina como a do X, então ficam só para leitor de tela */
+#home-page > header > p {
+  grid-column: 1 / -1; grid-row: 2; margin: .2rem 0 0 !important; text-align: center;
+  color: var(--home-sub) !important; font-size: .74rem !important; font-weight: 600 !important; letter-spacing: .14em !important; opacity: 1 !important;
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+@media (max-width: 380px) { #home-page > header > h1 { font-size: .96rem !important; letter-spacing: -.03em !important; } #home-page > header { column-gap: 0; } }
+@media (min-width: 700px) {
+  #home-page > header {
+    padding: max(.55rem, env(safe-area-inset-top)) max(1.25rem, calc((100vw - 1120px) / 2)) .55rem !important;
+  }
+  #home-page > header > h1 { font-size: 1.3rem !important; max-width: none; }
+  #home-page > header .nav-open-name { max-width: 10rem; }
+}
+
+/* busca: segunda linha da barra */
+#search-wrapper { top: 0 !important; margin-top: .85rem !important; margin-bottom: .85rem !important; }
+.search-bar-shell { background: var(--pa-surface) !important; }
+.search-input::placeholder { color: #5d6b63 !important; }
+html.dark .search-input::placeholder { color: #9fb0a6 !important; }
+#home-page #search-results { color: var(--home-sub); }
+#home-page #save-status { border-radius: 8px; }
+#home-page main > .flex.justify-between { margin-bottom: .5rem !important; }
+
+/* resumo: 2×2 com divisórias, sem caixas dentro da caixa */
+#home-page .dashboard-panel .text-gray-500,
+#home-page .dashboard-panel .text-gray-400 { color: var(--home-sub) !important; }
+#home-page .dashboard-panel .grid.grid-cols-2 { column-gap: 0 !important; row-gap: 0 !important; }
+#home-page .dashboard-panel .grid.grid-cols-2 > div + div { border-left: 1px solid var(--pa-line); }
+#home-page .dashboard-panel .grid.grid-cols-2.border-b { margin-bottom: 1rem !important; padding-bottom: 1rem !important; }
+#home-page .dashboard-panel .grid.grid-cols-2:not(.border-b) {
+  margin-bottom: 1.1rem !important; padding-bottom: 1.1rem; border-bottom: 1px solid var(--pa-line);
+}
+#home-page .dashboard-panel .grid.grid-cols-2 > .p-4 {
+  padding: .25rem .5rem !important; border: 0 !important; background: transparent !important; border-radius: 0 !important;
+}
+#home-page .dashboard-panel .grid.grid-cols-2 > .p-4:active { background: transparent !important; }
+#home-page .dashboard-panel p.uppercase {
+  text-transform: none; letter-spacing: 0; font-size: .95rem; font-weight: 500; color: var(--home-sub) !important;
+}
+#home-page .dashboard-panel .text-2xl { font-size: 1.9rem !important; line-height: 1.15; }
+#home-page .dashboard-panel .text-xl { font-size: 1.55rem !important; line-height: 1.2; }
+#home-page .dashboard-panel .text-sm.font-medium { font-size: 1.05rem; }
+#home-page .dashboard-panel .space-y-6 > div > .flex > span:first-child { font-size: 1.02rem; }
+#home-page .dashboard-panel .space-y-6 > div > .flex > span:first-child .text-xs { font-size: .85rem; }
+#home-page .dashboard-panel .progress-track { height: 10px !important; border-radius: 6px; }
+#home-page .dashboard-panel .progress-bar { border-radius: 6px; }
+html.dark #home-page .dashboard-panel .text-gray-500,
+html.dark #home-page .dashboard-panel .text-gray-400 { color: var(--home-sub) !important; }
+#home-page .site-footer { color: var(--home-sub); }
