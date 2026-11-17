@@ -376,6 +376,406 @@
 })();
 
 // =====================================================================
+// Seção: normalizacao
+// =====================================================================
+/* FarmacIA — normalização do português brasileiro (camada v3, etapa 1).
+ * Prepara uma CÓPIA da mensagem para análise (o texto original nunca é alterado nem exibido a partir daqui):
+ * minúsculas, sem acentos, letras repetidas ("oiii"), abreviações e gírias de chat ("oq", "pq", "vc", "q") e correção
+ * controlada de digitação SÓ em palavras-pista de intenção ("explcia", "difernça").
+ * Nomes de medicamentos, siglas, números e unidades NÃO são "corrigidos" aqui: isso é feito, com limites e checagem de
+ * ambiguidade, na extração de entidades. Dicionários abaixo são dados simples e editáveis. */
+(function () {
+  'use strict';
+  var M = window.FarmaMod = window.FarmaMod || {};
+
+  // abreviações e gírias gerais (nenhuma altera sentido clínico)
+  var ABREV = {
+    oq: 'o que', oque: 'o que', pq: 'por que', pqe: 'por que', q: 'que', qe: 'que', vc: 'voce', vcs: 'voces', voc: 'voce', tb: 'tambem', tbm: 'tambem', td: 'tudo', tds: 'todos',
+    mt: 'muito', mto: 'muito', mta: 'muita', pra: 'para', pro: 'para o', p: 'para', qnt: 'quanto', qto: 'quanto', qnto: 'quanto', qts: 'quantos', dps: 'depois', hj: 'hoje',
+    msm: 'mesmo', n: 'nao', nd: 'nada', cmg: 'comigo', pfv: 'por favor', pf: 'por favor', pfvr: 'por favor', blz: 'beleza', vlw: 'valeu', obg: 'obrigado', obgd: 'obrigado',
+    obrigadx: 'obrigado', flw: 'falou', ta: 'esta', tao: 'estao', cm: 'como', qdo: 'quando', qd: 'quando', sbr: 'sobre', agr: 'agora', vdd: 'verdade', dnv: 'de novo',
+    fzr: 'fazer', fz: 'faz', ngm: 'ninguem', mds: 'meu deus', mn: 'mano', s: 'sim', ss: 'sim', nn: 'nao', ne: 'nao e', tmb: 'tambem', explik: 'explica', xplica: 'explica',
+    msg: 'mensagem', cmo: 'como', dif: 'diferenca', difs: 'diferencas', resumao: 'resumo', rem: 'remedio', remedios: 'remedio', remedio: 'remedio', medic: 'medicamento', ab: 'antibiotico'
+  };
+  // palavras-pista de intenção que podem receber correção de digitação (distância 1, mesma inicial, único candidato)
+  var PISTAS = ('explica explique explicar explicacao diferenca diferencas comparar compara comparacao questoes questao exercicios exercicio resumo resumir resume significa funciona funcionam mecanismo ' +
+    'interacao interacoes interage interagem quando porque sintese conceito defina define efeitos adversos colaterais contraindicacao contraindicacoes indicacoes posologia simulado flashcards ' +
+    'aprofunda detalhes exemplos exemplo continua converter converte equivale gravida alergia dobro overdose quanto serve usado remedio medicamento antibiotico exame resultado referencia ' +
+    'misturar juntos junto tomar posso devo bula dose dosagem classe grupo quais quantos').split(' ');
+  var PISTA_SET = {}; PISTAS.forEach(function (w) { PISTA_SET[w] = 1; });
+  var PISTA_POR_INICIAL = {}; PISTAS.forEach(function (w) { (PISTA_POR_INICIAL[w.charAt(0)] = PISTA_POR_INICIAL[w.charAt(0)] || []).push(w); });
+
+  function corrigirPista(tok) {
+    if (tok.length < 5 || PISTA_SET[tok] || PISTA_SET[tok.replace(/s$/, '')] || PISTA_SET[tok + 's'] || /\d/.test(tok)) return tok;   // plural/singular de uma pista não é erro de digitação
+    var lst = PISTA_POR_INICIAL[tok.charAt(0)] || [], melhor = null, empate = false;
+    for (var i = 0; i < lst.length; i += 1) {
+      var w = lst[i]; if (Math.abs(w.length - tok.length) > 1) continue;
+      var d = M.busca.editDistance(tok, w);
+      if (d === 1) { if (melhor && melhor !== w) empate = true; melhor = w; }
+    }
+    return melhor && !empate ? melhor : tok;
+  }
+
+  // Devolve { original, n, tokens, corrigidas }. "n" é a forma de análise (sem acentos, abreviações expandidas).
+  function analisar(raw) {
+    var original = String(raw == null ? '' : raw);
+    var s = original.replace(/([a-zà-úA-ZÀ-Ú])\1{2,}/g, '$1');          // letras repetidas (oiii, kkkk); dígitos ficam
+    var base = M.busca.norm(s), tokens = [], corrigidas = [];
+    base.split(' ').forEach(function (t) {
+      if (!t) return;
+      if (ABREV[t] !== undefined) { var e = ABREV[t]; if (e !== t) corrigidas.push({ de: t, para: e }); e.split(' ').forEach(function (x) { tokens.push(x); }); return; }
+      var c = corrigirPista(t); if (c !== t) corrigidas.push({ de: t, para: c });
+      tokens.push(c);
+    });
+    return { original: original, n: tokens.join(' '), tokens: tokens, corrigidas: corrigidas };
+  }
+
+  M.norma = { analisar: analisar, ABREV: ABREV, PISTAS: PISTAS };
+})();
+
+// =====================================================================
+// Seção: entidades
+// =====================================================================
+/* FarmacIA — extração de entidades (camada v3, etapa 2).
+ * Reconhece NOMES (medicamentos, substâncias, classes, exames, conceitos e áreas) e quantidades com unidade.
+ * Este dicionário serve só para RECONHECER e distinguir termos: não contém indicação, dose, contraindicação,
+ * interação nem classe de nenhum fármaco. Conteúdo farmacológico só entra pela base de conhecimento revisada.
+ * Casamento: (1) frase exata, mais longa primeiro; (2) variações de singular/plural e junto/separado;
+ * (3) aproximado, só para palavras com 6+ letras, mesma inicial e distância 1 (ou 2 a partir de 9 letras), e SÓ
+ * quando houver um único candidato mais próximo. Empate entre candidatos = incerteza (não adivinha). */
+(function () {
+  'use strict';
+  var M = window.FarmaMod = window.FarmaMod || {};
+  var CAT = { med: 'farmacologia', subst: 'farmacologia', classe: 'farmacologia', exame: 'analises-clinicas', area: 'conteudo', conc: 'bioquimica' };
+
+  // [nome canônico, 'alias;alias', categoria opcional]
+  var DADOS = {
+    med: [
+      ['paracetamol', 'acetaminofeno;tylenol'], ['dipirona', 'metamizol;novalgina'], ['ibuprofeno', 'advil'], ['ácido acetilsalicílico', 'aas;aspirina;acido acetil salicilico'], ['diclofenaco', ''], ['naproxeno', ''],
+      ['cetoprofeno', ''], ['nimesulida', ''], ['amoxicilina', ''], ['azitromicina', ''], ['ciprofloxacino', ''], ['cefalexina', ''], ['penicilina', ''], ['doxiciclina', ''], ['claritromicina', ''],
+      ['metronidazol', ''], ['fluconazol', ''], ['cetoconazol', ''], ['omeprazol', ''], ['pantoprazol', ''], ['esomeprazol', ''], ['ranitidina', ''], ['losartana', ''], ['enalapril', ''], ['captopril', ''],
+      ['atenolol', ''], ['propranolol', ''], ['metoprolol', ''], ['carvedilol', ''], ['anlodipino', ''], ['nifedipino', ''], ['hidroclorotiazida', ''], ['furosemida', ''], ['espironolactona', ''],
+      ['digoxina', ''], ['varfarina', ''], ['heparina', ''], ['enoxaparina', ''], ['clopidogrel', ''], ['sinvastatina', ''], ['atorvastatina', ''], ['rosuvastatina', ''], ['metformina', ''],
+      ['glibenclamida', ''], ['insulina', ''], ['levotiroxina', ''], ['prednisona', ''], ['prednisolona', ''], ['dexametasona', ''], ['hidrocortisona', ''], ['fluoxetina', ''], ['sertralina', ''],
+      ['amitriptilina', ''], ['diazepam', ''], ['clonazepam', ''], ['alprazolam', ''], ['fenobarbital', ''], ['carbamazepina', ''], ['fenitoína', ''], ['ácido valproico', 'valproato'], ['morfina', ''],
+      ['codeína', ''], ['tramadol', ''], ['loratadina', ''], ['cetirizina', ''], ['salbutamol', ''], ['budesonida', ''], ['lidocaína', ''], ['adrenalina', 'epinefrina'], ['atropina', ''],
+      ['dopamina', ''], ['noradrenalina', 'norepinefrina'], ['sildenafila', 'sildenafil'], ['ondansetrona', ''], ['metoclopramida', ''], ['domperidona', ''], ['loperamida', ''], ['simeticona', ''],
+      ['bisacodil', ''], ['lactulose', ''], ['nistatina', ''], ['aciclovir', ''], ['oseltamivir', ''], ['ivermectina', ''], ['albendazol', ''], ['cloroquina', ''], ['hidroxicloroquina', ''],
+      ['isoniazida', ''], ['rifampicina', ''], ['vancomicina', ''], ['gentamicina', ''], ['ceftriaxona', ''], ['haloperidol', ''], ['risperidona', ''], ['olanzapina', ''], ['levodopa', ''],
+      ['metotrexato', ''], ['tamoxifeno', ''], ['sulfato ferroso', ''], ['lítio', 'carbonato de litio'], ['fenilefrina', ''], ['pseudoefedrina', ''], ['bromexina', ''], ['acetilcisteína', 'acetilcisteina']
+    ],
+    subst: [['cafeína', ''], ['álcool etílico', 'etanol;alcool'], ['nicotina', ''], ['vitamina C', 'acido ascorbico'], ['vitamina D', 'colecalciferol'], ['vitamina K', ''], ['vitamina B12', 'cianocobalamina'], ['ácido fólico', 'folato']],
+    classe: [
+      ['anti-inflamatórios', 'antiinflamatorios;anti inflamatorios;antiinflamatorio'], ['AINEs', 'aine;anti inflamatorios nao esteroides;anti inflamatorios nao esteroidais;antiinflamatorios nao esteroidais'], ['beta-bloqueadores', 'betabloqueadores;bloqueadores beta;bloqueadores beta adrenergicos'],
+      ['IECA', 'inibidores da eca;inibidores da enzima conversora de angiotensina'], ['BRA', 'bloqueadores do receptor de angiotensina;antagonistas da angiotensina ii'], ['antibióticos', 'antibacterianos'],
+      ['antifúngicos', ''], ['antivirais', ''], ['antiparasitários', 'antiparasitarios;antihelminticos'], ['anti-histamínicos', 'antihistaminicos;antialergicos'], ['antidepressivos', ''], ['ansiolíticos', ''],
+      ['benzodiazepínicos', 'benzodiazepinicos;benzos'], ['anticoagulantes', ''], ['antiagregantes plaquetários', 'antiplaquetarios;antiagregantes'], ['estatinas', ''], ['diuréticos', ''],
+      ['anti-hipertensivos', 'antihipertensivos'], ['anticonvulsivantes', 'antiepilepticos'], ['antipsicóticos', 'neurolepticos'], ['opioides', 'opiaceos;opioide'], ['corticoides', 'corticosteroides;glicocorticoides'],
+      ['broncodilatadores', ''], ['inibidores da bomba de prótons', 'ibp;ibps'], ['antiácidos', ''], ['analgésicos', ''], ['antitérmicos', 'antipireticos'], ['antieméticos', ''], ['laxantes', ''],
+      ['hipoglicemiantes', 'antidiabeticos'], ['penicilinas', ''], ['cefalosporinas', ''], ['macrolídeos', 'macrolideos'], ['quinolonas', 'fluoroquinolonas'], ['tetraciclinas', ''],
+      ['bloqueadores de canal de cálcio', 'bloqueadores dos canais de calcio'], ['anestésicos', ''], ['relaxantes musculares', ''], ['vitaminas', '']
+    ],
+    exame: [
+      ['hemograma', ''], ['hemoglobina', ''], ['hematócrito', ''], ['hemácias', 'eritrocitos'], ['leucócitos', 'globulos brancos'], ['plaquetas', ''], ['VHS', 'velocidade de hemossedimentacao'],
+      ['proteína C reativa', 'pcr'], ['creatinina', ''], ['ureia', ''], ['TGO', 'ast'], ['TGP', 'alt'], ['TSH', ''], ['T4 livre', 't4'], ['glicemia', 'glicemia de jejum;glicose em jejum'],
+      ['hemoglobina glicada', 'hba1c;a1c;glicada'], ['urina tipo 1', 'eas;urina tipo i;exame de urina'], ['coagulograma', ''], ['INR', 'rni'], ['ferritina', ''], ['ácido úrico', 'acido urico'], ['PSA', ''], ['LDL', ''], ['HDL', '']
+    ],
+    conc: [
+      ['lipídios', 'lipidios;lipideos;lipidio;gorduras'], ['triglicerídeos', 'triglicerideos;triglicerides;triacilgliceróis'], ['colesterol', ''], ['ácido graxo', 'acidos graxos;acidos gordos'],
+      ['ácido graxo saturado', 'acidos graxos saturados;gordura saturada'], ['ácido graxo insaturado', 'acidos graxos insaturados;gordura insaturada'], ['carboidratos', 'carboidrato;glicidios'], ['glicose', ''],
+      ['glicogênio', 'glicogenio'], ['ATP', ''], ['hipoglicemia', '', 'patologia'], ['hiperglicemia', '', 'patologia'], ['hipertensão', 'hipertensao;pressao alta', 'patologia'], ['hipotensão', 'hipotensao;pressao baixa', 'patologia'],
+      ['hipotireoidismo', '', 'patologia'], ['hipertireoidismo', '', 'patologia'], ['diabetes', 'diabetes mellitus', 'patologia'], ['interação medicamentosa', 'interacao entre medicamentos;interacoes entre medicamentos;interacoes medicamentosas', 'farmacologia'],
+      ['reação em cadeia da polimerase', 'pcr', 'analises-clinicas'], ['hormônio', 'hormonio;hormonios', 'fisiologia'], ['vitamina', '', 'fisiologia'], ['fígado', 'figado;hepatico', 'fisiologia'], ['rim', 'rins;renal', 'fisiologia'], ['coração', 'coracao', 'fisiologia'],
+      ['pulmão', 'pulmao;pulmoes', 'fisiologia'], ['estômago', 'estomago', 'fisiologia'], ['intestino', '', 'fisiologia'], ['cérebro', 'cerebro', 'fisiologia'], ['pâncreas', 'pancreas', 'fisiologia']
+    ],
+    area: [['bioquímica', 'bioquimica'], ['fisiologia', ''], ['microbiologia', ''], ['imunologia', ''], ['farmacognosia', ''], ['parasitologia', ''], ['patologia', ''], ['anatomia', ''], ['histologia', ''],
+      ['genética', 'genetica'], ['bioestatística', 'bioestatistica'], ['tecnologia farmacêutica', ''], ['química analítica', ''], ['análises clínicas', 'analises clinicas']]
+  };
+  // "ácido graxo saturado e insaturado": o substantivo da frente vale para os dois
+  var ELIPSE = [{ cabeca: /\bacidos? graxos?\b/, mods: [['saturado', 'conc:acido graxo saturado'], ['insaturado', 'conc:acido graxo insaturado']] }];
+  var MAXN = 5;
+  var IDX = null;
+
+  function nz(s) { return M.busca.norm(String(s).replace(/-/g, ' ')); }
+  function variantes(k) {
+    var out = {}, partes = k.split(' '), ult = partes[partes.length - 1], pre = partes.slice(0, -1).join(' ');
+    function pu(x) { out[(pre ? pre + ' ' : '') + x] = 1; }
+    out[k] = 1; out[k.replace(/ /g, '')] = 1;
+    if (/oes$/.test(ult)) pu(ult.replace(/oes$/, 'ao')); else if (/ao$/.test(ult)) pu(ult.replace(/ao$/, 'oes'));
+    if (/[rlz]es$/.test(ult)) pu(ult.slice(0, -2)); else if (/s$/.test(ult)) pu(ult.slice(0, -1)); else { pu(ult + 's'); if (/[rlz]$/.test(ult)) pu(ult + 'es'); }
+    return Object.keys(out);
+  }
+  function construir() {
+    var exato = Object.create(null), vari = Object.create(null), unig = Object.create(null), n = 0;
+    Object.keys(DADOS).forEach(function (tipo) {
+      DADOS[tipo].forEach(function (d) {
+        var ent = { id: tipo + ':' + nz(d[0]), nome: d[0], tipo: tipo, categoria: d[2] || CAT[tipo] };
+        [d[0]].concat(d[1] ? d[1].split(';') : []).forEach(function (a) {
+          var k = nz(a); if (!k) return;
+          (exato[k] = exato[k] || []);
+          if (exato[k].every(function (x) { return x.id !== ent.id; })) exato[k].push(ent);
+          variantes(k).forEach(function (v) { if (v !== k) { (vari[v] = vari[v] || []); if (vari[v].every(function (x) { return x.id !== ent.id; })) vari[v].push(ent); } });
+          if (k.indexOf(' ') < 0 && k.length >= 6) { var c = k.charAt(0); (unig[c] = unig[c] || []).push({ k: k, ent: ent }); }
+          var junto = k.replace(/ /g, ''); if (junto !== k && junto.length >= 6) { var c2 = junto.charAt(0); (unig[c2] = unig[c2] || []).push({ k: junto, ent: ent }); }
+        });
+        n += 1;
+      });
+    });
+    IDX = { exato: exato, vari: vari, unig: unig, total: n, porId: null };
+    var porId = {}; Object.keys(exato).forEach(function (k) { exato[k].forEach(function (e) { porId[e.id] = e; }); }); IDX.porId = porId;
+    return IDX;
+  }
+  function indice() { return IDX || construir(); }
+
+  var QTD = /(\d+(?:[.,]\d+)?)\s*(mcg|mg|kg|ml|mmol|mol|meq|ui|ug|µg|g|l|%|gramas?|miligramas?|microgramas?|quilos?|litros?|mililitros?|comprimidos?|gotas?|capsulas?|cápsulas?)(?![a-zà-ú])/gi;
+  function quantidades(raw) {
+    var out = [], m; QTD.lastIndex = 0;
+    while ((m = QTD.exec(String(raw)))) out.push({ tipo: 'quantidade', valor: Number(m[1].replace(',', '.')), unidade: m[2].toLowerCase(), texto: m[1] + ' ' + m[2].toLowerCase() });
+    return out;
+  }
+  function ehNumero(t) { return /^\d+$/.test(t); }
+  function limite(len) { return len >= 10 ? 2 : len >= 6 ? 1 : 0; }
+  var CONHECIDAS = null;   // palavras de conceitos que o interpretador antigo já reconhece: não passam por correção aproximada (evita "glicólise" virar "glicose")
+  function conhecidas() {
+    if (CONHECIDAS) return CONHECIDAS;
+    CONHECIDAS = {};
+    try { (M.interpretador && M.interpretador.CONCEITOS || []).forEach(function (c) { M.busca.palavras(c[0]).forEach(function (w) { CONHECIDAS[w] = 1; }); }); } catch (e) { /* segue sem a lista */ }
+    return CONHECIDAS;
+  }
+
+  function extrair(an, raw) {
+    var I = indice(), toks = an.tokens, usado = [], itens = [], incertas = [], i, len;
+    function marcar(a, b) { for (var q = a; q < b; q += 1) usado[q] = true; }
+    function livre(a, b) { for (var q = a; q < b; q += 1) if (usado[q]) return false; return true; }
+    function colocar(lista, pos, texto, aprox, dist) {
+      if (lista.length === 1) { var e = lista[0]; itens.push({ id: e.id, nome: e.nome, tipo: e.tipo, categoria: e.categoria, texto: texto, pos: pos, aprox: !!aprox, dist: dist || 0, ambigua: false }); }
+      else { itens.push({ id: null, nome: null, tipo: lista[0].tipo, categoria: lista[0].categoria, texto: texto, pos: pos, aprox: !!aprox, dist: dist || 0, ambigua: true, candidatos: lista.map(function (e) { return e.nome; }) }); }
+    }
+    // 1) exato, depois variações; frase mais longa primeiro
+    [I.exato, I.vari].forEach(function (mapa) {
+      for (i = 0; i < toks.length; i += 1) {
+        if (usado[i]) continue;
+        for (len = Math.min(MAXN, toks.length - i); len >= 1; len -= 1) {
+          if (!livre(i, i + len)) continue;
+          var chave = toks.slice(i, i + len).join(' ');
+          if (len === 1 && (ehNumero(chave) || chave.length < 2)) continue;
+          var lst = mapa[chave];
+          if (lst) { colocar(lst, i, chave, false, 0); marcar(i, i + len); break; }
+        }
+      }
+    });
+    // 2) aproximado, palavra a palavra
+    for (i = 0; i < toks.length; i += 1) {
+      var t = toks[i];
+      if (usado[i] || t.length < 6 || !/^[a-z]+$/.test(t) || M.norma.PISTAS.indexOf(t) >= 0 || conhecidas()[t]) continue;
+      var lim = limite(t.length), cands = I.unig[t.charAt(0)] || [], melhor = 9, ids = {}, lista = [];
+      for (var c = 0; c < cands.length; c += 1) {
+        var k = cands[c].k; if (Math.abs(k.length - t.length) > lim) continue;
+        var d = M.busca.editDistance(t, k); if (d > lim) continue;
+        if (d < melhor) { melhor = d; ids = {}; lista = []; }
+        if (d === melhor && !ids[cands[c].ent.id]) { ids[cands[c].ent.id] = 1; lista.push(cands[c].ent); }
+      }
+      if (!lista.length) continue;
+      if (lista.length === 1) { colocar(lista, i, t, true, melhor); marcar(i, i + 1); }
+      else { incertas.push({ texto: t, candidatos: lista.map(function (e) { return e.nome; }) }); marcar(i, i + 1); }
+    }
+    // 3) elipse ("saturado e insaturado")
+    ELIPSE.forEach(function (el) {
+      if (!el.cabeca.test(an.n)) return;
+      el.mods.forEach(function (m) {
+        if (toks.indexOf(m[0]) < 0) return;
+        var e = I.porId[m[1]]; if (e && !itens.some(function (x) { return x.id === e.id; })) itens.push({ id: e.id, nome: e.nome, tipo: e.tipo, categoria: e.categoria, texto: m[0], pos: toks.indexOf(m[0]), aprox: false, dist: 0, ambigua: false });
+      });
+    });
+    // elipse: "acido graxo" isolado some quando os dois específicos aparecem
+    if (itens.some(function (x) { return x.id === 'conc:acido graxo saturado'; }) || itens.some(function (x) { return x.id === 'conc:acido graxo insaturado'; })) itens = itens.filter(function (x) { return x.id !== 'conc:acido graxo'; });
+    itens.sort(function (a, b) { return a.pos - b.pos; });
+    var amb = itens.filter(function (x) { return x.ambigua; });
+    return { itens: itens, incertas: incertas.concat(amb.map(function (x) { return { texto: x.texto, candidatos: x.candidatos }; })), quantidades: quantidades(raw || an.original), ambigua: incertas.length > 0 || amb.length > 0 };
+  }
+
+  function resolver(termo) { var l = indice().exato[nz(termo)] || indice().vari[nz(termo)]; return l && l.length === 1 ? l[0] : null; }
+  M.entidades = { extrair: extrair, resolver: resolver, _dados: DADOS, _indice: indice, total: function () { return indice().total; } };
+})();
+
+// =====================================================================
+// Seção: intencao
+// =====================================================================
+/* FarmacIA — classificação de intenção por múltiplos sinais (camada v3, etapa 3).
+ * Cada intenção soma evidências ponderadas (palavras-pista, tipos de entidade, quantidades, contexto da conversa, similaridade
+ * com exemplos curtos) e perde pontos por sinais contraditórios. O resultado traz pontuação, confiança, ranking e os sinais que
+ * pesaram (para depuração). Esta etapa só CLASSIFICA e sinaliza risco: quem decide responder, perguntar ou admitir limitação
+ * é a camada de confiança/segurança (etapa seguinte). Não cria intenção para o que a FarmacIA não faz. */
+(function () {
+  'use strict';
+  var M = window.FarmaMod = window.FarmaMod || {};
+
+  function R(s) { return new RegExp(s); }
+  var C = {
+    saudacao: R('^(oi+|ola|opa|eae|e ai|salve|hey|hello|hi|ei|oie|fala ai|bom dia|boa tarde|boa noite)\\b|\\btudo (bem|bom|certo|joia)\\b|\\bcomo (voce )?(vai|esta)\\b'),
+    social: R('\\b(obrigad[oa]|obrigadao|brigadao|brigada|valeu|falou|tchau|ate (mais|logo|amanha|depois)|beleza|show|tamo junto|tmj|top|massa|entendi|ok|okay|certo|perfeito|otimo|legal|de nada)\\b'),
+    naoEntendi: R('\\bnao (entendi|compreendi|fez sentido)\\b'),
+    exerc: R('\\b(questoes|questao|exercicios?|quiz|simulado|flashcards?|treinar|praticar|me (pergunta|perguntas|testa|teste)|perguntas (de|sobre))\\b|\\b(faz\\w*|faca|gera\\w*|cri[ae]\\w*|mont[ae]\\w*|elabor\\w*|me da|quero|preciso de|bota)\\b(\\s+\\w+){0,3}\\s+(perguntas|questoes|exercicios)\\b'),
+    resumo: R('\\b(resum\\w*|sintese|em topicos|topicos principais)\\b'),
+    compF: R('\\b(diferenca|diferencas|difere|diferem|diferencia\\w*|compar\\w*|versus|vs|mesma coisa|o mesmo que|a mesma que|igual a|semelhan\\w*|parecid\\w*|similares?|equivalentes?)\\b'),
+    compM: R('\\bqual (e )?(o |a )?(melhor|mais forte|mais seguro|mais fraco)\\b'),
+    compX: R('\\b(x|vs|ou)\\b'),
+    intF: R('\\b(interac\\w*|interag\\w*)\\b'),
+    intM: R('\\b(juntos?|misturar|mistura|associa\\w*|combinar|combinacao|ao mesmo tempo)\\b'),
+    mecF: R('\\b(mecanismo|modo de acao)\\b|\\bacao (d(o|a|os|as)|farmacologica|terapeutica)\\b'),
+    mecW: R('\\bcomo\\b.*\\b(age|agem|atua|atuam|funciona|funcionam|trabalha|trabalham|reduz|diminui|aumenta|inibe|bloqueia|estimula|combate|alivia)\\b|\\bo que .{1,30}\\bfaz (no|pelo|com o) (corpo|organismo)\\b'),
+    intP: R('\\b(da problema|tem problema|faz mal|e perigoso|tem risco|corta o efeito|anula)\\b'),
+    s7: R('\\b(melhor|mais forte|mais seguro) (remedio|medicamento|antibiotico|analgesico)\\b|\\bqual (remedio|medicamento) (e|eh) (melhor|mais forte|mais seguro)\\b'),
+    s10: R('\\be (muito|pouco|demais|alto|baixo|seguro|perigoso|normal)\\b'),
+    def: R('\\b(o que (e|sao|significa|quer dizer|seria)|defin\\w*|conceito|significado|me fala|fala sobre|fale sobre)\\b'),
+    expl: R('\\b(explic\\w*|entender|entendo|me ensina|ensina|duvida sobre|ajuda\\w* (com|em|sobre)|ajudar (com|em|sobre))\\b'),
+    med: R('\\b(para que (serve|e usado|usa)|serve para que|serve para|e usad[oa] para|indicac\\w*|indicad[oa]|efeitos? (adversos?|colaterais?|indesejados?)|reacoes? adversas?|contraindicac\\w*|bula|posologia|usos?|colaterais|faz mal|e bom para|como (usar|tomar|se usa|se toma)|dose|dosagem)\\b'),
+    exame: R('\\bexames?\\b|\\bvalor(es)? de referencia\\b|\\breferencia\\b|\\bresultado\\b|\\bdeu \\d|\\b(alto|alta|baixo|baixa|elevado|elevada|aumentad[oa]|diminuid[oa])\\b|\\binterpret\\w*|\\blaudo\\b'),
+    classeC: R('\\b(classe|grupo|pertence|exemplos? de|quais (sao )?(os |as )?(medicamentos|remedios|farmacos|exemplos)|me fala (dos|das)|quais sao)\\b'),
+    calc: R('\\b(quanto (e|da|fica|vale)|converte\\w*|transform\\w*|passa (para|pra)|em (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas)|conversao|equivale\\w*|quantos? (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas|comprimidos|gotas)|regra de tres|dilui\\w*|concentracao|calcul\\w*|molaridade)\\b'),
+    anaf: R('\\b(isso|disso|nisso|esse|essa|esses|essas|desse|dessa|dele|dela|deles|delas|ele|ela|eles|elas|o mesmo|a mesma)\\b'),
+    seq: R('^(e |mais |continua|prossiga|pode continuar|de novo|de outro jeito|de outra forma|aprofunda|detalha)|\\b(de novo|de outro jeito|de outra forma|mais simples|mais facil|mais detalhes|aprofund\\w*|detalh\\w*|exemplos?|continua)\\b'),
+    s1: R('\\b(dobro|dobrar|em dobro|tomar mais|mais um comprimido|mais uma dose|passar da dose|dose maxima|overdose|a mais|por engano|duas vezes|tres vezes|esqueci (de )?tomar|esqueci a dose|pular (a )?dose)\\b'),
+    s2: R('\\bposso (tomar|dar|usar|misturar|cortar|parar|trocar|suspender|beber|comer|dirigir)\\b|\\btomar\\b.*\\bjuntos?\\b|\\bpode(m)? ser (tomad\\w*|usad\\w*|trocad\\w*|misturad\\w*)\\b|\\bdevo (parar|tomar|trocar|suspender|continuar)\\b|\\bda para (tomar|misturar)\\b|\\bpode(m)? (tomar|misturar|trocar)\\b'),
+    s3: R('\\b(alergia|alergic[oa]|gravidez|gravida|gestante|gestacao|amament\\w*|lactante|bebe|crianca|neonato|idoso|renal|hepatic\\w*)\\b'),
+    s4: R('\\b(vencido|sem receita|sem prescricao|automedic\\w*|emagrecer|emagrecimento|abortivo|energetico|alcool|bebida alcoolica|cerveja)\\b'),
+    s5: R('\\b(dose|quanto)\\b.*\\bpara mim\\b|\\b(minha|meu) (dose|remedio)\\b|\\bqual (remedio|medicamento) (eu|devo)\\b|\\bdose (certa|ideal|correta|segura)\\b'),
+    s6: R('\\btomei\\b|\\btomamos\\b|\\bengoli\\b|\\bingeri\\b|\\btomou\\b'),
+    s8: R('\\b(meu|minha) \\w+ (veio|deu|esta|ficou|saiu)\\b|\\be grave\\b|\\bdevo me preocupar\\b|\\bpreocupante\\b|\\bperigoso\\b'),
+    dose: R('\\bdose\\b|\\bdosagem\\b|\\bposologia\\b|\\bquanto .*\\b(tomar|dar)\\b|\\bcomo (tomar|usar|dar)\\b'),
+    forma: R('\\b(comprimido|remedio|medicamento|capsula|dose|antibiotico|pilula|injecao|xarope|gotas)\\b'),
+    ajuda: R('\\b(o que (voce|vc) (sabe|pode|consegue) fazer|como (voce|vc) funciona|quem (e|eh) (voce|vc)|quem (te )?(criou|fez)|o que (voce|vc) faz|quais (sao )?(suas|seus) (funcoes|recursos)|me conta uma piada|me indica|me recomenda)\\b'),
+    ajudaObj: R('\\bajuda (com|em|sobre)\\s+\\w+'),
+    interrog: R('^(qual|quais|quem|quando|onde|quanto|quantos|como|por que|o que|receita|previsao)\\b'),
+    interrogQ: R('\\b(qual|quais|quem|quando|onde|quanto|quantos|como|por que)\\b'),
+    vago: R('^(ajuda|me ajuda( ai)?|preciso de (ajuda|uma coisa)|tenho uma duvida|duvida|nao sei|hmm+|e ai|\\?+|\\.+)$'),
+    acad: R('\\b(escolha condicionada|condicionadas?|obrigatorias?|optativas?|eletivas?|coeficiente|jubilamento|reprovacao|aproveitamento|equivalencia|historico escolar|sigaa|ufrj|coordenacao|pre requisitos?|co requisitos?|ementa|creditos?|carga horaria|trancamento|tranca\\w*|matricula\\w*|periodo|grade|disciplinas?|formar|formatura|tcc|estagio|puxar)\\b'),
+    dominio: R('\\b(farmac\\w*|medic\\w*|remedio\\w*|droga\\w*|doenca\\w*|sintoma\\w*|saude|organismo|celulas?|tecido\\w*|hormon\\w*|molecul\\w*|sangue|urina|figado|rins?|enzim\\w*|vitamin\\w*|bacteri\\w*|virus|infec\\w*|dor|febre|pressao|diabet\\w*|colesterol|laborat\\w*|quimic\\w*|bioquimic\\w*|fisiolog\\w*|patolog\\w*|toxic\\w*|veneno|substancia\\w*|composto\\w*|comprimido\\w*|capsula\\w*|terapi\\w*|tratamento\\w*|clinic\\w*|anatomi\\w*|dose\\w*)\\b'),
+    sufixo: R('(azol|pril|sartana|olol|statina|prazol|oxacino|micina|cilina|emia|ase|coide)$')
+  };
+  var ATRIBUTOS = ['efeito adverso', 'reacao adversa', 'posologia', 'interacao medicamentosa', 'toxicidade', 'dose letal'];
+  var EXEMPLOS = {
+    explicar_conceito: ['me conta como funciona o conceito de osmose', 'quero entender melhor esse assunto da matéria'],
+    consultar_medicamento: ['esse remédio é indicado para quê', 'para que é usado esse medicamento'],
+    criar_exercicios: ['gera perguntas de revisão para eu treinar', 'monta uma prova de treino'],
+    resumir_conteudo: ['faz um resumo curto desse capítulo', 'resume a matéria em tópicos'],
+    comparar_conceitos: ['qual a diferença entre esses dois termos', 'o que distingue um do outro']
+  };
+
+  function t(re, n) { return re.test(n); }
+  function gibberish(toks) {
+    if (!toks.length) return false;
+    var ruins = toks.filter(function (w) {
+      if (w.length < 3) return false;
+      var v = (w.match(/[aeiou]/g) || []).length;
+      return /^(asdf|qwer|zxcv|hjkl|qaz|wsx)/.test(w) || /(asdf|qwert|zxcv|hjkl)/.test(w) || v === 0 || /^(\w{2,3})\1{2,}$/.test(w) || /(bla){2,}/.test(w) || /[bcdfghjklmnpqrstvwxz]{5,}/.test(w) || v / w.length < 0.2;
+    });
+    return ruins.length === toks.length || (toks.length >= 3 && ruins.length >= toks.length - 1);
+  }
+  function simExemplo(n, id) {
+    var ex = EXEMPLOS[id]; if (!ex) return 0;
+    var a = M.busca.tokens(n), melhor = 0;
+    if (!a.length) return 0;
+    ex.forEach(function (e) {
+      var b = M.busca.tokens(e), inter = 0, u = {};
+      a.forEach(function (x) { u[x] = 1; }); b.forEach(function (x) { u[x] = 1; if (a.indexOf(x) >= 0) inter += 1; });
+      var j = inter / (Object.keys(u).length || 1); if (j > melhor) melhor = j;
+    });
+    return melhor >= 0.3 ? melhor * 3 : 0;
+  }
+
+  // info: { ents:[{nome,tipo,categoria}], incertas, quantidades, academica, codigoExplicito, ctx:{rotulo}|null }
+  function classificar(an, info) {
+    var n = an.n, nw = an.tokens.length, S = {}, sinais = [], ents = info.ents || [], qtd = info.quantidades || [];
+    var nMed = 0, nClasse = 0, nExame = 0, nConc = 0;
+    ents.forEach(function (e) { if (e.tipo === 'med' || e.tipo === 'subst') nMed += 1; else if (e.tipo === 'classe') nClasse += 1; else if (e.tipo === 'exame') nExame += 1; else nConc += 1; });
+    var E = nMed + nClasse + nExame + nConc, ctx = info.ctx || null, drog0 = nMed + nClasse > 0;
+    var cue = {}; Object.keys(C).forEach(function (k) { cue[k] = t(C[k], n); });
+    // conceitos que são "atributo" de um assunto já em curso (não trocam o assunto numa pergunta de continuação)
+    var eNovo = ents.filter(function (e) { return !(e.tipo === 'conc' && ATRIBUTOS.indexOf(M.busca.norm(e.nome)) >= 0); }).length;
+    var sinalDom = cue.dominio || an.tokens.some(function (w) { return w.length >= 6 && C.sufixo.test(w); }) || E > 0 || (info.incertas || []).length > 0 || qtd.length > 0;
+    function add(id, v, why) { if (!v) return; S[id] = (S[id] || 0) + v; if (why) sinais.push(id + (v > 0 ? '+' : '') + v + ':' + why); }
+
+    var def = cue.def || cue.expl || (cue.mecW && !drog0);
+    // ---- segurança
+    var sc = 0;
+    if (cue.s1) sc += 3; if (cue.s2) sc += 3; if (cue.s3) sc += 2.5; if (cue.s4) sc += 2; if (cue.s6) sc += 3; if (cue.s5) sc += 5; if (cue.s7) sc += 2.5; if (cue.s10 && qtd.length && nMed) sc += 4;
+    if (cue.s2 && nMed >= 2) sc += 1;
+    if (cue.s6 && nMed) sc += 1;
+    if (cue.compM && E >= 1) sc += 2;
+    var temS = sc > 0;
+    if (temS && (cue.forma || nMed)) sc += 1.5;
+    if (temS && cue.intM && (cue.s2 || cue.s6)) sc += 1;
+    if (cue.dose && cue.s3) sc += 4;
+    if (cue.s8 && E) sc += 2;
+    var doseMed = cue.dose && (nMed > 0 || nClasse > 0);
+    add('seguranca_farmaceutica', sc >= 4 ? sc : 0, 'risco');
+    // ---- conteúdo
+    var comp = cue.compF || (cue.compM && E >= 2);
+    var par = E >= 2 && nw <= 7 && (cue.compX && !cue.compF) ? 5 : 0;
+    var compScore = (cue.compF ? 5 : 0) + (cue.compM && E >= 2 ? 3 : 0) + (E >= 2 && comp ? 2 : 0) + par;
+    add((nMed + nClasse >= 2) ? 'comparar_substancias' : 'comparar_conceitos', compScore, 'comparação');
+    var intScore = (cue.intF ? 5 : (cue.intM ? 3 : (cue.intP && nMed >= 2 ? 4 : 0)));
+    if (intScore) { intScore += (nMed >= 1 ? 1.5 : 0) + (nMed >= 2 ? 1 : 0); if (nMed + nClasse === 0) intScore -= 2.5; add('explicar_interacao', intScore, 'interação'); }
+    var drog = nMed + nClasse > 0;
+    if (cue.mecF || cue.mecW) add('explicar_mecanismo_acao', (cue.mecF ? 5 : 4) + (drog ? 2 : 0) - (drog ? 0 : (cue.mecF ? 1 : 3.5)) - (E === 0 && cue.mecF ? 2 : 0), 'mecanismo');
+    if (cue.exerc) add('criar_exercicios', 5 + (E ? 1 : 0), 'exercícios');
+    if (cue.resumo) add('resumir_conteudo', 5 + (E ? 1 : 0), 'resumo');
+    var medBase = nMed ? 3 + (cue.med ? 3 : 0) + (nw <= 3 ? 2 : 0) + (def ? 1.5 : 0) : 0;
+    add('consultar_medicamento', medBase, 'medicamento');
+    if (nClasse) add('consultar_classe_farmacologica', 4 + (cue.classeC ? 2 : 0) + (def ? 1 : 0) + (nMed ? 3 : 0), 'classe');
+    if (nMed && /\b(classe|grupo|faz parte|pertence|categoria|tipo de (remedio|medicamento))\b/.test(n)) add('consultar_classe_farmacologica', 4, 'pergunta de classe');
+    if (nExame || (cue.exame && E)) add('explicar_exame', (nExame ? 4 : 0) + (cue.exame ? 3 : 0) + (nExame && def ? 1 : 0) + (cue.s8 ? 1 : 0), 'exame');
+    if (qtd.length || /\d+\s*[+*/x-]\s*\d+/.test(n)) { if (cue.calc || /\d+\s*[+*/x-]\s*\d+/.test(n)) add('resolver_calculo', (qtd.length ? 3 : 0) + (cue.calc ? 4 : 0) + 1, 'cálculo'); }
+    if (nConc || (E === 0 && def && sinalDom)) add('explicar_conceito', (nConc ? 3 : 0) + (def ? 3 : 0) + (E === 0 ? -1 : 0) + (nConc && nw <= 5 ? 1.5 : 0), 'conceito');
+    else if (E === 0 && def) add('explicar_conceito', 2, 'conceito sem termo conhecido');
+    if (nExame === 0 && nMed === 0 && nClasse === 0 && nConc === 0 && cue.def && !sinalDom) { /* fora do domínio: tratado abaixo */ }
+    var sim = Object.keys(EXEMPLOS).map(function (id) { return [id, simExemplo(n, id)]; });
+    sim.forEach(function (p) { if (p[1] > 0) add(p[0], p[1], 'exemplo parecido'); });
+    // ---- contexto / continuação
+    var contCue = (cue.anaf || cue.seq) && !cue.saudacao;
+    if (contCue && (eNovo === 0 || /\b(de novo|de outro jeito|de outra forma)\b/.test(n))) {
+      if (ctx) add('continuar_assunto', (cue.anaf ? 4 : 0) + (cue.seq ? 4 : 0) + 2 + (eNovo === 0 ? 1 : 0), 'continuação do assunto');
+      else add('pedir_esclarecimento', 4, 'continuação sem assunto anterior');
+    }
+    // ---- social
+    var curto = nw <= 6;
+    if (curto && cue.saudacao) add('saudacao', 5 - (E ? 4 : 0), 'saudação');
+    if (curto && cue.social && !cue.naoEntendi && !cue.exerc) add('social', 5 - (E ? 4 : 0), 'agradecimento/despedida');
+    // ---- acadêmico (o motor antigo responde)
+    if (info.academica || info.codigoExplicito || cue.acad) add('academico', 6, 'tema acadêmico do curso');
+    // ---- ajuda geral / fora do domínio / esclarecimento
+    var foraDominio = false;
+    if (cue.ajuda) add('ajuda_geral', 6, 'pergunta sobre a FarmácIA');
+    else if (E === 0 && !sinalDom && nw >= 3 && !contCue && !cue.acad && (cue.interrog || cue.ajudaObj || def || (cue.interrogQ && /\?/.test(an.original)))) { add('ajuda_geral', 3.5, 'pergunta geral sem termo de Farmácia'); foraDominio = true; }
+    else if (cue.ajudaObj && E === 0 && !cue.acad) { add('ajuda_geral', 3.5, 'pedido de ajuda geral'); foraDominio = true; }
+    var gib = !cue.social && !cue.saudacao && gibberish(an.tokens);
+    add('pedir_esclarecimento', 1.5, 'base');
+    if (gib) add('pedir_esclarecimento', 6, 'texto sem sentido');
+    if (cue.vago) add('pedir_esclarecimento', 4, 'pedido vago');
+    if (nw <= 2 && E === 0 && !cue.saudacao && !cue.social) add('pedir_esclarecimento', 2, 'mensagem muito curta');
+    if ((cue.resumo || cue.exerc) && E === 0 && !ctx && nw <= 3) add('pedir_esclarecimento', 3, 'falta o assunto');
+    if (cue.s5 && nMed === 0) add('pedir_esclarecimento', 5, 'dose pessoal sem medicamento');
+    if ((info.incertas || []).length && E === 0) add('pedir_esclarecimento', 4, 'termo ambíguo');
+    if (cue.s5 && nMed === 0) S.seguranca_farmaceutica = 0;
+    // ---- decisão
+    var ranking = Object.keys(S).map(function (k) { return { id: k, score: Math.round(S[k] * 100) / 100 }; }).sort(function (a, b) { return b.score - a.score; });
+    var top = ranking[0], seg = ranking[1] || { score: 0 }, margem = top.score - seg.score;
+    var conf = Math.max(0, Math.min(1, 0.5 * Math.min(top.score, 8) / 8 + 0.5 * Math.min(margem, 4) / 4));
+    var nivel = conf >= 0.6 ? 'alta' : conf >= 0.4 ? 'media' : 'baixa';
+    // risco sinalizado independentemente da intenção
+    var nivelSeg = null;
+    if (top.id === 'seguranca_farmaceutica') nivelSeg = 'critico';
+    else if (top.id === 'explicar_interacao' || cue.intF || cue.intP || sc >= 2 || doseMed || (cue.s5 && nMed === 0) || (cue.s8 && E)) nivelSeg = top.id === 'explicar_interacao' ? 'critico' : 'atencao';
+    var entidades = ents.map(function (e) { return { nome: e.nome, tipo: e.tipo, categoria: e.categoria, aprox: !!e.aprox }; }).concat(qtd);
+    return { id: top.id, score: top.score, confianca: Math.round(conf * 100) / 100, nivel: nivel, ranking: ranking.slice(0, 3), sinais: sinais, entidades: entidades, incertas: info.incertas || [], ambigua: !!(info.incertas || []).length,
+      seguranca: !!nivelSeg, nivelSeguranca: nivelSeg, referencia: ctx ? ctx.rotulo : null, faltaContexto: top.id === 'pedir_esclarecimento' && !!contCue && !ctx, foraDominio: foraDominio && top.id === 'ajuda_geral', normalizada: n, corrigidas: an.corrigidas };
+  }
+
+  M.intencao = { classificar: classificar, INTENCOES: ['explicar_conceito', 'consultar_medicamento', 'explicar_mecanismo_acao', 'consultar_classe_farmacologica', 'comparar_substancias', 'comparar_conceitos', 'explicar_interacao', 'explicar_exame', 'resolver_calculo', 'criar_exercicios', 'resumir_conteudo', 'continuar_assunto', 'saudacao', 'social', 'ajuda_geral', 'pedir_esclarecimento', 'seguranca_farmaceutica', 'academico'] };
+})();
+
+// =====================================================================
 // Seção: interpretador
 // =====================================================================
 /* FarmacIA — interpretação de linguagem natural (camada v2).
@@ -484,6 +884,25 @@
   function interpretar(raw) {
     var n = norm(raw), nw = n ? n.split(' ').length : 0;
     var conc = conceitosEm(raw), farm = farmacosEm(n);
+    var v3 = null, anV3 = null;
+    try {   // camada v3 (normalização, entidades, intenção): se falhar, o interpretador antigo segue sozinho
+      anV3 = M.norma.analisar(raw);
+      var exV3 = M.entidades.extrair(anV3, raw), ents = [];
+      exV3.itens.forEach(function (e) { if (!e.ambigua) ents.push(e); });
+      var sg = function (x) { return norm(x).replace(/s\b/g, ''); };
+      conc.forEach(function (c) { if (!ents.some(function (e) { return sg(e.nome) === sg(c.termo) || e.nome === c.rotulo; })) ents.push({ nome: c.rotulo, tipo: 'conc', categoria: c.categoria }); });
+      farm.forEach(function (f) { var r = M.entidades.resolver(f); if (!ents.some(function (e) { return norm(e.nome) === f || (r && e.id === r.id); })) ents.push({ nome: f, tipo: 'med', categoria: 'farmacologia' }); });
+      v3 = M.intencao.classificar(anV3, { ents: ents, incertas: exV3.incertas, quantidades: exV3.quantidades, academica: t(P.academico, n), codigoExplicito: /\b[A-Za-z]{3}\d{3}\b/.test(String(raw)), ctx: M.contexto.topico() });
+      // ampliar as listas antigas só quando a mensagem não é de risco crítico (nesse caso o fluxo antigo fica exatamente como era até a etapa de segurança)
+      if (v3.nivelSeguranca !== 'critico') {
+        exV3.itens.forEach(function (e) {
+          if (e.ambigua || e.tipo === 'area') return;   // áreas (bioquímica, fisiologia…) coincidem com nomes de disciplinas: seguem só na camada v3, o fluxo antigo de disciplinas não muda
+          var k = norm(e.nome);
+          if (e.tipo === 'med' || e.tipo === 'subst') { if (farm.indexOf(k) < 0 && !farm.some(function (f) { var r = M.entidades.resolver(f); return r && r.id === e.id; })) farm.push(k); }
+          else if (!conc.some(function (c) { return sg(c.termo) === sg(k) || c.rotulo === e.nome; })) conc.push({ termo: k, rotulo: e.nome, categoria: e.categoria });
+        });
+      }
+    } catch (errV3) { v3 = null; }
     var mods = { simples: t(/\b(simples|simplific\w*|leigo|facil|poucas palavras)\b/, n), aprofundar: t(P.aprofundar, n), exemplo: t(P.exemplo, n), resumo: t(P.resumo, n), analogia: t(P.analogia, n) };
     var anafora = conc.length === 0 && farm.length === 0 && t(P.anafora, n);
     var intencao = null;
@@ -499,7 +918,11 @@
     else if (t(P.explicar, n)) intencao = 'explicar';
     else if (mods.aprofundar) intencao = 'aprofundar';
     else if (!intencao && (conc.length || farm.length) && nw <= 4) intencao = 'definir';
+    var MAPA_V3 = { explicar_conceito: 'explicar', explicar_mecanismo_acao: 'explicar', explicar_interacao: 'explicar', consultar_medicamento: 'definir', consultar_classe_farmacologica: 'definir', explicar_exame: 'definir', comparar_conceitos: 'comparar', comparar_substancias: 'comparar', criar_exercicios: 'exercicio', resumir_conteudo: 'resumo' };
+    var usaV3 = !!(v3 && v3.confianca >= 0.5 && v3.nivelSeguranca !== 'critico');
+    if (usaV3 && !intencao && MAPA_V3[v3.id] && (conc.length || farm.length)) intencao = MAPA_V3[v3.id];
     var seguimento = !conc.length && !farm.length && (anafora || ['reformular', 'exemplo', 'resumo', 'aprofundar', 'fatores', 'onde', 'exercicio', 'erro'].indexOf(intencao) >= 0 || /^e (se |como |por que |quando |o que |qual |quais |onde )/.test(n) || /^(mais|continua|continue|e ai|e depois)$/.test(n));
+    if (usaV3 && v3.id === 'continuar_assunto' && !conc.length && !farm.length) seguimento = true;
     var nivel = mods.aprofundar ? 'aprofundado' : (mods.simples || mods.resumo || (intencao === 'definir' && nw <= 7 && !mods.exemplo)) ? 'curto' : 'normal';
     var ambiguidade = null;
     if (!seguimento && nw <= 8 && !t(P.academico, n)) {
@@ -515,7 +938,7 @@
     return {
       n: n, palavras: nw, intencao: intencao, pedagogica: !!intencao, modificadores: mods, nivel: nivel, conceitos: conc, farmacos: farm,
       categorias: conc.map(function (c) { return c.categoria; }), disciplina: disc, codigoExplicito: codigoExplicito, numeral: numeral,
-      academica: t(P.academico, n), anafora: anafora, seguimento: seguimento, ambiguidade: ambiguidade
+      academica: t(P.academico, n), anafora: anafora, seguimento: seguimento, ambiguidade: ambiguidade, v3: v3
     };
   }
 
@@ -796,6 +1219,7 @@
   function nomeHTML() { var n = perfil().nome; return n ? '<strong>' + esc(n) + '</strong>' : ''; }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+  var CONTEUDO_V3 = { explicar_conceito: 1, explicar_mecanismo_acao: 1, consultar_medicamento: 1, consultar_classe_farmacologica: 1, explicar_exame: 1, comparar_conceitos: 1, comparar_substancias: 1, criar_exercicios: 1, resumir_conteudo: 1 };
   var OVERR = { info: 1, topic: 1, unknown: 1, followup: 1, reexplain: 1, more: 1, why: 1 };
   var SOCIAL = { ack: 1, thanks: 1, greet: 1, bye: 1, praise: 1, howare: 1, invite: 1, who: 1, about: 1, myname: 1, setname: 1, setpron: 1, setperiod: 1, setshift: 1, frustrated: 1, empty: 1 };
   var pendente = null, primeiro = true, cache = [], consentMostrado = false;
@@ -920,13 +1344,15 @@
     var temEnt = interp.conceitos.length > 0 || interp.farmacos.length > 0, decide = false;
     var forced = !!(local && local.forcarIA);   // pedido de conteúdo vindo do catálogo da FarmacIA (ou o tema que o aluno deu em seguida): vai à IA se ela puder responder
     var regraPlain = lid === 'rule' && window.FarmaRegras && window.FarmaRegras.match(n);   // regra pedida com as próprias palavras (não por correção ortográfica)
-    var manter = SOCIAL[lid] || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
+    var v3 = interp.v3, conteudoV3 = !!(v3 && !v3.seguranca && CONTEUDO_V3[v3.id] && v3.confianca >= 0.55 && v3.entidades.some(function (e) { return e.tipo !== 'quantidade' && e.tipo !== 'area'; }));   // pergunta de conteúdo com termo reconhecido e sem risco sinalizado
+    var manter = (SOCIAL[lid] && !(conteudoV3 && (lid === 'about' || lid === 'who'))) || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
     var academico = interp.academica || interp.codigoExplicito || (!!interp.disciplina && !temEnt && (!interp.pedagogica || interp.numeral));
     if (forced) { var pf = M.ia.pode(); decide = pf.ok || ['sem_consentimento', 'intervalo', 'pausado', 'teto_sessao'].indexOf(pf.motivo) >= 0; }
     else if (lid === 'topic') decide = true;
     else if (interp.seguimento && !conceitual) decide = false;   // "explica de novo" sem assunto anterior: o farmacia.js responde
     else if (!manter && !academico) {
-      if (conceitual && interp.seguimento) decide = true;
+      if (conteudoV3 && (lid === 'unknown' || lid === 'about' || lid === 'who')) decide = true;   // o motor antigo não entendeu (ou respondeu como conversa): vai para material local / IA opcional
+      else if (conceitual && interp.seguimento) decide = true;
       else if (temEnt && (interp.pedagogica || OVERR[lid]) && !(lid === 'info' && interp.numeral)) decide = true;
       else if (!temEnt && OVERR[lid] && interp.pedagogica) decide = true;
       else if (lid === 'unknown' && perguntaAberta(raw)) {
