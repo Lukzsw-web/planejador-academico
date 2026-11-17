@@ -918,10 +918,12 @@
     var lid = local && local.id, interp = M.interpretador.interpretar(raw);
     var conceitual = M.contexto.modo() === 'conceitual' && !!M.contexto.topico();
     var temEnt = interp.conceitos.length > 0 || interp.farmacos.length > 0, decide = false;
+    var forced = !!(local && local.forcarIA);   // pedido de conteúdo vindo do catálogo da FarmacIA (ou o tema que o aluno deu em seguida): vai à IA se ela puder responder
     var regraPlain = lid === 'rule' && window.FarmaRegras && window.FarmaRegras.match(n);   // regra pedida com as próprias palavras (não por correção ortográfica)
     var manter = SOCIAL[lid] || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
     var academico = interp.academica || interp.codigoExplicito || (!!interp.disciplina && !temEnt && (!interp.pedagogica || interp.numeral));
-    if (lid === 'topic') decide = true;
+    if (forced) { var pf = M.ia.pode(); decide = pf.ok || ['sem_consentimento', 'intervalo', 'pausado', 'teto_sessao'].indexOf(pf.motivo) >= 0; }
+    else if (lid === 'topic') decide = true;
     else if (interp.seguimento && !conceitual) decide = false;   // "explica de novo" sem assunto anterior: o farmacia.js responde
     else if (!manter && !academico) {
       if (conceitual && interp.seguimento) decide = true;
@@ -934,7 +936,7 @@
       }
     }
     if (!decide) { if (!SOCIAL[lid]) M.contexto.marcarLocal(); return null; }
-    if (interp.ambiguidade && !interp.seguimento) {
+    if (interp.ambiguidade && !interp.seguimento && !forced) {
       var a = interp.ambiguidade;
       return Promise.resolve(R(p(esc(a.pergunta)), a.opcoes.map(function (o) { return { label: o[0], q: o[1] }; })));
     }

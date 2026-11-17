@@ -675,3 +675,48 @@ html #modal-farmacia .farma-header .farma-title { font-size: 1.3rem !important; 
 #modal-farmacia .farma-card strong { font-size: .82rem; }
 #modal-farmacia .farma-card small { font-size: .7rem; }
 #modal-farmacia .farma-chip, #modal-farmacia .farma-act { font-size: .74rem; }
+
+/* =========================================================
+   "O que você pode fazer?" — catálogo de funcionalidades dentro da conversa
+   Um índice, não uma grade de cartões: categorias separadas por filetes, linhas de ação sem caixa. A categoria aberta
+   ganha o ícone preenchido (mesma convenção de aba ativa do resto do app). Tokens --pa-* e Chirp herdados.
+   ========================================================= */
+.fd { margin-top: .6rem; border-top: 1px solid var(--pa-line); }
+.fd-cat { border-bottom: 1px solid var(--pa-line); }
+.fd-cat > summary {
+  list-style: none; display: flex; align-items: center; gap: .65rem; padding: .62rem 0; min-height: 48px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.fd-cat > summary::-webkit-details-marker { display: none; }
+.fd-cat > summary:focus-visible { outline: none; box-shadow: var(--pa-focus); border-radius: 8px; }
+.fd-ico {
+  flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px;
+  background: var(--pa-primary-soft); color: var(--pa-primary); transition: background-color .15s, color .15s;
+}
+.fd-ico svg { width: 18px; height: 18px; }
+.fd-cat[open] > summary .fd-ico { background: var(--pa-primary); color: #fff; }
+html.dark .fd-cat[open] > summary .fd-ico { color: #0f1a16; }
+.fd-head { flex: 1 1 auto; min-width: 0; display: grid; gap: .05rem; }
+.fd-head strong { font-size: .9rem; font-weight: 700; line-height: 1.25; }
+.fd-head small { font-size: .74rem; line-height: 1.25; color: var(--pa-muted); }
+.fd-cat.is-ai .fd-head small { color: var(--pa-primary); font-weight: 600; }
+.fd-chev { flex: 0 0 auto; width: 16px; height: 16px; color: var(--pa-muted); transition: transform .15s; }
+.fd-cat[open] > summary .fd-chev { transform: rotate(180deg); }
+.fd-list { display: grid; gap: 1px; padding: 0 0 .55rem 2.3rem; }
+.fd-act {
+  position: relative; width: 100%; display: block; text-align: left; font: inherit; color: var(--pa-ink); cursor: pointer;
+  border: 0; border-radius: 8px; background: transparent; padding: .5rem 1.5rem .5rem .6rem; min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+.fd-act::after {
+  content: ""; position: absolute; right: .7rem; top: 50%; width: 6px; height: 6px; margin-top: -3px;
+  border-top: 1.8px solid var(--pa-muted); border-right: 1.8px solid var(--pa-muted); transform: rotate(45deg);
+}
+.fd-act-txt { display: grid; gap: .05rem; min-width: 0; }
+.fd-act strong { font-size: .86rem; font-weight: 600; line-height: 1.3; }
+.fd-act small { font-size: .74rem; line-height: 1.3; color: var(--pa-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-act:hover { background: var(--pa-surface-soft); }
+.fd-act:active { background: var(--pa-surface-soft); transform: scale(.99); }
+.fd-act:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.farma-bubble .fd-foot { margin-top: .6rem; font-size: .76rem; color: var(--pa-muted); }
+@media (prefers-reduced-motion: reduce) { .fd-ico, .fd-chev { transition: none; } }

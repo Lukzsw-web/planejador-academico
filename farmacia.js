@@ -1178,16 +1178,72 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       p('Estou em <strong>beta</strong>: ainda erro e não entendo tudo. Quanto mais claro o pedido, melhor eu respondo.'),
       [{ label: 'O que você pode fazer?', q: 'O que você pode fazer?' }]);
   }
+  // "O que você pode fazer?": em vez de um parágrafo, um catálogo interativo dentro da conversa. Cada linha é um
+  // botão [data-farma-ask] comum: o clique cai no mesmo ask() de qualquer chip/sugestão (motor local primeiro; a IA
+  // online só entra, com consentimento, nas perguntas de conteúdo). Sem JS próprio: <details> nativo.
+  var FEATURE_ICONS = {
+    plan: '<rect x="5" y="12" width="3.2" height="7" rx="1"></rect><rect x="10.4" y="8" width="3.2" height="11" rx="1"></rect><rect x="15.8" y="4.5" width="3.2" height="14.5" rx="1"></rect>',
+    grade: '<rect x="4.5" y="4.5" width="6" height="6" rx="1.5"></rect><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"></rect><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"></rect><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"></rect>',
+    rules: '<path d="M7 3.5h7.5L19 8v12.5H7z"></path><path d="M14.5 3.5V8H19M10 12.5h6M10 16h6"></path>',
+    life: '<path d="M3.5 9.5L12 4.5l8.5 5M5.5 10.5v7.5M10 10.5v7.5M14 10.5v7.5M18.5 10.5v7.5M3.5 20h17"></path>',
+    ai: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"></path>'
+  };
+  var IA_EXERCISES = 'Crie questões de múltipla escolha sobre o assunto solicitado, com dificuldade progressiva, alternativas e gabarito comentado ao final. Pergunte o tema ao usuário caso ele ainda não tenha especificado.';
+  var IA_DRUGS = 'Atue como assistente de estudos farmacêuticos e ajude o usuário a consultar e compreender informações sobre medicamentos, incluindo mecanismos de ação, indicações, contraindicações e efeitos adversos, respeitando os limites de segurança e as fontes disponíveis. Pergunte qual medicamento o usuário quer estudar caso ele ainda não tenha dito.';
+  var IA_CONCEPT = 'Explique de forma clara e com um exemplo o conceito de Farmácia que o usuário quer estudar. Pergunte qual conceito caso ele ainda não tenha dito.';
+  // [título, subtítulo (1 linha), pergunta enviada, texto mostrado como mensagem do usuário (omitido = a própria pergunta)]
+  function featureGroups() {
+    return [
+      { ico: 'plan', t: 'Seu planejamento', open: true, items: [
+        ['O que posso puxar', 'Disciplinas liberadas para você agora', 'O que posso puxar?'],
+        ['Montar a grade', 'Uma sugestão pronta para o próximo período', 'Monte uma grade para o próximo período'],
+        ['O que mais destrava', 'Matérias que abrem mais caminho', 'O que mais destrava?'],
+        ['Quanto falta', 'Créditos e disciplinas que restam', 'Quantos créditos faltam?']
+      ] },
+      { ico: 'grade', t: 'Sua grade', items: [
+        ['Pré-requisitos', 'O que ela exige e o que ela tranca', 'Quais os pré-requisitos de uma disciplina?'],
+        ['E se eu reprovar?', 'O efeito nas matérias seguintes', 'E se eu reprovar em uma disciplina?'],
+        ['Ementa', 'O conteúdo de uma disciplina', 'Qual a ementa?'],
+        ['Fluxograma do curso', 'PDF do currículo novo', 'Fluxograma do curso']
+      ] },
+      { ico: 'rules', t: 'Regras da UFRJ', items: [
+        ['Trancamento', 'Como trancar a matrícula', 'Como trancar a matrícula?'],
+        ['Frequência', 'Faltas e aprovação', 'Qual a frequência mínima?'],
+        ['CR e CRA', 'Como são calculados', 'Como é calculado o CR?'],
+        ['TCC', 'Regras do trabalho de conclusão', 'Regras do TCC'],
+        ['Bolsas', 'Requisitos e modalidades', 'Quais os requisitos das bolsas?'],
+        ['Prazo para se formar', 'Tempo máximo do curso', 'Qual o prazo máximo para me formar?']
+      ] },
+      { ico: 'life', t: 'Vida acadêmica', items: [
+        ['Contatos', 'Coordenação, secretaria e professores', 'Contatos da coordenação'],
+        ['CRID', 'O comprovante de inscrição', 'O que é o CRID?'],
+        ['Atividades complementares', 'Horas exigidas', 'O que são atividades complementares?'],
+        ['Extensão', 'Como funciona no curso', 'Como funciona a extensão?']
+      ] },
+      { ico: 'ai', t: 'Estudar Farmácia', note: 'IA online · opcional', items: [
+        ['Explicar um conceito', 'Com linguagem clara e exemplo', IA_CONCEPT, 'Explicar um conceito'],
+        ['Medicamentos', 'Mecanismo, indicações e efeitos adversos', IA_DRUGS, 'Medicamentos'],
+        ['Criar exercícios', 'Questões com gabarito comentado', IA_EXERCISES, 'Criar exercícios']
+      ] }
+    ];
+  }
+  function featuresHTML() {
+    var chev = '<svg class="fd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+    return '<div class="fd" role="group" aria-label="Funcionalidades da FarmacIA">' + featureGroups().map(function (g) {
+      var sub = g.note || (g.items.length + ' opções');
+      return '<details class="fd-cat' + (g.ico === 'ai' ? ' is-ai' : '') + '"' + (g.open ? ' open' : '') + '>' +
+        '<summary><span class="fd-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + FEATURE_ICONS[g.ico] + '</svg></span>' +
+        '<span class="fd-head"><strong>' + esc(g.t) + '</strong><small>' + esc(sub) + '</small></span>' + chev + '</summary>' +
+        '<div class="fd-list">' + g.items.map(function (it) {
+          return '<button type="button" class="fd-act" data-farma-ask="' + esc(it[2]) + '"' + (it[3] ? ' data-farma-label="' + esc(it[3]) + '"' : '') + (g.ico === 'ai' ? ' data-farma-ia="1"' : '') + '>' +
+            '<span class="fd-act-txt"><strong>' + esc(it[0]) + '</strong><small>' + esc(it[1]) + '</small></span></button>';
+        }).join('') + '</div></details>';
+    }).join('') + '</div>';
+  }
   function answerAbout() {
-    function sec(title, items) { return '<p><strong>' + title + '</strong><br>' + items.map(function (i) { return '• ' + i; }).join('<br>') + '</p>'; }
-    var html = p((userName() ? nameHTML() + ', a' : 'A') + 'qui está o que eu sei fazer hoje:') +
-      sec('Sua grade', ['Dizer se você pode puxar uma matéria (“Posso puxar CIF I?”)', 'Pré-requisitos, co-requisitos e o que cada matéria tranca', 'Créditos, carga horária e período de qualquer disciplina', 'Conferir se duas matérias podem ser puxadas juntas']) +
-      sec('Seu planejamento', ['Listar o que você pode puxar agora e o que mais destrava', 'Sugerir uma grade para o próximo período', 'Mostrar quantos créditos e disciplinas faltam e o que você já cursou', 'Simular cenários (“e se eu reprovar em X?”) e comparar disciplinas', 'Mostrar a ementa de cada disciplina, segundo o PPC']) +
-      sec('Regras da UFRJ (Manual Estudantil e PPC)', ['Trancamento, cancelamento, frequência, nota mínima, CR e CRA', 'Prazo máximo, carga horária, extensão, atividades complementares e TCC', 'Bolsas, Dignidade Acadêmica, dispensa de disciplina e exercícios domiciliares']) +
-      sec('Vida acadêmica na Farmácia', ['Atendimento, e-mails e local da Coordenação e da Secretaria de Graduação', 'Como funcionam pedidos de inscrição, CRID, vagas, troca de turma e as letras do protocolo', 'Concomitância e quebra de pré-requisito, horário sobreposto e limite de um terço fora do curso', 'Professor orientador, plano de estudos, BOA e o Centro Acadêmico (CAFar)']) +
-      sec('Conversa', ['Entendo abreviações e erros de digitação (“oq vc pd fazer”)', 'Entendo respostas curtas (“a segunda”, “por quê?”, “explica de novo”) e posso explicar com exemplo', 'Você pode mudar nome, pronome e período quando quiser (“me chama de ...”)']) +
-      sec('O que ainda não faço', ['Cardápio do RU, horários de aula, salas ou notas. Ainda estou em beta.']);
-    return R(html, [{ label: 'O que posso puxar?', q: 'O que posso puxar?' }, { label: 'Monte uma grade', q: 'Monte uma grade para o próximo período' }, { label: 'Quantos créditos faltam?', q: 'Quantos créditos faltam?' }, { label: 'Como trancar a matrícula?', q: 'Como trancar a matrícula?' }]);
+    var html = p((userName() ? nameHTML() + ', e' : 'E') + 'scolha o que quer fazer e eu já começo:') + featuresHTML() +
+      '<p class="fd-foot">Ainda estou em <strong>beta</strong>. Não sei o cardápio do RU, horários de aula, salas nem notas.</p>';
+    return R(html, []);
   }
   function answerMyName() {
     if (!userName()) { awaiting = 'name'; return R(p('Ainda não sei o seu nome. <strong>Como posso te chamar?</strong>'), [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }]); }
@@ -1783,8 +1839,26 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     }).join('');
   }
 
-  function ask(query, display) {
+  // Pedido de conteúdo vindo do catálogo (opts.ia): não passa pelo motor local (que poderia confundir a instrução com outra
+  // intenção) e vai direto ao orquestrador; se a IA online não puder responder, o aluno vê o porquê e como ligá-la.
+  function iaIndisponivel() {
+    if (awaiting) return R(p('Antes disso, como posso te chamar? Diga seu nome (ou toque em “Prefiro não dizer”) e depois peça de novo.'), [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }]);
+    return R(p('Essa função usa a <strong>IA online</strong>, que está desligada ou indisponível agora. Para ligar, diga “permitir IA online”.'), [{ label: 'Permitir IA online', q: 'Permitir IA online' }, { label: 'O que é enviado?', q: 'O que é enviado?' }]);
+  }
+  // Depois de um botão de "Estudar Farmácia" a IA costuma perguntar o tema: a resposta curta do aluno ("diabetes", "losartana")
+  // segue para a IA com o histórico, em vez de ser tomada pelo motor local como nome de disciplina. Vale uma vez só.
+  var studyPending = false;
+  function parecerTema(q) {
+    var n = norm(q);
+    if (!n || q.length > 80 || /\?\s*$/.test(q) || words(n) > 8) return false;
+    var id = classify(q).id;
+    return id === 'unknown' || id === 'info' || id === 'topic' || id === 'glossary' || id === 'fact';
+  }
+  function ask(query, display, opts) {
     var q = String(query || '').trim();
+    var viaIA = !!(opts && opts.ia);
+    var tema = !viaIA && studyPending && !awaiting && parecerTema(q);
+    studyPending = viaIA;
     if (!q || busy) return;
     busy = true;
     addUser(display || q);
@@ -1794,7 +1868,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var delay = reduceMotion() ? 0 : 380;
     window.setTimeout(function () {
       var res;
-      try { res = respond(q); } catch (err) {
+      try { res = viaIA ? iaIndisponivel() : respond(q); if (tema && res) res.forcarIA = true; } catch (err) {
         console.warn('FarmacIA:', err);
         res = R(p('Tive um problema para responder essa. Tente reformular a pergunta, por favor.'));
       }
@@ -1806,7 +1880,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       };
       // Camada v2 (farmacia-ia.js): pode assumir perguntas de conteúdo (RAG + IA online) e devolve uma Promise.
       var orq = window.FarmaMod && window.FarmaMod.orquestrador, pending = null;
-      try { pending = orq ? orq.interceptar(q, res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
+      try { pending = orq && !(viaIA && awaiting) ? orq.interceptar(q, viaIA ? { id: 'unknown', html: res.html, chips: res.chips, forcarIA: true } : res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
       if (pending && typeof pending.then === 'function') {
         pending.then(function (r2) { finish(r2 || res); }, function (err3) { console.warn('FarmacIA v2:', err3); finish(res); });
       } else finish(res);
@@ -1930,7 +2004,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       }
       if (e.target.closest('[data-farma-flux]')) { openFluxViewer(); return; }
       var btn = e.target.closest('[data-farma-ask]');
-      if (btn) ask(btn.dataset.farmaAsk, btn.dataset.farmaLabel);
+      if (btn) ask(btn.dataset.farmaAsk, btn.dataset.farmaLabel, btn.hasAttribute('data-farma-ia') ? { ia: true } : null);
     });
     bindViewport();
     // Perfil alterado nas Configurações: se eu esperava o nome e ele já foi informado lá, sigo em frente.
