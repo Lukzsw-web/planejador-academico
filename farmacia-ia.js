@@ -618,32 +618,37 @@
     exerc: R('\\b(questoes|questao|exercicios?|quiz|simulado|flashcards?|treinar|praticar|me (pergunta|perguntas|testa|teste)|perguntas (de|sobre))\\b|\\b(faz\\w*|faca|gera\\w*|cri[ae]\\w*|mont[ae]\\w*|elabor\\w*|me da|quero|preciso de|bota)\\b(\\s+\\w+){0,3}\\s+(perguntas|questoes|exercicios)\\b'),
     resumo: R('\\b(resum\\w*|sintese|em topicos|topicos principais)\\b'),
     compF: R('\\b(diferenca|diferencas|difere|diferem|diferencia\\w*|compar\\w*|versus|vs|mesma coisa|o mesmo que|a mesma que|igual a|semelhan\\w*|parecid\\w*|similares?|equivalentes?)\\b'),
-    compM: R('\\bqual (e )?(o |a )?(melhor|mais forte|mais seguro|mais fraco)\\b'),
+    compM: R('\\bqual (e )?(o |a )?(melhor|mais forte|mais seguro|mais fraco)\\b|\\bqual (remedio|medicamento) (e|eh) (melhor|mais forte|mais seguro|mais fraco)\\b'),
+    clfCop: R('\\b(e|eh|sao)\\b.{1,40}\\bou\\b'),
+    clfArt: R('\\b\\w+ (e|eh|sao) (um|uma|uns|umas|o|a|os|as|considerad[oa]s?|classificad[oa]s?)\\b'),
+    clfPal: R('\\b(classificad[oa]s?|e do tipo|tipo de|categoria de)\\b'),
+    s11: R('\\bo que acontece (se|quando|com)\\b'),
     compX: R('\\b(x|vs|ou)\\b'),
     intF: R('\\b(interac\\w*|interag\\w*)\\b'),
     intM: R('\\b(juntos?|misturar|mistura|associa\\w*|combinar|combinacao|ao mesmo tempo)\\b'),
     mecF: R('\\b(mecanismo|modo de acao)\\b|\\bacao (d(o|a|os|as)|farmacologica|terapeutica)\\b'),
     mecW: R('\\bcomo\\b.*\\b(age|agem|atua|atuam|funciona|funcionam|trabalha|trabalham|reduz|diminui|aumenta|inibe|bloqueia|estimula|combate|alivia)\\b|\\bo que .{1,30}\\bfaz (no|pelo|com o) (corpo|organismo)\\b'),
-    intP: R('\\b(da problema|tem problema|faz mal|e perigoso|tem risco|corta o efeito|anula)\\b'),
+    intP: R('\\b(da problema|tem problema|faz mal|e perigoso|tem risco|corta o efeito|anula)\\b|\\bpode(m)?\\s*$'),
     s7: R('\\b(melhor|mais forte|mais seguro) (remedio|medicamento|antibiotico|analgesico)\\b|\\bqual (remedio|medicamento) (e|eh) (melhor|mais forte|mais seguro)\\b'),
     s10: R('\\be (muito|pouco|demais|alto|baixo|seguro|perigoso|normal)\\b'),
     def: R('\\b(o que (e|sao|significa|quer dizer|seria)|defin\\w*|conceito|significado|me fala|fala sobre|fale sobre)\\b'),
     expl: R('\\b(explic\\w*|entender|entendo|me ensina|ensina|duvida sobre|ajuda\\w* (com|em|sobre)|ajudar (com|em|sobre))\\b'),
     med: R('\\b(para que (serve|e usado|usa)|serve para que|serve para|e usad[oa] para|indicac\\w*|indicad[oa]|efeitos? (adversos?|colaterais?|indesejados?)|reacoes? adversas?|contraindicac\\w*|bula|posologia|usos?|colaterais|faz mal|e bom para|como (usar|tomar|se usa|se toma)|dose|dosagem)\\b'),
     exame: R('\\bexames?\\b|\\bvalor(es)? de referencia\\b|\\breferencia\\b|\\bresultado\\b|\\bdeu \\d|\\b(alto|alta|baixo|baixa|elevado|elevada|aumentad[oa]|diminuid[oa])\\b|\\binterpret\\w*|\\blaudo\\b'),
-    classeC: R('\\b(classe|grupo|pertence|exemplos? de|quais (sao )?(os |as )?(medicamentos|remedios|farmacos|exemplos)|me fala (dos|das)|quais sao)\\b'),
+    classeC: R('\\b(classe|grupo|pertence|o que (caracteriza|define|torna)|exemplos? de|quais (sao )?(os |as )?(medicamentos|remedios|farmacos|exemplos)|me fala (dos|das)|quais sao)\\b'),
     calc: R('\\b(quanto (e|da|fica|vale)|converte\\w*|transform\\w*|passa (para|pra)|em (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas)|conversao|equivale\\w*|quantos? (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas|comprimidos|gotas)|regra de tres|dilui\\w*|concentracao|calcul\\w*|molaridade)\\b'),
     anaf: R('\\b(isso|disso|nisso|esse|essa|esses|essas|desse|dessa|dele|dela|deles|delas|ele|ela|eles|elas|o mesmo|a mesma)\\b'),
     seq: R('^(e |mais |continua|prossiga|pode continuar|de novo|de outro jeito|de outra forma|aprofunda|detalha)|\\b(de novo|de outro jeito|de outra forma|mais simples|mais facil|mais detalhes|aprofund\\w*|detalh\\w*|exemplos?|continua)\\b'),
-    s1: R('\\b(dobro|dobrar|em dobro|tomar mais|mais um comprimido|mais uma dose|passar da dose|dose maxima|overdose|a mais|por engano|duas vezes|tres vezes|esqueci (de )?tomar|esqueci a dose|pular (a )?dose)\\b'),
+    s1: R('\\b(dobro|dobrar|em dobro|tomar mais|mais um comprimido|mais uma dose|passar da dose|dose maxima|overdose|a mais|por engano|duas vezes|tres vezes|de uma (so )?vez|esqueci (de )?tomar|esqueci a dose|pular (a )?dose)\\b'),
     s2: R('\\bposso (tomar|dar|usar|misturar|cortar|parar|trocar|suspender|beber|comer|dirigir)\\b|\\btomar\\b.*\\bjuntos?\\b|\\bpode(m)? ser (tomad\\w*|usad\\w*|trocad\\w*|misturad\\w*)\\b|\\bdevo (parar|tomar|trocar|suspender|continuar)\\b|\\bda para (tomar|misturar)\\b|\\bpode(m)? (tomar|misturar|trocar)\\b'),
     s3: R('\\b(alergia|alergic[oa]|gravidez|gravida|gestante|gestacao|amament\\w*|lactante|bebe|crianca|neonato|idoso|renal|hepatic\\w*)\\b'),
     s4: R('\\b(vencido|sem receita|sem prescricao|automedic\\w*|emagrecer|emagrecimento|abortivo|energetico|alcool|bebida alcoolica|cerveja)\\b'),
     s5: R('\\b(dose|quanto)\\b.*\\bpara mim\\b|\\b(minha|meu) (dose|remedio)\\b|\\bqual (remedio|medicamento) (eu|devo)\\b|\\bdose (certa|ideal|correta|segura)\\b'),
     s6: R('\\btomei\\b|\\btomamos\\b|\\bengoli\\b|\\bingeri\\b|\\btomou\\b'),
     s8: R('\\b(meu|minha) \\w+ (veio|deu|esta|ficou|saiu)\\b|\\be grave\\b|\\bdevo me preocupar\\b|\\bpreocupante\\b|\\bperigoso\\b'),
+    doseX: R('\\bdose (resposta|efetiva|letal|terapeutica|toxica)\\b|\\bdose-resposta\\b'),
     dose: R('\\bdose\\b|\\bdosagem\\b|\\bposologia\\b|\\bquanto .*\\b(tomar|dar)\\b|\\bcomo (tomar|usar|dar)\\b'),
-    forma: R('\\b(comprimido|remedio|medicamento|capsula|dose|antibiotico|pilula|injecao|xarope|gotas)\\b'),
+    forma: R('\\b(comprimidos?|remedios?|medicamentos?|capsulas?|doses?|antibioticos?|pilulas?|injecao|injecoes|xarope|gotas|cartelas?|anticoncepcional|analgesicos?)\\b'),
     ajuda: R('\\b(o que (voce|vc) (sabe|pode|consegue) fazer|como (voce|vc) funciona|quem (e|eh) (voce|vc)|quem (te )?(criou|fez)|o que (voce|vc) faz|quais (sao )?(suas|seus) (funcoes|recursos)|me conta uma piada|me indica|me recomenda)\\b'),
     ajudaObj: R('\\bajuda (com|em|sobre)\\s+\\w+'),
     interrog: R('^(qual|quais|quem|quando|onde|quanto|quantos|como|por que|o que|receita|previsao)\\b'),
@@ -699,20 +704,24 @@
     var def = cue.def || cue.expl || (cue.mecW && !drog0);
     // ---- segurança
     var sc = 0;
-    if (cue.s1) sc += 3; if (cue.s2) sc += 3; if (cue.s3) sc += 2.5; if (cue.s4) sc += 2; if (cue.s6) sc += 3; if (cue.s5) sc += 5; if (cue.s7) sc += 2.5; if (cue.s10 && qtd.length && nMed) sc += 4;
+    if (cue.s1) sc += 3; if (cue.s2) sc += 3; if (cue.s3) sc += 2.5; if (cue.s4) sc += 2; if (cue.s6) sc += 3; if (cue.s5) sc += 5; if (cue.s7 && nMed + nClasse < 2) sc += 2.5; if (cue.s10 && qtd.length && nMed) sc += 4;
     if (cue.s2 && nMed >= 2) sc += 1;
     if (cue.s6 && nMed) sc += 1;
-    if (cue.compM && E >= 1) sc += 2;
+    if (cue.compM && E === 1) sc += 2;
+    if (cue.s11) sc += 2.5;
     var temS = sc > 0;
     if (temS && (cue.forma || nMed)) sc += 1.5;
     if (temS && cue.intM && (cue.s2 || cue.s6)) sc += 1;
     if (cue.dose && cue.s3) sc += 4;
     if (cue.s8 && E) sc += 2;
-    var doseMed = cue.dose && (nMed > 0 || nClasse > 0);
+    var doseMed = cue.dose && !cue.doseX && (nMed > 0 || nClasse > 0 || !!ctx);
     add('seguranca_farmaceutica', sc >= 4 ? sc : 0, 'risco');
     // ---- conteúdo
     var comp = cue.compF || (cue.compM && E >= 2);
-    var par = E >= 2 && nw <= 7 && (cue.compX && !cue.compF) ? 5 : 0;
+    // pergunta de classificação conceitual ("X é A ou B?", "X é um Y?"): não é comparação entre substâncias
+    var perguntaDef = /\b(o que|como|qual|quais|quando|onde|por que) (e|eh|sao)\b/.test(n);
+    var clf = E >= 1 && !cue.compF && !cue.compM && !cue.social && !cue.saudacao && !/\b(classe|grupo)\b/.test(n) && ((cue.clfCop && nMed + nClasse < 2) || (cue.clfArt && !perguntaDef) || cue.clfPal);
+    var par = E >= 2 && nw <= 7 && (cue.compX && !cue.compF) && !clf ? 5 : 0;
     var compScore = (cue.compF ? 5 : 0) + (cue.compM && E >= 2 ? 3 : 0) + (E >= 2 && comp ? 2 : 0) + par;
     add((nMed + nClasse >= 2) ? 'comparar_substancias' : 'comparar_conceitos', compScore, 'comparação');
     var intScore = (cue.intF ? 5 : (cue.intM ? 3 : (cue.intP && nMed >= 2 ? 4 : 0)));
@@ -727,6 +736,7 @@
     if (nMed && /\b(classe|grupo|faz parte|pertence|categoria|tipo de (remedio|medicamento))\b/.test(n)) add('consultar_classe_farmacologica', 4, 'pergunta de classe');
     if (nExame || (cue.exame && E)) add('explicar_exame', (nExame ? 4 : 0) + (cue.exame ? 3 : 0) + (nExame && def ? 1 : 0) + (cue.s8 ? 1 : 0), 'exame');
     if (qtd.length || /\d+\s*[+*/x-]\s*\d+/.test(n)) { if (cue.calc || /\d+\s*[+*/x-]\s*\d+/.test(n)) add('resolver_calculo', (qtd.length ? 3 : 0) + (cue.calc ? 4 : 0) + 1, 'cálculo'); }
+    if (clf) add('explicar_conceito', 5, 'classificação conceitual');
     if (nConc || (E === 0 && def && sinalDom)) add('explicar_conceito', (nConc ? 3 : 0) + (def ? 3 : 0) + (E === 0 ? -1 : 0) + (nConc && nw <= 5 ? 1.5 : 0), 'conceito');
     else if (E === 0 && def) add('explicar_conceito', 2, 'conceito sem termo conhecido');
     if (nExame === 0 && nMed === 0 && nClasse === 0 && nConc === 0 && cue.def && !sinalDom) { /* fora do domínio: tratado abaixo */ }
@@ -764,12 +774,23 @@
     var conf = Math.max(0, Math.min(1, 0.5 * Math.min(top.score, 8) / 8 + 0.5 * Math.min(margem, 4) / 4));
     var nivel = conf >= 0.6 ? 'alta' : conf >= 0.4 ? 'media' : 'baixa';
     // risco sinalizado independentemente da intenção
-    var nivelSeg = null;
+    var nivelSeg = null, riscos = [];
+    var ctxFarma = cue.forma || nMed > 0 || nClasse > 0 || cue.s5, semFarma = cue.acad && nMed + nClasse === 0;
+    var interMed = (cue.intF || cue.intM || (cue.intP && nMed >= 2)) && (nMed + nClasse > 0 || !!ctx);
+    if (!semFarma) {
+      if (doseMed || (cue.dose && !cue.doseX && ctxFarma) || cue.s5) riscos.push('dose');
+      if (interMed || top.id === 'explicar_interacao') riscos.push('interacao');
+      if ((cue.s3 && ctxFarma) || cue.s5) riscos.push('populacao');
+      if ((cue.s1 || cue.s6) && (ctxFarma || top.id === 'seguranca_farmaceutica')) riscos.push('excesso');
+      if (cue.s8 && E) riscos.push('exame_pessoal');
+      if ((cue.s4 && ctxFarma) || cue.s7 || (cue.compM && nMed > 0)) riscos.push('recomendacao');
+    }
     if (top.id === 'seguranca_farmaceutica') nivelSeg = 'critico';
-    else if (top.id === 'explicar_interacao' || cue.intF || cue.intP || sc >= 2 || doseMed || (cue.s5 && nMed === 0) || (cue.s8 && E)) nivelSeg = top.id === 'explicar_interacao' ? 'critico' : 'atencao';
+    else if (top.id === 'explicar_interacao') nivelSeg = 'critico';
+    else if (riscos.length) nivelSeg = 'atencao';
     var entidades = ents.map(function (e) { return { nome: e.nome, tipo: e.tipo, categoria: e.categoria, aprox: !!e.aprox }; }).concat(qtd);
     return { id: top.id, score: top.score, confianca: Math.round(conf * 100) / 100, nivel: nivel, ranking: ranking.slice(0, 3), sinais: sinais, entidades: entidades, incertas: info.incertas || [], ambigua: !!(info.incertas || []).length,
-      seguranca: !!nivelSeg, nivelSeguranca: nivelSeg, referencia: ctx ? ctx.rotulo : null, faltaContexto: top.id === 'pedir_esclarecimento' && !!contCue && !ctx, foraDominio: foraDominio && top.id === 'ajuda_geral', normalizada: n, corrigidas: an.corrigidas };
+      seguranca: !!nivelSeg, nivelSeguranca: nivelSeg, riscos: riscos, subtipo: (clf && top.id === 'explicar_conceito') ? 'classificacao' : null, referencia: ctx ? ctx.rotulo : null, faltaContexto: top.id === 'pedir_esclarecimento' && !!contCue && !ctx, foraDominio: foraDominio && top.id === 'ajuda_geral', normalizada: n, corrigidas: an.corrigidas };
   }
 
   M.intencao = { classificar: classificar, INTENCOES: ['explicar_conceito', 'consultar_medicamento', 'explicar_mecanismo_acao', 'consultar_classe_farmacologica', 'comparar_substancias', 'comparar_conceitos', 'explicar_interacao', 'explicar_exame', 'resolver_calculo', 'criar_exercicios', 'resumir_conteudo', 'continuar_assunto', 'saudacao', 'social', 'ajuda_geral', 'pedir_esclarecimento', 'seguranca_farmaceutica', 'academico'] };
@@ -1297,7 +1318,22 @@
     return R(html, chips.length ? chips : (F()._chips ? F()._chips() : []));
   }
 
+  // Portão de segurança farmacêutica: roda ANTES de qualquer provedor (online ou futuro) e não depende de rede.
+  // Pergunta sobre dose, interação, gravidez/amamentação, crianças, alergia, excesso de dose, exame pessoal ou
+  // recomendação de remédio recebe uma resposta fixa e local, sem conteúdo clínico, e NADA é enviado para fora.
+  function bloqueioRisco(interp) {
+    var v = interp && interp.v3;
+    if (!v || !v.seguranca || v.id === 'academico') return null;
+    var r = v.riscos || [], html = p('<strong>Essa pergunta envolve segurança no uso de medicamentos.</strong>');
+    html += p('Dose, combinação de remédios, gravidez e amamentação, crianças, alergias e resultado de exame dependem de cada pessoa. Por isso eu não respondo isso, nem pela IA online: converse com um farmacêutico ou médico e confira a bula do produto.');
+    if (r.indexOf('exame_pessoal') >= 0) html += p('Também não interpreto o resultado de exame de uma pessoa: quem pediu o exame pode explicar o que ele significa no seu caso.');
+    if (r.indexOf('excesso') >= 0) html += p('Se você tomou mais do que o indicado ou está passando mal, procure atendimento agora: SAMU 192 ou Disque-Intoxicação 0800 722 6001.');
+    html += p('Posso explicar o assunto em termos gerais, sem orientar o seu caso, se você perguntar de outro jeito.');
+    return R(html, F()._chips ? F()._chips() : []);
+  }
+
   function tratar(raw, interp, local, prefixo) {
+    var bloq = bloqueioRisco(interp); if (bloq) return Promise.resolve(bloq);   // segunda barreira: nada de risco chega ao provedor
     var res = M.contexto.resolver(interp, raw), busca = M.rag.preparar(interp, res.texto), chk = M.ia.pode();
     if (!busca.suficiente) busca = { resultados: [], cobertura: busca.cobertura, suficiente: false, vazio: busca.vazio };   // material fraco não vira "fonte" nem contexto
     prefixo = prefixo || '';
@@ -1344,14 +1380,16 @@
     var temEnt = interp.conceitos.length > 0 || interp.farmacos.length > 0, decide = false;
     var forced = !!(local && local.forcarIA);   // pedido de conteúdo vindo do catálogo da FarmacIA (ou o tema que o aluno deu em seguida): vai à IA se ela puder responder
     var regraPlain = lid === 'rule' && window.FarmaRegras && window.FarmaRegras.match(n);   // regra pedida com as próprias palavras (não por correção ortográfica)
+    var bloqueio = bloqueioRisco(interp);
+    if (bloqueio) return Promise.resolve(bloqueio);   // risco classificado antes de qualquer roteamento
     var v3 = interp.v3, conteudoV3 = !!(v3 && !v3.seguranca && CONTEUDO_V3[v3.id] && v3.confianca >= 0.55 && v3.entidades.some(function (e) { return e.tipo !== 'quantidade' && e.tipo !== 'area'; }));   // pergunta de conteúdo com termo reconhecido e sem risco sinalizado
-    var manter = (SOCIAL[lid] && !(conteudoV3 && (lid === 'about' || lid === 'who'))) || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
+    var manter = (SOCIAL[lid] && !conteudoV3) || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
     var academico = interp.academica || interp.codigoExplicito || (!!interp.disciplina && !temEnt && (!interp.pedagogica || interp.numeral));
     if (forced) { var pf = M.ia.pode(); decide = pf.ok || ['sem_consentimento', 'intervalo', 'pausado', 'teto_sessao'].indexOf(pf.motivo) >= 0; }
     else if (lid === 'topic') decide = true;
     else if (interp.seguimento && !conceitual) decide = false;   // "explica de novo" sem assunto anterior: o farmacia.js responde
     else if (!manter && !academico) {
-      if (conteudoV3 && (lid === 'unknown' || lid === 'about' || lid === 'who')) decide = true;   // o motor antigo não entendeu (ou respondeu como conversa): vai para material local / IA opcional
+      if (conteudoV3 && (lid === 'unknown' || SOCIAL[lid])) decide = true;   // o motor antigo não entendeu (ou respondeu como conversa): vai para material local / IA opcional
       else if (conceitual && interp.seguimento) decide = true;
       else if (temEnt && (interp.pedagogica || OVERR[lid]) && !(lid === 'info' && interp.numeral)) decide = true;
       else if (!temEnt && OVERR[lid] && interp.pedagogica) decide = true;
