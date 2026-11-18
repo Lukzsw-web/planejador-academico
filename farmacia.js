@@ -1048,7 +1048,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
 
   function timeGreeting() {
     var h = new Date().getHours();
-    return h < 5 ? 'Boa madrugada' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+    return h < 6 ? 'Boa madrugada' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
   }
   function exampleChips() {
     return [
@@ -1058,22 +1058,22 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       { label: 'Como trancar a matrícula?', q: 'Como trancar a matrícula?' }
     ];
   }
+  // Sugestões rápidas: "label" é o que aparece (e o que vira a mensagem do aluno); "q" é a pergunta que o motor entende.
+  var SUGGESTS = [
+    { label: 'Montar uma grade', q: 'Monte uma grade para o próximo período',
+      ico: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"></rect><path d="M3.5 9.5h17M3.5 14.8h17M9.2 9.5V20M14.8 9.5V20"></path>' },
+    { label: 'Fluxograma em PDF do curso', q: 'Fluxograma do curso',
+      ico: '<circle cx="6" cy="5.5" r="2.2"></circle><circle cx="6" cy="18.5" r="2.2"></circle><circle cx="18" cy="10" r="2.2"></circle><path d="M6 7.7v8.6M6 14.5c0-2.8 2.3-4.5 6-4.5h3.8"></path>' },
+    { label: 'O que você pode fazer?', q: 'O que você pode fazer?',
+      ico: '<circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.5a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.3-2.6 4"></path><path d="M12 17.4v.2"></path>' }
+  ];
+  function suggestRowsHTML() {
+    return SUGGESTS.map(function (c) {
+      return '<button type="button" class="farma-card" data-farma-ask="' + esc(c.q) + '" data-farma-label="' + esc(c.label) + '"><span class="farma-card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + c.ico + '</svg></span><span class="farma-card-txt"><strong>' + esc(c.label) + '</strong></span></button>';
+    }).join('');
+  }
   function cardsHTML() {
-    var cards = [
-      ['Posso puxar Farmacocinética?', 'Confira pré-requisitos'],
-      ['Fluxograma do curso', 'Obtenha o PDF do currículo novo'],
-      ['Monte uma grade para o próximo período', 'Uma sugestão pronta'],
-      ['O que você pode fazer?', 'Veja o que eu sei fazer']
-    ];
-    var ICONS = [
-      '<path d="M5 12.5l4.2 4.2L19 7"></path><circle cx="12" cy="12" r="9.2"></circle>',
-      '<rect x="3.5" y="4" width="7" height="5" rx="1.4"></rect><rect x="13.5" y="4" width="7" height="5" rx="1.4"></rect><rect x="8.5" y="15" width="7" height="5" rx="1.4"></rect><path d="M7 9v2.5h10V9M12 11.5V15"></path>',
-      '<rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M4 10h16M9 3.5v3M15 3.5v3"></path>',
-      '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"></path>'
-    ];
-    return '<p class="farma-cards-title">' + 'Sugestões rápidas' + '</p><div class="farma-cards">' + cards.map(function (c, i) {
-      return '<button type="button" class="farma-card" data-farma-ask="' + esc(c[0]) + '"><span class="farma-card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ICONS[i % ICONS.length] + '</svg></span><span class="farma-card-txt"><strong>' + esc(c[0]) + '</strong><small>' + esc(c[1]) + '</small></span></button>';
-    }).join('') + '</div>';
+    return '<p class="farma-cards-title">Sugestões rápidas</p><div class="farma-cards">' + suggestRowsHTML() + '</div>';
   }
 
   // ---------- Fluxograma do currículo novo (PDF) ----------
@@ -1437,11 +1437,11 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     return R(p('Não consegui entender essa' + (userName() ? ', ' + nameHTML() : '') + '. Ainda estou em <strong>beta</strong> e conheço pré-requisitos, o seu progresso, sugestões de grade e regras da UFRJ. Tente perguntar de outro jeito ou veja o que eu sei fazer:'), exampleChips());
   }
 
+  // Primeiro acesso, sem nome: a FarmacIA se apresenta e pergunta o nome. Com nome (ou sem querer informar),
+  // a tela começa vazia: saudação do horário (se houver nome) + sugestões, tudo some na primeira mensagem.
   function welcomeHTML() {
-    var html = p('Eu sou a <strong>FarmacIA</strong>, assistente dos alunos aqui dentro do Planejador.') +
-      p('Ainda estou em <strong>beta</strong>, então posso não entender direito o que você pede. Tenha um pouquinho de paciência comigo, combinado? Se eu errar, tente perguntar de outro jeito.');
-    html += needsName() ? p('Para começar: <strong>como posso te chamar?</strong>') : p('O que você quer saber hoje?') + cardsHTML();
-    return html;
+    return p('Eu sou a <strong>FarmacIA</strong>, assistente dos alunos aqui dentro do Planejador. Ainda estou em <strong>beta</strong>, então posso errar: se isso acontecer, tente perguntar de outro jeito.') +
+      p('Para começar: <strong>como posso te chamar?</strong>');
   }
   // ---------- montagem da resposta ----------
   var LEAD_IDS = { progress: 1, pending: 1, available: 1, period: 1, periodPending: 1, cond: 1, siga: 1, nextPeriod: 1, canTake: 1, locks: 1, prereqs: 1, coreq: 1, info: 1, followup: 1, fact: 1, together: 1, plan: 1, priority: 1, free: 1, done: 1, rule: 1, glossary: 1 };
@@ -1809,12 +1809,34 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var target = tall ? top : el.scrollHeight;
     el.scrollTo ? el.scrollTo({ top: target, behavior: reduceMotion() ? 'auto' : 'smooth' }) : (el.scrollTop = target);
   }
+  // ---------- tela vazia (sem mensagens): saudação do horário + sugestões rápidas ----------
+  // Sem nome = sem saudação. Assim que o primeiro balão aparece, saudação e sugestões saem de cena.
+  function helloLine() {
+    var n = userName();
+    return n ? '<p class="farma-hello-line">' + esc(timeGreeting()) + ', <span class="farma-hello-name">' + esc(n) + '</span></p>' : '';
+  }
+  function syncEmpty() {
+    var el = messagesEl(), page = $('modal-farmacia'), box = $('farma-suggest');
+    if (!el || !page) return;
+    var empty = !el.querySelector('.farma-msg');
+    page.classList.toggle('is-empty', empty);
+    var hello = el.querySelector('.farma-hello');
+    if (!empty) { if (hello) hello.remove(); if (box) box.hidden = true; return; }
+    var html = helloLine();
+    if (!html) { if (hello) hello.remove(); }
+    else {
+      if (!hello) { hello = document.createElement('div'); hello.className = 'farma-hello'; hello.setAttribute('data-no-i18n', ''); el.appendChild(hello); }
+      if (hello.innerHTML !== html) hello.innerHTML = html;
+    }
+    if (box) { if (!box.firstChild) box.innerHTML = suggestRowsHTML(); box.hidden = false; }
+  }
   function addUser(text) {
     var el = messagesEl();
     var div = document.createElement('div');
     div.className = 'farma-msg is-user';
     div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + esc(text) + '</div>';
     el.appendChild(div);
+    syncEmpty();
     scrollDown();
   }
   function addBot(html, extraClass) {
@@ -1824,6 +1846,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var actions = extraClass === 'is-typing' ? '' : '<div class="farma-actions"><button type="button" class="farma-act" data-farma-copy aria-label="' + esc(tr('Copiar resposta')) + '" title="' + esc(tr('Copiar resposta')) + '">' + COPY_ICON + '</button></div>';
     div.innerHTML = '<div class="farma-body"><div class="farma-bubble" data-no-i18n>' + html + '</div>' + actions + '</div>';
     el.appendChild(div);
+    syncEmpty();
     if (extraClass === 'is-typing') { scrollDown(); return div; }
     if (window.FarmaVisual) { try { window.FarmaVisual.aprimorar(div); } catch (errV) { console.warn('FarmacIA visual:', errV); } }
     scrollToMessage(div);
@@ -1891,7 +1914,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var input = $('farma-input');
     if (!input) return;
     var asking = awaiting === 'name' || awaiting === 'newname';
-    input.placeholder = asking ? tr('Digite seu nome...') : tr('Pergunte qualquer coisa sobre a sua grade...');
+    input.placeholder = asking ? tr('Digite seu nome...') : tr('Pergunte à FarmacIA...');
     input.setAttribute('aria-label', input.placeholder);
   }
   function reset() {
@@ -1903,8 +1926,9 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     awaiting = needsName() ? 'name' : null;
     busy = false;
     if (window.FarmaMod && window.FarmaMod.orquestrador) window.FarmaMod.orquestrador.reset();
-    addBot(welcomeHTML());
+    if (needsName()) addBot(welcomeHTML());
     setChips(needsName() ? [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }] : []);
+    syncEmpty();
     setPlaceholder();
   }
 
@@ -1932,12 +1956,13 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       if (VZ && m.r !== 'u') { try { VZ.aprimorar(div); } catch (e1) { /* segue sem o componente */ } }
     });
     setChips(conv.chips || []);
+    syncEmpty();
     setPlaceholder();
     el.scrollTop = el.scrollHeight;
   }
 
   function show() {
-    if (!started) { started = true; reset(); }
+    if (!started) { started = true; reset(); } else syncEmpty();
   }
 
   // Teclado do iPhone: a página usa a área visível, para o campo não ficar escondido.
@@ -2011,6 +2036,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     window.addEventListener('planejador:profile', function () {
       if ((awaiting === 'name' || awaiting === 'newname' || awaiting === 'pron') && userName()) { awaiting = null; setSkip(false); }
       setPlaceholder();
+      if (started) syncEmpty();
     });
     // Sai do modo "digitando" ao trocar de aba.
     document.addEventListener('click', function (e) {

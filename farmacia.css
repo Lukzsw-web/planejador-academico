@@ -187,14 +187,7 @@ html.dark #modal-farmacia.farma-page, html.dark #modal-comunicados.comunicados-p
   --pq-ink: #e4efe7; --pq-ink-soft: #a1b1a8; --pq-card: #182722; --pq-bg: #0f1a16; --pq-chip: #223d32;
 }
 #modal-farmacia .farma-screen { position: relative; isolation: isolate; }
-#modal-farmacia .farma-screen > *:not(.farma-deco) { position: relative; z-index: 1; }
-.farma-deco { position: absolute !important; z-index: 0 !important; top: 0; bottom: 0; left: 50%; width: 100vw; margin-left: -50vw; pointer-events: none; overflow: hidden; }
-.farma-deco .fd-cap { position: absolute; left: 0; top: 0; width: 100%; height: 200px; display: block; }
-html.dark .farma-deco .fd-cap { filter: brightness(.72); }
-.farma-deco .fd-blob { position: absolute; display: block; fill: var(--pq-tile); opacity: .55; }
-html.dark .farma-deco .fd-blob { opacity: .1; }
-.farma-deco .fd-blob-a { right: 0; top: 300px; width: min(52vw, 220px); height: auto; }
-.farma-deco .fd-blob-b { left: 0; bottom: 0; width: min(62vw, 260px); height: auto; }
+#modal-farmacia .farma-screen > * { position: relative; z-index: 1; }
 /* cabeçalho: ladrilho + título + subtítulo no canto superior esquerdo */
 #modal-farmacia .farma-header { align-items: flex-start; padding: .35rem 0 1.05rem; gap: .75rem; }
 #modal-farmacia .farma-header .tab-title-row { margin: 0 0 .4rem; gap: .7rem; align-items: center; }
@@ -389,18 +382,9 @@ html.dark [data-farma-theme="verde"] {
 
 /* ---------- cabeçalho: cápsula ⋯ | atualizar ---------- */
 #modal-farmacia .farma-header { z-index: 20; }
-.farma-tools { position: relative; flex: 0 0 auto; }
-.farma-capsule { display: inline-flex; align-items: center; height: 42px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .26); background: rgba(255, 255, 255, .1); }
-.farma-capsule-sep { width: 1px; height: 22px; background: rgba(255, 255, 255, .3); }
-#modal-farmacia .farma-capsule .farma-tool { width: 42px; height: 40px; margin: 0; padding: 0; display: grid; place-items: center; border: 0; background: transparent; color: #fff; cursor: pointer; border-radius: 9px 0 0 9px; -webkit-tap-highlight-color: transparent; }
-#modal-farmacia .farma-capsule .farma-reset { border-radius: 0 9px 9px 0; }
-#modal-farmacia .farma-capsule .farma-tool svg { width: 21px; height: 21px; }
-#modal-farmacia .farma-capsule .farma-tool:hover, #modal-farmacia .farma-capsule .farma-tool[aria-expanded="true"] { background: rgba(255, 255, 255, .16); }
-#modal-farmacia .farma-capsule .farma-tool:active { transform: none; background: rgba(255, 255, 255, .22); }
-#modal-farmacia .farma-capsule .farma-tool:focus-visible { outline: 2px solid #fff; outline-offset: -3px; box-shadow: none; }
 
 /* ---------- menu ---------- */
-.fm-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: min(21rem, calc(100vw - 2rem)); max-height: calc(100dvh - 8rem); overflow: auto; padding: .3rem; border-radius: 12px; border: 1px solid var(--fm-line); background: var(--fm-paper); color: var(--fm-ink); box-shadow: 0 10px 28px rgba(18, 63, 42, .16); }
+.fm-menu { color: var(--fm-ink); }
 .fm-menu[hidden], .fm-hist[hidden] { display: none; }
 .fm-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .7rem; align-items: center; width: 100%; min-height: 52px; padding: .5rem .6rem; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fm-row + .fm-row { box-shadow: 0 -1px 0 var(--fm-line); }
@@ -459,7 +443,6 @@ html.dark #modal-farmacia .farma-msg.is-bot .farma-bubble { border: 0; border-le
 #modal-farmacia .farma-msg.is-user .farma-bubble { max-width: 86%; padding: .65rem .95rem; border: 1px solid var(--fm-rule); border-radius: 12px; background: var(--fm-chip); color: var(--fm-ink); font-size: var(--fm-fs); line-height: calc(var(--fm-lh) - .1); font-weight: 500; }
 #modal-farmacia .farma-actions { margin: .15rem 0 0 .95rem; }
 #modal-farmacia .farma-act.is-done { color: var(--fm-deep); background: var(--fm-chip); }
-.farma-deco .fd-blob { opacity: .4; }
 .farma-bubble > * + *, .farma-md > * + * { margin-top: var(--fm-gap); }
 .farma-bubble p + p, .farma-bubble p + .farma-rows, .farma-bubble .farma-rows + p { margin-top: var(--fm-gap); }
 .farma-bubble :is(h1, h2, h3, h4) { margin: 0; font-family: var(--fm-serif); font-weight: 600; line-height: 1.25; letter-spacing: -.01em; color: var(--fm-deep); }
@@ -646,8 +629,6 @@ html.farma-typing #modal-farmacia .farma-messages { margin-top: 0; }
 .fm-ia-btn:focus-visible { outline: 3px solid var(--fm-deep); outline-offset: 2px; }
 
 /* ---------- menu ⋯ (revisão): linhas limpas, ícone solto, valor à direita; separador só entre grupos ---------- */
-.fm-menu { width: min(19.5rem, calc(100vw - 2rem)); padding: .4rem; border-radius: 12px; box-shadow: 0 12px 30px rgba(18, 63, 42, .14); }
-html.dark .fm-menu { box-shadow: 0 14px 32px rgba(0, 0, 0, .4); }
 .fm-menu-cap { padding: .5rem .75rem .45rem; font-size: .78rem; font-weight: 600; letter-spacing: .01em; color: var(--fm-soft); }
 .fm-row { grid-template-columns: 22px minmax(0, 1fr) auto; gap: .85rem; min-height: 48px; padding: .45rem .75rem; border-radius: 11px; }
 .fm-row + .fm-row { box-shadow: none; }
@@ -720,3 +701,113 @@ html.dark .fd-cat[open] > summary .fd-ico { color: #0f1a16; }
 .fd-act:focus-visible { outline: none; box-shadow: var(--pa-focus); }
 .farma-bubble .fd-foot { margin-top: .6rem; font-size: .76rem; color: var(--pa-muted); }
 @media (prefers-reduced-motion: reduce) { .fd-ico, .fd-chev { transition: none; } }
+
+/* =========================================================
+   v0.6.0 — FarmacIA redesenhada
+   Tela limpa, sem faixa nem manchas: menu ☰ à esquerda, só "nova conversa" à direita, saudação do horário
+   no centro (some com a primeira mensagem), sugestões em linhas acima do campo, campo verde-claro com o
+   símbolo da farmácia, divisória e botão de enviar. O menu dos três pontinhos virou o painel lateral.
+   Cores do campo: fundo #D9F5DE, placeholder #607A69, ícone #008A38 (no escuro, equivalentes do mesmo matiz).
+   ========================================================= */
+html:not(.dark) #modal-farmacia.farma-page {
+  --fa-bg: #F2FBF4; --fa-field: #D9F5DE; --fa-press: #C6EBCD; --fa-placeholder: #607A69; --fa-mark: #008A38;
+  --fa-ink: #14261C; --fa-ink-2: #3E5547; --fa-rule: rgba(0, 138, 56, .32); --fa-panel: #F7FCF8; --fa-scrim: rgba(16, 27, 24, .42);
+  --fm-paper: #FBFEFC; --fm-code: #edf6ef;
+}
+html.dark #modal-farmacia.farma-page {
+  --fa-bg: #0f1a16; --fa-field: #1b3027; --fa-press: #25423a; --fa-placeholder: #8FAE9B; --fa-mark: #41C777;
+  --fa-ink: #E6F1EA; --fa-ink-2: #B3C5BA; --fa-rule: rgba(65, 199, 119, .36); --fa-panel: #13211c; --fa-scrim: rgba(0, 0, 0, .55);
+}
+#modal-farmacia.farma-page { background: var(--fa-bg) !important; --pq-chip: var(--fa-field); --fm-chip: var(--fa-field); }
+#modal-farmacia .farma-screen { width: min(100%, 720px); padding: max(.75rem, env(safe-area-inset-top)) clamp(1rem, 4vw, 1.5rem) 0; }
+
+/* cabeçalho */
+#modal-farmacia .farma-header { display: flex; align-items: center; justify-content: flex-start; gap: .7rem; min-height: 52px; padding: 0 0 .55rem; }
+html #modal-farmacia .farma-header .farma-title {
+  flex: 1 1 auto; min-width: 0; margin: 0; font-size: 1.3rem !important; font-weight: 800 !important; line-height: 1.1; letter-spacing: -.02em !important; color: var(--fa-ink) !important;
+}
+.farma-title-ia { color: var(--fa-mark); }
+#modal-farmacia .farma-header .farma-tool {
+  flex: 0 0 auto; width: 44px; height: 44px; margin: 0; padding: 0; display: grid; place-items: center; border: 0; border-radius: 12px;
+  background: var(--fa-field); color: var(--fa-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color .12s ease, transform .12s ease;
+}
+#modal-farmacia .farma-header .farma-tool svg { width: 22px; height: 22px; }
+#modal-farmacia .farma-header .farma-tool:active { background: var(--fa-press); transform: scale(.95); }
+#modal-farmacia .farma-header .farma-tool:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; box-shadow: none; }
+#modal-farmacia .farma-header .farma-tool[aria-expanded="true"] { background: var(--fa-press); }
+
+/* tela vazia: saudação + sugestões; tudo sai na primeira mensagem */
+#modal-farmacia .farma-messages { padding: .5rem .1rem 1rem; }
+.farma-hello { margin: auto; padding: 0 .5rem 2rem; text-align: center; max-width: 100%; }
+.farma-hello-line { margin: 0; font-size: clamp(1.65rem, 7vw, 2.2rem); font-weight: 800; line-height: 1.18; letter-spacing: -.025em; color: var(--fa-ink); overflow-wrap: anywhere; text-wrap: balance; }
+.farma-hello-name { color: var(--fa-mark); }
+.farma-suggest { flex: 0 0 auto; display: grid; gap: .1rem; padding: 0 0 .9rem; }
+.farma-suggest[hidden] { display: none; }
+
+/* sugestões rápidas: linhas simples (na tela vazia e dentro das respostas) */
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card {
+  display: flex; align-items: center; gap: .85rem; width: 100%; min-height: 48px; padding: .3rem .35rem; border: 0; border-radius: 10px;
+  background: transparent; color: var(--fa-ink); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card:hover { background: transparent; }
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card:active { background: var(--fa-field); }
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 1px; box-shadow: none; }
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card-ico { flex: 0 0 auto; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 0; background: transparent; color: var(--fa-ink); }
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card-ico svg { width: 25px; height: 25px; }
+html #modal-farmacia :is(.farma-suggest, .farma-cards) .farma-card strong { font-size: 1rem; font-weight: 500; letter-spacing: 0; color: var(--fa-ink); }
+#modal-farmacia .farma-cards { grid-template-columns: 1fr; gap: 0; }
+.farma-cards-title { color: var(--fa-ink); }
+.farma-cards-title::before { background: var(--fa-mark); }
+
+/* continuações sugeridas */
+html #modal-farmacia .farma-msg.is-user .farma-bubble { border: 0; }
+#modal-farmacia .farma-chip { background: var(--fa-field); color: var(--fa-ink); border-radius: 10px; font-weight: 600; }
+html.dark #modal-farmacia .farma-chip { color: var(--fa-ink); }
+
+/* campo de mensagem: símbolo da farmácia | divisória | texto, e o botão de enviar ao lado */
+#modal-farmacia .farma-composer { display: flex; align-items: stretch; gap: .5rem; }
+#modal-farmacia .farma-composer-box, html.dark #modal-farmacia .farma-composer-box {
+  flex: 1 1 auto; min-width: 0; height: 54px; display: flex; align-items: center; gap: .7rem; padding: 0 .75rem 0 .85rem;
+  border: 0; border-radius: 12px; background: var(--fa-field); box-shadow: none;
+}
+#modal-farmacia .farma-composer-box:focus-within, html.dark #modal-farmacia .farma-composer-box:focus-within { box-shadow: inset 0 0 0 2px var(--fa-mark); }
+.farma-composer-mark { flex: 0 0 auto; width: 26px; height: 26px; color: var(--fa-mark); }
+.farma-composer-rule { flex: 0 0 auto; width: 1px; height: 26px; background: var(--fa-rule); }
+#modal-farmacia .farma-composer-box .farma-input { flex: 1 1 auto; min-width: 0; height: 100%; padding: 0; color: var(--fa-ink); font-weight: 400; }
+#modal-farmacia .farma-composer-box .farma-input::placeholder { color: var(--fa-placeholder); opacity: 1; }
+#modal-farmacia .farma-composer .farma-send {
+  flex: 0 0 auto; width: 54px; height: 54px; display: grid; place-items: center; border: 0; border-radius: 12px !important;
+  background: var(--fa-field); color: var(--fa-placeholder); opacity: 1; transition: background-color .15s ease, color .15s ease, transform .12s ease;
+}
+#modal-farmacia .farma-composer .farma-send svg { width: 22px; height: 22px; }
+#modal-farmacia .farma-composer .farma-send:not(:disabled) { background: var(--fa-mark); color: #fff; }
+html.dark #modal-farmacia .farma-composer .farma-send:not(:disabled) { color: #08130d; }
+#modal-farmacia .farma-composer .farma-send:not(:disabled):active { transform: scale(.94); }
+#modal-farmacia .farma-composer .farma-send:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
+
+/* painel lateral (antigo menu dos três pontinhos) */
+.farma-drawer { position: absolute; inset: 0; z-index: 60; }
+.farma-drawer[hidden] { display: none; }
+.farma-drawer-scrim { position: absolute; inset: 0; background: var(--fa-scrim); opacity: 0; transition: opacity .22s ease; -webkit-tap-highlight-color: transparent; }
+.farma-drawer.is-open .farma-drawer-scrim { opacity: 1; }
+.farma-drawer-panel {
+  position: absolute; top: 0; bottom: 0; left: 0; width: min(84vw, 21.5rem); display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + .75rem) .75rem max(.9rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  background: var(--fa-panel); color: var(--fa-ink); border-right: 1px solid var(--fm-line);
+  transform: translateX(-102%); transition: transform .26s cubic-bezier(.22, .8, .3, 1); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+.farma-drawer.is-open .farma-drawer-panel { transform: translateX(0); }
+.farma-drawer-head { display: flex; align-items: center; gap: .6rem; min-height: 52px; padding: 0 0 .6rem .25rem; }
+.farma-drawer-brand { flex: 1 1 auto; display: flex; align-items: center; gap: .6rem; font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; color: var(--fa-ink); }
+.farma-drawer-brand svg { width: 28px; height: 28px; color: var(--fa-mark); }
+.farma-drawer-x { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--fa-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.farma-drawer-x svg { width: 22px; height: 22px; }
+.farma-drawer-x:active { background: var(--fa-field); }
+.farma-drawer-x:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
+.farma-drawer .fm-menu { color: var(--fa-ink); }
+.farma-drawer .fm-menu-cap { display: none; }
+.farma-drawer .fm-row-txt small, .farma-drawer .fm-opt small, .farma-drawer .fm-preview-label { color: var(--fa-ink-2); }
+html.farma-drawer-open .bottom-liquid-nav, html.farma-drawer-open .nav-handle { opacity: 0; pointer-events: none; }
+@media (min-width: 768px) { .farma-drawer-panel { width: 22rem; } }
+@media (prefers-reduced-motion: reduce) { .farma-drawer-panel, .farma-drawer-scrim { transition: none; } }
+html.no-anim .farma-drawer-panel, html.no-anim .farma-drawer-scrim { transition: none; }

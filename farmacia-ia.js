@@ -20,6 +20,7 @@
       intervaloMinMs: 2500,      // intervalo mínimo entre duas chamadas online
       maxPorSessao: 40,          // teto de chamadas online por sessão do navegador
       maxPergunta: 500,          // caracteres enviados da pergunta
+      academicoRiscoOnline: false, // pergunta ACADÊMICA sobre efeitos adversos/interações (risco 'geral'): false = só material local; true = pode ir à IA online, com instrução de resposta só conceitual
       maxHistorico: 4,           // mensagens anteriores enviadas (pares pergunta/resposta recentes)
       maxCharsHistorico: 280,    // cada mensagem do histórico é cortada neste tamanho
       maxTrechos: 4,             // trechos do material local enviados como contexto
@@ -626,8 +627,9 @@
     compX: R('\\b(x|vs|ou)\\b'),
     intF: R('\\b(interac\\w*|interag\\w*)\\b'),
     intM: R('\\b(juntos?|misturar|mistura|associa\\w*|combinar|combinacao|ao mesmo tempo)\\b'),
+    intV: R('\\b(potencializ\\w*|interfere\\w*|atrapalh\\w*|anula\\w*|reduz o efeito|diminui o efeito|aumenta o efeito|inibe o metabolismo|induz o metabolismo|altera o efeito)\\b'),
     mecF: R('\\b(mecanismo|modo de acao)\\b|\\bacao (d(o|a|os|as)|farmacologica|terapeutica)\\b'),
-    mecW: R('\\bcomo\\b.*\\b(age|agem|atua|atuam|funciona|funcionam|trabalha|trabalham|reduz|diminui|aumenta|inibe|bloqueia|estimula|combate|alivia)\\b|\\bo que .{1,30}\\bfaz (no|pelo|com o) (corpo|organismo)\\b'),
+    mecW: R('\\b(como|de que (jeito|forma|modo|maneira)|por meio de qual|por qual (mecanismo|via))\\b.*\\b(age|agem|atua|atuam|funciona|funcionam|trabalha|trabalham|reduz|diminui|aumenta|inibe|bloqueia|estimula|combate|alivia|baixa|eleva|controla)\\b|\\bpor que\\b.*\\b(reduz|reduzir|diminui|diminuir|aumenta|aumentar|inibe|inibir|bloqueia|bloquear|estimula|estimular|baixa|baixar|eleva|elevar|causa|causar|provoca|provocar|lesa|lesar|lesiona|gera|gerar|desencadeia|desencadear|se liga|age|atua|funciona|potencializa)\\b|\\bpor que\\b.*\\b(tem|apresenta|possui)\\b.*\\b(risco|toxicidade|dependencia)\\b|\\bo que .{1,30}\\bfaz (no|pelo|com o) (corpo|organismo)\\b'),
     intP: R('\\b(da problema|tem problema|faz mal|e perigoso|tem risco|corta o efeito|anula)\\b|\\bpode(m)?\\s*$'),
     s7: R('\\b(melhor|mais forte|mais seguro) (remedio|medicamento|antibiotico|analgesico)\\b|\\bqual (remedio|medicamento) (e|eh) (melhor|mais forte|mais seguro)\\b'),
     s10: R('\\be (muito|pouco|demais|alto|baixo|seguro|perigoso|normal)\\b'),
@@ -636,6 +638,7 @@
     med: R('\\b(para que (serve|e usado|usa)|serve para que|serve para|e usad[oa] para|indicac\\w*|indicad[oa]|efeitos? (adversos?|colaterais?|indesejados?)|reacoes? adversas?|contraindicac\\w*|bula|posologia|usos?|colaterais|faz mal|e bom para|como (usar|tomar|se usa|se toma)|dose|dosagem)\\b'),
     exame: R('\\bexames?\\b|\\bvalor(es)? de referencia\\b|\\breferencia\\b|\\bresultado\\b|\\bdeu \\d|\\b(alto|alta|baixo|baixa|elevado|elevada|aumentad[oa]|diminuid[oa])\\b|\\binterpret\\w*|\\blaudo\\b'),
     classeC: R('\\b(classe|grupo|pertence|o que (caracteriza|define|torna)|exemplos? de|quais (sao )?(os |as )?(medicamentos|remedios|farmacos|exemplos)|me fala (dos|das)|quais sao)\\b'),
+    funcaoBio: R('\\b(funcao|funcoes|papel|importancia|responsavel por|transporta\\w*|se liga|ligacao ao|armazena\\w*)\\b'),
     calc: R('\\b(quanto (e|da|fica|vale)|converte\\w*|transform\\w*|passa (para|pra)|em (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas)|conversao|equivale\\w*|quantos? (mg|g|ml|l|mcg|gramas|miligramas|litros|mililitros|microgramas|comprimidos|gotas)|regra de tres|dilui\\w*|concentracao|calcul\\w*|molaridade)\\b'),
     anaf: R('\\b(isso|disso|nisso|esse|essa|esses|essas|desse|dessa|dele|dela|deles|delas|ele|ela|eles|elas|o mesmo|a mesma)\\b'),
     seq: R('^(e |mais |continua|prossiga|pode continuar|de novo|de outro jeito|de outra forma|aprofunda|detalha)|\\b(de novo|de outro jeito|de outra forma|mais simples|mais facil|mais detalhes|aprofund\\w*|detalh\\w*|exemplos?|continua)\\b'),
@@ -649,7 +652,7 @@
     doseX: R('\\bdose (resposta|efetiva|letal|terapeutica|toxica)\\b|\\bdose-resposta\\b'),
     dose: R('\\bdose\\b|\\bdosagem\\b|\\bposologia\\b|\\bquanto .*\\b(tomar|dar)\\b|\\bcomo (tomar|usar|dar)\\b'),
     forma: R('\\b(comprimidos?|remedios?|medicamentos?|capsulas?|doses?|antibioticos?|pilulas?|injecao|injecoes|xarope|gotas|cartelas?|anticoncepcional|analgesicos?)\\b'),
-    ajuda: R('\\b(o que (voce|vc) (sabe|pode|consegue) fazer|como (voce|vc) funciona|quem (e|eh) (voce|vc)|quem (te )?(criou|fez)|o que (voce|vc) faz|quais (sao )?(suas|seus) (funcoes|recursos)|me conta uma piada|me indica|me recomenda)\\b'),
+    ajuda: R('\\b(o que (voce|vc) (sabe|pode|consegue) fazer|em que (voce|vc) (pode|consegue) (me )?ajudar|como (voce|vc) funciona|quem (e|eh) (voce|vc)|quem (te )?(criou|fez)|o que (voce|vc) faz|quais (sao )?(suas|seus) (funcoes|recursos)|me conta uma piada|me indica|me recomenda)\\b'),
     ajudaObj: R('\\bajuda (com|em|sobre)\\s+\\w+'),
     interrog: R('^(qual|quais|quem|quando|onde|quanto|quantos|como|por que|o que|receita|previsao)\\b'),
     interrogQ: R('\\b(qual|quais|quem|quando|onde|quanto|quantos|como|por que)\\b'),
@@ -657,6 +660,27 @@
     acad: R('\\b(escolha condicionada|condicionadas?|obrigatorias?|optativas?|eletivas?|coeficiente|jubilamento|reprovacao|aproveitamento|equivalencia|historico escolar|sigaa|ufrj|coordenacao|pre requisitos?|co requisitos?|ementa|creditos?|carga horaria|trancamento|tranca\\w*|matricula\\w*|periodo|grade|disciplinas?|formar|formatura|tcc|estagio|puxar)\\b'),
     dominio: R('\\b(farmac\\w*|medic\\w*|remedio\\w*|droga\\w*|doenca\\w*|sintoma\\w*|saude|organismo|celulas?|tecido\\w*|hormon\\w*|molecul\\w*|sangue|urina|figado|rins?|enzim\\w*|vitamin\\w*|bacteri\\w*|virus|infec\\w*|dor|febre|pressao|diabet\\w*|colesterol|laborat\\w*|quimic\\w*|bioquimic\\w*|fisiolog\\w*|patolog\\w*|toxic\\w*|veneno|substancia\\w*|composto\\w*|comprimido\\w*|capsula\\w*|terapi\\w*|tratamento\\w*|clinic\\w*|anatomi\\w*|dose\\w*)\\b'),
     sufixo: R('(azol|pril|sartana|olol|statina|prazol|oxacino|micina|cilina|emia|ase|coide)$')
+  };
+
+  // sinais de risco para a classificação de risco/ação (texto já normalizado: minúsculas, sem acento)
+  var RX = {
+    medPal: R('\\b(calmante|antibiotico|remedio|medicamento|comprimido|xarope|pilula|capsula|injecao|pomada|colirio|tarja|antidepressivo|ansiolitico|descongestionante|anticoncepcional|anti-?inflamatorio|analgesico|antialergico|laxante|diuretico|corticoide|antiacido|antitermico|antifungico|antiviral|sedativo|hipnotico|suplemento|vitamina)s?\\b'),
+    sujPessoal: R('\\b(eu|posso|devo|meu|minha|meus|minhas|comigo|mim|tenho|sou|estou (tomando|usando|gravida|amamentando|com)|quero tomar|preciso tomar|filh[oa]s?|bebe|crianca|idos[oa]|gestante|gravida|hipertens[oa]|diabetic[oa]|alergic[oa]|asmatic[oa])\\b'),
+    usoVerbo: R('\\b(tomar|tomo|tomando|dar|dou|damos|usar|usando|misturar|misturo|parar|partir|cortar|trocar|beber|ingerir|aplicar)\\b'),
+    hipot: R('\\b(posso|devo|pode|podem|se eu|e se|o que acontece se|da para|seria)\\b'),
+    verboIng: R('\\b(tomei|tomou|tomamos|tomaram|engoli|engoliu|ingeri|ingeriu|bebeu|bebi|dei|demos|usei|usou)\\b'),
+    excesso: R('\\b(dobro|demais|a mais|por engano|sem querer|duas vezes|tres vezes|de uma (so )?vez|cartela|frasco|caixa inteira|overdose|todos os (comprimidos|remedios)|mais do que (o )?(indicado|receitado|prescrito|devia))\\b|\\b(\\d{2,}|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|vinte|varios|varias|muitos|muitas)\\s*(comprimidos|capsulas|gotas|pilulas|cartelas|frascos)\\b'),
+    grave: R('\\b(desmai\\w*|convuls\\w*|inconsciente|desacordad\\w*|nao (esta )?(respira\\w*|acorda|reage)|falta de ar|dificuldade (pra|para|de) respirar|garganta (fechando|inchando|fechou|inchou)|(boca|lingua|rosto|labios?) inchad\\w*|(boca|lingua|rosto|labios?) inchando|peito apertad\\w*|dor no peito|vomitando sangue|anafila\\w*|roxo|roxa|corpo todo vermelho|confus[oa]|sonolent\\w* demais|muito sonolent\\w*|desorientad\\w*)\\b'),
+    pessoa: R('\\b(estou|esta|estao|fiquei|ficou|ficando|meu|minha|ele|ela|dele|dela|eu)\\b'),
+    depois: R('\\b(depois|apos|desde|logo (que|apos)|ao tomar)\\b'),
+    fazMal: R('\\b(faz mal|da problema|tem problema|e perigoso|tem risco|prejudica)\\b'),
+    primeira: R('\\b(pra mim|para mim|eu|tomo|uso|todo dia|estou|meu|minha|meus|minhas|comigo|me faz|minha mae|meu pai)\\b'),
+    sintoma: R('\\b(apareceu|apareceram|senti|sinto|sentindo|surgiu|surgiram|comecei a sentir|fiquei com|deu (enjoo|dor|alergia|coceira|diarreia))\\b'),
+    parou: R('\\b(parei|larguei|suspendi|deixei de tomar|parar de tomar|por conta propria)\\b'),
+    adverso: R('\\b(efeitos? (advers\\w*|colaterais?|indesejados?)|reacoes? advers\\w*|contraindicac\\w*|toxicidade|hepatotox\\w*|nefrotox\\w*|faz mal|riscos?|perigos?|agranulocitose|dependencia|lesar|lesao|lesionar|causa|causam|causar|provoca|provocam|provocar|induz\\w*|pode(m)? (aumentar|reduzir|diminuir|elevar|baixar|piorar|levar))\\b'),
+    molduraAcad: R('\\b(estudo de caso|caso clinico|questao de prova|para fins de estudo|para estudar|de aula|na aula|trabalho da faculdade|do ponto de vista|hipotetic\\w*|explique|descreva|justifique|discuta|mecanismo|farmacocinetic\\w*|farmacodinamic\\w*|inducao|inibicao enzimatic\\w*|cyp\\w*)\\b'),
+    pessoalForte: R('\\b(eu|mim|comigo|meu|meus|minha|minhas|tomo|uso|usando|usei|estou|posso|devo|podemos|receitou|receitaram|passou|prescreveu|tomei|tomou|tomamos|nosso|nossa|filh[oa]s?|bebe|crianca|mae|pai|avo|avos|marido|esposa|namorad[oa]|amig[oa]|vizinh[oa]|dar para|da para)\\b'),
+    deitico: R('\\b(aquilo|aquele|aquela|aqueles|aquelas|negocio|coisa|troco|tenho uma duvida|uma duvida sobre)\\b')
   };
   var ATRIBUTOS = ['efeito adverso', 'reacao adversa', 'posologia', 'interacao medicamentosa', 'toxicidade', 'dose letal'];
   var EXEMPLOS = {
@@ -724,7 +748,7 @@
     var par = E >= 2 && nw <= 7 && (cue.compX && !cue.compF) && !clf ? 5 : 0;
     var compScore = (cue.compF ? 5 : 0) + (cue.compM && E >= 2 ? 3 : 0) + (E >= 2 && comp ? 2 : 0) + par;
     add((nMed + nClasse >= 2) ? 'comparar_substancias' : 'comparar_conceitos', compScore, 'comparação');
-    var intScore = (cue.intF ? 5 : (cue.intM ? 3 : (cue.intP && nMed >= 2 ? 4 : 0)));
+    var intScore = (cue.intF ? 5 : (cue.intM ? 3 : (cue.intP && nMed + nClasse >= 2 ? 4 : (cue.intV && nMed >= 2 ? 4 : 0))));
     if (intScore) { intScore += (nMed >= 1 ? 1.5 : 0) + (nMed >= 2 ? 1 : 0); if (nMed + nClasse === 0) intScore -= 2.5; add('explicar_interacao', intScore, 'interação'); }
     var drog = nMed + nClasse > 0;
     if (cue.mecF || cue.mecW) add('explicar_mecanismo_acao', (cue.mecF ? 5 : 4) + (drog ? 2 : 0) - (drog ? 0 : (cue.mecF ? 1 : 3.5)) - (E === 0 && cue.mecF ? 2 : 0), 'mecanismo');
@@ -734,7 +758,9 @@
     add('consultar_medicamento', medBase, 'medicamento');
     if (nClasse) add('consultar_classe_farmacologica', 4 + (cue.classeC ? 2 : 0) + (def ? 1 : 0) + (nMed ? 3 : 0), 'classe');
     if (nMed && /\b(classe|grupo|faz parte|pertence|categoria|tipo de (remedio|medicamento))\b/.test(n)) add('consultar_classe_farmacologica', 4, 'pergunta de classe');
-    if (nExame || (cue.exame && E)) add('explicar_exame', (nExame ? 4 : 0) + (cue.exame ? 3 : 0) + (nExame && def ? 1 : 0) + (cue.s8 ? 1 : 0), 'exame');
+    var bioFn = nExame > 0 && cue.funcaoBio && !cue.exame;   // analito (hemoglobina, albumina…) perguntado pela função biológica, não pelo exame
+    if (bioFn) add('explicar_conceito', 5, 'função biológica de analito');
+    if (nExame || (cue.exame && E)) add('explicar_exame', (nExame ? (bioFn ? 1.5 : 4) : 0) + (cue.exame ? 3 : 0) + (nExame && def ? 1 : 0) + (cue.s8 ? 1 : 0), 'exame');
     if (qtd.length || /\d+\s*[+*/x-]\s*\d+/.test(n)) { if (cue.calc || /\d+\s*[+*/x-]\s*\d+/.test(n)) add('resolver_calculo', (qtd.length ? 3 : 0) + (cue.calc ? 4 : 0) + 1, 'cálculo'); }
     if (clf) add('explicar_conceito', 5, 'classificação conceitual');
     if (nConc || (E === 0 && def && sinalDom)) add('explicar_conceito', (nConc ? 3 : 0) + (def ? 3 : 0) + (E === 0 ? -1 : 0) + (nConc && nw <= 5 ? 1.5 : 0), 'conceito');
@@ -776,7 +802,7 @@
     // risco sinalizado independentemente da intenção
     var nivelSeg = null, riscos = [];
     var ctxFarma = cue.forma || nMed > 0 || nClasse > 0 || cue.s5, semFarma = cue.acad && nMed + nClasse === 0;
-    var interMed = (cue.intF || cue.intM || (cue.intP && nMed >= 2)) && (nMed + nClasse > 0 || !!ctx);
+    var interMed = ((cue.intF || cue.intM || (cue.intP && nMed + nClasse >= 2)) && (nMed + nClasse > 0 || !!ctx)) || (/\b(corta o efeito|anula o efeito|atrapalha o efeito)\b/.test(n) && (nMed + nClasse > 0 || RX.medPal.test(n)));
     if (!semFarma) {
       if (doseMed || (cue.dose && !cue.doseX && ctxFarma) || cue.s5) riscos.push('dose');
       if (interMed || top.id === 'explicar_interacao') riscos.push('interacao');
@@ -788,9 +814,58 @@
     if (top.id === 'seguranca_farmaceutica') nivelSeg = 'critico';
     else if (top.id === 'explicar_interacao') nivelSeg = 'critico';
     else if (riscos.length) nivelSeg = 'atencao';
+    // ---- classe de risco e ação (etapas 4–6): none | geral | pessoal | intoxicacao | urgencia  ·  responder | esclarecer | seguranca
+    var novos = ents.filter(function (e) { return !(e.tipo === 'conc' && ATRIBUTOS.indexOf(M.busca.norm(e.nome)) >= 0); });
+    var trocaAssunto = !!ctx && novos.some(function (e) { return e.tipo === 'conc' || e.tipo === 'exame' || e.tipo === 'area'; });
+    var medCtx = cue.forma || nMed > 0 || nClasse > 0 || RX.medPal.test(n);
+    var hipot = RX.hipot.test(n);
+    var intox = !hipot && RX.verboIng.test(n) && RX.excesso.test(n) && medCtx;
+    var urg = RX.grave.test(n) && medCtx && RX.pessoa.test(n) && (RX.depois.test(n) || RX.verboIng.test(n));
+    var pFaz = RX.fazMal.test(n) && RX.primeira.test(n);
+    var sint = RX.sintoma.test(n) && RX.depois.test(n) && (nMed > 0 || cue.forma);
+    var parou = RX.parou.test(n) && (nMed > 0 || cue.forma);
+    var pedido = (cue.s2 && (nMed + nClasse > 0)) || (medCtx && RX.sujPessoal.test(n) && RX.usoVerbo.test(n));   // "posso tomar/misturar/parar… <medicamento ou classe>": pedido sobre o uso por uma pessoa, qualquer que seja a intenção mais pontuada
+    var popCtx = cue.s3 && (ctxFarma || !!ctx);
+    var herda = !!ctx && !!ctx.risco && !trocaAssunto && !cue.def && (contCue || nw <= 4);
+    var genVazio = E === 0 && !ctx && !qtd.length && (nw <= 3 || !!info.ctxIncompativel) && !cue.s1 && !cue.s3 && !cue.s4 && !cue.s5 && !cue.s6 && !cue.s7 && !pFaz && !sint && !parou && !intox && !urg && (cue.dose || cue.intP || /\bposso\b/.test(n));
+    var conteudoIds0 = { explicar_conceito: 1, explicar_mecanismo_acao: 1, consultar_medicamento: 1, consultar_classe_farmacologica: 1, explicar_exame: 1, comparar_conceitos: 1, comparar_substancias: 1 };
+    var relacao = ctx ? (trocaAssunto ? 'troca' : (top.id === 'continuar_assunto' ? 'continua' : 'independente')) : (info.ctxIncompativel ? 'incompativel' : 'nenhum');
+    var risco = 'none', novoRisco = false;
+    if (urg) { risco = 'urgencia'; novoRisco = true; }
+    else if (intox) { risco = 'intoxicacao'; novoRisco = true; }
+    else if (pFaz || sint || parou || popCtx || pedido) { risco = 'pessoal'; novoRisco = true; }
+    else if (herda) { risco = ctx.risco; novoRisco = true; }
+    else if (nivelSeg && !genVazio) risco = 'pessoal';
+    else if (!semFarma && RX.adverso.test(n) && (nMed + nClasse > 0 || (ctx && (cue.anaf || contCue)))) risco = 'geral';
+    if (genVazio) { nivelSeg = null; if (top.id === 'seguranca_farmaceutica') top = { id: 'pedir_esclarecimento', score: top.score }; }
+    if (risco !== 'none' && risco !== 'geral') {
+      nivelSeg = 'critico';
+      var forte = risco === 'urgencia' || risco === 'intoxicacao';
+      if (novoRisco && (forte || top.id !== 'academico') && !(!forte && info.academica && nMed + nClasse === 0 && !pFaz)) top = { id: 'seguranca_farmaceutica', score: Math.max(top.score, 4) };
+    }
+    // interação medicamentosa em termos acadêmicos: só com moldura explícita de estudo (estudo de caso, mecanismo, questão de prova…) E sem nenhum marcador de uso real
+    // (eu/meu/posso/tomo/mãe/filho/receitou…), de população, dose, excesso, exame ou sintoma. Qualquer marcador pessoal mantém o fluxo de segurança.
+    var acadInter = (top.id === 'explicar_interacao' || cue.intF || (cue.intV && nMed >= 2)) && nMed + nClasse > 0 && RX.molduraAcad.test(n) && !RX.pessoalForte.test(n) && !cue.s1 && !cue.s2 && !cue.s3 && !cue.s5 && !cue.s6 && !cue.s8 && !cue.s4 && !cue.s11 && !pFaz && !sint && !parou && !intox && !urg && !(ctx && ctx.risco) && riscos.every(function (x) { return x === 'interacao'; });
+    if (acadInter) { nivelSeg = null; risco = 'geral'; novoRisco = false; if (top.id !== 'explicar_interacao') top = { id: 'explicar_interacao', score: Math.max(top.score, 6) }; }
+    var topId = top.id;
+    var conteudoIds = { explicar_conceito: 1, explicar_mecanismo_acao: 1, consultar_medicamento: 1, consultar_classe_farmacologica: 1, explicar_exame: 1, comparar_conceitos: 1, comparar_substancias: 1, criar_exercicios: 1, resumir_conteudo: 1 };
+    var motivo = '';
+    var acao = (risco === 'pessoal' || risco === 'intoxicacao' || risco === 'urgencia') ? 'seguranca' : 'responder';
+    if (acao === 'responder' && topId !== 'academico') {
+      var incE = (info.incertas || []).length && E === 0;
+      var faltaSujeito = E === 0 && !ctx && !qtd.length && ((cue.intP || cue.dose || /\bposso\b/.test(n)) || (conteudoIds[topId] && (cue.compF || cue.compM) && nw <= 4));
+      var vagoDeitico = E === 0 && RX.deitico.test(n) && nw <= 8 && !cue.acad;
+      var fazMalCtx = !!ctx && cue.intP && E === 0 && !pFaz && !/\b(efeitos?|reacoes?|riscos?)\b/.test(n);
+      var baixa = nivel === 'baixa' && !{ saudacao: 1, social: 1, academico: 1, ajuda_geral: 1 }[topId] && E === 0 && !qtd.length;
+      if (info.ctxIncompativel && E === 0 && (contCue || topId === 'pedir_esclarecimento')) motivo = 'antecedente'; else if (incE) motivo = 'ambiguo'; else if (fazMalCtx) motivo = 'faz_mal'; else if (faltaSujeito || (topId === 'pedir_esclarecimento' && !!contCue && !ctx)) motivo = (cue.dose || cue.intP || /\bposso\b/.test(n)) ? 'sem_assunto_seg' : 'sem_assunto'; else if (vagoDeitico || topId === 'pedir_esclarecimento' || baixa) motivo = 'vago';
+      if (motivo) acao = 'esclarecer';
+    }
+    if (acao === 'esclarecer') risco = 'none';
+    if (acao === 'esclarecer') topId = top.id === 'academico' ? top.id : 'pedir_esclarecimento';
+    if (acao === 'esclarecer' && top.id !== topId) top = { id: topId, score: top.score };
     var entidades = ents.map(function (e) { return { nome: e.nome, tipo: e.tipo, categoria: e.categoria, aprox: !!e.aprox }; }).concat(qtd);
     return { id: top.id, score: top.score, confianca: Math.round(conf * 100) / 100, nivel: nivel, ranking: ranking.slice(0, 3), sinais: sinais, entidades: entidades, incertas: info.incertas || [], ambigua: !!(info.incertas || []).length,
-      seguranca: !!nivelSeg, nivelSeguranca: nivelSeg, riscos: riscos, subtipo: (clf && top.id === 'explicar_conceito') ? 'classificacao' : null, referencia: ctx ? ctx.rotulo : null, faltaContexto: top.id === 'pedir_esclarecimento' && !!contCue && !ctx, foraDominio: foraDominio && top.id === 'ajuda_geral', normalizada: n, corrigidas: an.corrigidas };
+      seguranca: !!nivelSeg, nivelSeguranca: nivelSeg, riscos: riscos, risco: risco, acao: acao, motivo: motivo, relacaoCtx: relacao, trocaAssunto: trocaAssunto, subtipo: (clf && top.id === 'explicar_conceito') ? 'classificacao' : null, referencia: ctx ? ctx.rotulo : null, faltaContexto: top.id === 'pedir_esclarecimento' && !!contCue && !ctx, foraDominio: foraDominio && top.id === 'ajuda_geral', normalizada: n, corrigidas: an.corrigidas };
   }
 
   M.intencao = { classificar: classificar, INTENCOES: ['explicar_conceito', 'consultar_medicamento', 'explicar_mecanismo_acao', 'consultar_classe_farmacologica', 'comparar_substancias', 'comparar_conceitos', 'explicar_interacao', 'explicar_exame', 'resolver_calculo', 'criar_exercicios', 'resumir_conteudo', 'continuar_assunto', 'saudacao', 'social', 'ajuda_geral', 'pedir_esclarecimento', 'seguranca_farmaceutica', 'academico'] };
@@ -913,7 +988,7 @@
       var sg = function (x) { return norm(x).replace(/s\b/g, ''); };
       conc.forEach(function (c) { if (!ents.some(function (e) { return sg(e.nome) === sg(c.termo) || e.nome === c.rotulo; })) ents.push({ nome: c.rotulo, tipo: 'conc', categoria: c.categoria }); });
       farm.forEach(function (f) { var r = M.entidades.resolver(f); if (!ents.some(function (e) { return norm(e.nome) === f || (r && e.id === r.id); })) ents.push({ nome: f, tipo: 'med', categoria: 'farmacologia' }); });
-      v3 = M.intencao.classificar(anV3, { ents: ents, incertas: exV3.incertas, quantidades: exV3.quantidades, academica: t(P.academico, n), codigoExplicito: /\b[A-Za-z]{3}\d{3}\b/.test(String(raw)), ctx: M.contexto.topico() });
+      v3 = M.intencao.classificar(anV3, { ents: ents, incertas: exV3.incertas, quantidades: exV3.quantidades, academica: t(P.academico, n), codigoExplicito: /\b[A-Za-z]{3}\d{3}\b/.test(String(raw)), ctx: M.contexto.topicoPara(n) || M.contexto.soRisco(), ctxIncompativel: M.contexto.incompativel(n) });
       // ampliar as listas antigas só quando a mensagem não é de risco crítico (nesse caso o fluxo antigo fica exatamente como era até a etapa de segurança)
       if (v3.nivelSeguranca !== 'critico') {
         exV3.itens.forEach(function (e) {
@@ -976,8 +1051,25 @@
 (function () {
   'use strict';
   var M = window.FarmaMod = window.FarmaMod || {};
-  function novo() { return { turnos: [], topico: null, conceitos: [], explicados: {}, modo: null }; }
+  function novo() { return { turnos: [], topico: null, conceitos: [], explicados: {}, modo: null, n: 0, risco: null, ini: false }; }
+  // Validade do contexto (só em memória): o assunto vale por poucas trocas e por pouco tempo; um risco já sinalizado (dose, excesso,
+  // urgência) vale por menos ainda, mas é herdado por perguntas de continuação ("e agora?", "e pra criança?", "e com o ibuprofeno?").
+  var TTL_TURNOS = 4, TTL_RISCO = 3, TTL_MS = 30 * 60 * 1000;
+  function agora() { return Date.now(); }
+  function idade(x) { return S.n - x - (S.ini ? 1 : 0); }   // trocas desde o registro (a mensagem atual não conta)
+  function vivoTopico() { return S.topico && idade(S.topico.n) <= TTL_TURNOS && (agora() - S.topico.ts) <= TTL_MS ? S.topico : null; }
+  function vivoRisco() { return S.risco && idade(S.risco.n) <= TTL_RISCO && (agora() - S.risco.ts) <= TTL_MS ? S.risco.classe : null; }
   var S = novo();
+  // Só turnos de CONTEÚDO (conceito, medicamento, mecanismo, exame…) definem o assunto da conversa. Perguntas do planejador (pré-requisito, créditos), conversa social,
+  // cálculo e pedidos de esclarecimento não trocam o assunto: "Quais os pré-requisitos de Farmacologia?" não faz de "Farmacologia" o assunto do "mecanismo dele".
+  var CONTEUDO = { explicar_conceito: 1, explicar_mecanismo_acao: 1, consultar_medicamento: 1, consultar_classe_farmacologica: 1, explicar_exame: 1, comparar_conceitos: 1, comparar_substancias: 1, resumir_conteudo: 1, criar_exercicios: 1, continuar_assunto: 1, explicar_interacao: 1, seguranca_farmaceutica: 1 };
+  var ATR_CTX = ['efeito adverso', 'reacao adversa', 'posologia', 'interacao medicamentosa', 'toxicidade', 'dose letal'];
+  // Compatibilidade entre o assunto guardado e o que a pergunta pede dele: mecanismo, efeito adverso, dose, indicação ou classe só fazem sentido para um
+  // agente (medicamento, substância, classe ou conceito específico); um CAMPO inteiro (Farmacologia, Farmacocinética, Bioquímica…) não responde "como ele age?".
+  var EXIGE_AGENTE = /\b(mecanismo|age|agem|atua|atuam|efeitos?|reacoes?|dose|doses|posologia|indicac\w*|contraindicac\w*|para que serve|classe|interage|interacao)\b/;
+  function nz(x) { return M.busca.norm(String(x || '')); }
+  function compativel(t, n) { return !!t && !(t.campo && EXIGE_AGENTE.test(n)); }
+  function vista(t) { return { rotulo: t.rotulo, termos: t.termos, categoria: t.categoria, tipo: t.tipo, campo: !!t.campo, risco: vivoRisco() }; }
 
   function plano(html) { return String(html || '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim(); }
   function cortar(t, max) { t = String(t || ''); return t.length <= max ? t : t.slice(0, max).replace(/\s+\S*$/, '') + '…'; }
@@ -985,8 +1077,10 @@
   // Se a pergunta depende do que veio antes, devolve o texto com o assunto explícito.
   function resolver(interp, texto) {
     var original = String(texto || '');
-    if (!S.topico || !interp || !interp.seguimento) return { texto: original, topico: S.topico ? S.topico.rotulo : '', usou: false };
-    var rot = S.topico.rotulo;
+    var tv = vivoTopico();
+    if (tv && !compativel(tv, nz(original))) return { texto: original, topico: '', usou: false, incompativel: true };
+    if (!tv || !interp || !interp.seguimento) return { texto: original, topico: tv ? tv.rotulo : '', usou: false };
+    var rot = tv.rotulo;
     var t = original.replace(/\b(isso|disso|nisso|aquilo|esse processo|esse conceito|este conceito)\b/gi, rot);
     if (t === original) t = original.replace(/[?!.\s]+$/, '') + ' (assunto: ' + rot + ')';
     return { texto: t, topico: rot, usou: true };
@@ -994,11 +1088,19 @@
 
   function registrar(t) {   // t: { pergunta, html, interp, modo }
     var interp = t.interp || {};
-    if (interp.conceitos && interp.conceitos.length) {
-      S.topico = { rotulo: interp.conceitos.map(function (c) { return c.rotulo; }).slice(0, 2).join(' e '), termos: interp.conceitos.map(function (c) { return c.termo; }), categoria: interp.conceitos[0].categoria };
-      interp.conceitos.forEach(function (c) { if (S.conceitos.indexOf(c.termo) < 0) S.conceitos.push(c.termo); S.explicados[c.termo] = true; });
-    } else if (interp.farmacos && interp.farmacos.length) {
-      S.topico = { rotulo: interp.farmacos[0], termos: interp.farmacos.slice(0, 1), categoria: 'farmacologia' };
+    if (S.ini) S.ini = false; else S.n += 1;
+    var rc = interp.v3 && interp.v3.risco;
+    if (rc === 'pessoal' || rc === 'intoxicacao' || rc === 'urgencia') S.risco = { classe: rc, n: S.n, ts: agora() };
+    else if (S.risco && interp.v3 && interp.v3.trocaAssunto) S.risco = null;
+    var v3 = interp.v3, atualiza = !v3 || !!CONTEUDO[v3.id];
+    var conc = (interp.conceitos || []).filter(function (c) { return ATR_CTX.indexOf(nz(c.rotulo)) < 0; });
+    if (atualiza && conc.length) {
+      S.topico = { rotulo: conc.map(function (c) { return c.rotulo; }).slice(0, 2).join(' e '), termos: conc.map(function (c) { return c.termo; }), n: S.n, ts: agora(), categoria: conc[0].categoria, tipo: 'conc', campo: conc.every(function (c) { return nz(c.termo) === nz(c.categoria); }) };
+      conc.forEach(function (c) { if (S.conceitos.indexOf(c.termo) < 0) S.conceitos.push(c.termo); S.explicados[c.termo] = true; });
+    } else if (atualiza && interp.farmacos && interp.farmacos.length) {
+      S.topico = { rotulo: interp.farmacos[0], termos: interp.farmacos.slice(0, 1), n: S.n, ts: agora(), categoria: 'farmacologia', tipo: 'med', campo: false };
+    } else if (S.topico && v3 && v3.relacaoCtx === 'continua') {
+      S.topico.n = S.n; S.topico.ts = agora();   // conversa que segue no mesmo assunto não expira no meio
     }
     S.turnos.push({ q: cortar(t.pergunta, 300), a: cortar(plano(t.html), 600), intencao: interp.intencao || '', modo: t.modo || 'conceitual' });
     if (S.turnos.length > 20) S.turnos.shift();
@@ -1029,8 +1131,14 @@
 
   M.contexto = {
     resolver: resolver, registrar: registrar, marcarLocal: marcarLocal, historico: historico, academico: academico, perfil: perfil,
-    modo: function () { return S.modo; }, topico: function () { return S.topico; }, explicados: function () { return S.conceitos.slice(); },
+    modo: function () { return S.modo; },
+    topico: function () { var t = vivoTopico(); return t ? vista(t) : null; },
+    topicoPara: function (n) { var t = vivoTopico(); return t && compativel(t, n) ? vista(t) : null; },
+    incompativel: function (n) { var t = vivoTopico(); return !!t && !compativel(t, n); },
+    risco: function () { return vivoRisco(); },
+    soRisco: function () { var r = vivoRisco(); return r ? { rotulo: '', termos: [], categoria: '', risco: r } : null; }, explicados: function () { return S.conceitos.slice(); },
     ultimo: function () { return S.turnos[S.turnos.length - 1] || null; }, turnos: function () { return S.turnos.slice(); },
+    iniciar: function () { S.n += 1; S.ini = true; },   // chamado uma vez por mensagem do aluno: todas as trocas contam para a validade, respondidas aqui ou pelo farmacia.js
     reset: function () { S = novo(); }
   };
 })();
@@ -1068,7 +1176,7 @@
     });
     var perfil = M.contexto.perfil();
     return {
-      v: 1, cid: cid(), pergunta: String(resolvido.texto).slice(0, c.maxPergunta), historico: M.contexto.historico(), trechos: trechos,
+      v: 1, cid: cid(), pergunta: (interp.v3 && interp.v3.risco === 'geral' ? 'Pergunta acadêmica de Farmácia: explique só o mecanismo e o conceito; não dê dose, conduta nem recomendação para uma pessoa específica. ' : '') + String(resolvido.texto).slice(0, c.maxPergunta), historico: M.contexto.historico(), trechos: trechos,
       estilo: { intencao: interp.intencao || 'explicar', nivel: interp.nivel, mods: Object.keys(interp.modificadores || {}).filter(function (k) { return interp.modificadores[k]; }) },
       disciplina: M.contexto.academico(interp.disciplina && !interp.conceitos.length ? interp.disciplina : null),
       perfil: { periodo: perfil.periodo, turno: perfil.turno }
@@ -1243,6 +1351,7 @@
   var CONTEUDO_V3 = { explicar_conceito: 1, explicar_mecanismo_acao: 1, consultar_medicamento: 1, consultar_classe_farmacologica: 1, explicar_exame: 1, comparar_conceitos: 1, comparar_substancias: 1, criar_exercicios: 1, resumir_conteudo: 1 };
   var OVERR = { info: 1, topic: 1, unknown: 1, followup: 1, reexplain: 1, more: 1, why: 1 };
   var SOCIAL = { ack: 1, thanks: 1, greet: 1, bye: 1, praise: 1, howare: 1, invite: 1, who: 1, about: 1, myname: 1, setname: 1, setpron: 1, setperiod: 1, setshift: 1, frustrated: 1, empty: 1 };
+  var ESC_SOC = { bye: 1, greet: 1, invite: 1 };   // o motor antigo confundiu "aquilo", "fala" etc. com conversa social
   var pendente = null, primeiro = true, cache = [], consentMostrado = false;
 
   // ---------- comandos de privacidade e de modo ----------
@@ -1308,35 +1417,104 @@
     return [M.busca.norm(res.texto), interp.intencao, interp.nivel, (busca.resultados || []).map(function (r) { return r.id; }).join(','), u ? M.busca.norm(u.q) : ''].join('|');
   }
 
+  // até 3 títulos de tópicos do material local parecidos com a pergunta (mesmo quando a busca não bastou para responder)
+  function proximosLocais(busca) {
+    var vistos = {}, out = [];
+    (busca.resultados || []).forEach(function (r) { var t = String(r.titulo || '').trim(); if (t && !vistos[t] && out.length < 3 && r.tipo !== 'ementa-ppc') { vistos[t] = 1; out.push(t); } });
+    return out;
+  }
   function semIA(raw, interp, local, busca, aviso, retry) {
     var loc = M.rag.formatarLocal(busca, interp), html = aviso || '', chips = [];
     if (loc) { html += loc; M.contexto.registrar({ pergunta: raw, html: loc, interp: interp, modo: 'conceitual' }); chips = chipsPos(interp).slice(0, 2); }
     else if (local && local.id === 'topic') { html += local.html; chips = local.chips || []; }
     else if (interp.intencao === 'exercicio') html += p('Para criar perguntas de revisão eu preciso da IA online. Sem ela, só consigo mostrar o material local.');
-    else html += p('Não encontrei isso no material local e, sem a IA online, prefiro não arriscar uma explicação. Você pode tentar com outras palavras ou procurar o professor da disciplina.');
+    else {
+      var tema = temaDe(interp).map(function (x) { return '<strong>' + esc(x) + '</strong>'; }).join(' e ');
+      html += p('Não encontrei ' + (tema ? 'material local sobre ' + tema : 'isso no material local') + ' e, sem a IA online, prefiro não arriscar uma explicação.');
+      var prox = (busca.proximos || []);
+      if (prox.length) { html += p('No material local há algo próximo: ' + prox.map(function (x) { return '<strong>' + esc(x) + '</strong>'; }).join(', ') + '.'); chips = prox.map(function (x) { return { label: x.slice(0, 34), q: 'Me explica ' + x }; }); }
+      else html += p('Você pode tentar com outras palavras ou procurar o professor da disciplina.');
+    }
     if (retry) chips = [{ label: 'Tentar novamente', q: raw }].concat(chips);
     return R(html, chips.length ? chips : (F()._chips ? F()._chips() : []));
   }
 
   // Portão de segurança farmacêutica: roda ANTES de qualquer provedor (online ou futuro) e não depende de rede.
-  // Pergunta sobre dose, interação, gravidez/amamentação, crianças, alergia, excesso de dose, exame pessoal ou
-  // recomendação de remédio recebe uma resposta fixa e local, sem conteúdo clínico, e NADA é enviado para fora.
+  // Quatro respostas fixas e locais, sem conteúdo clínico, e NADA é enviado para fora:
+  //  · urgência (sintoma grave depois de remédio) -> SAMU 192 (e Disque-Intoxicação se foi medicamento);
+  //  · intoxicação (tomou além do indicado)      -> Disque-Intoxicação 0800 722 6001; SAMU só se houver sinais graves;
+  //  · pessoal (dose, combinação, gravidez, criança, alergia, exame, "faz mal pra mim") -> farmacêutico/médico e bula, sem telefone de emergência.
+  // O SAMU não é recomendado para qualquer dúvida de medicamento.
   function bloqueioRisco(interp) {
     var v = interp && interp.v3;
     if (!v || !v.seguranca || v.id === 'academico') return null;
-    var r = v.riscos || [], html = p('<strong>Essa pergunta envolve segurança no uso de medicamentos.</strong>');
-    html += p('Dose, combinação de remédios, gravidez e amamentação, crianças, alergias e resultado de exame dependem de cada pessoa. Por isso eu não respondo isso, nem pela IA online: converse com um farmacêutico ou médico e confira a bula do produto.');
-    if (r.indexOf('exame_pessoal') >= 0) html += p('Também não interpreto o resultado de exame de uma pessoa: quem pediu o exame pode explicar o que ele significa no seu caso.');
-    if (r.indexOf('excesso') >= 0) html += p('Se você tomou mais do que o indicado ou está passando mal, procure atendimento agora: SAMU 192 ou Disque-Intoxicação 0800 722 6001.');
-    html += p('Posso explicar o assunto em termos gerais, sem orientar o seu caso, se você perguntar de outro jeito.');
+    var r = v.riscos || [], c = v.risco, html;
+    if (c === 'urgencia') {
+      html = p('<strong>Isso pode ser uma emergência.</strong>') + p('Ligue agora para o <strong>SAMU: 192</strong>.');
+      html += p('Se um medicamento pode ter causado isso, diga ao atendimento qual foi, a quantidade e o horário. O Disque-Intoxicação (0800 722 6001) também pode orientar.');
+      html += p('Eu não consigo avaliar o quadro por aqui e nada desta conversa é enviado para fora.');
+    } else if (c === 'intoxicacao') {
+      html = p('<strong>Tomar mais do que o indicado precisa de orientação agora, mesmo sem sintomas.</strong>');
+      html += p('Ligue para o <strong>Disque-Intoxicação: 0800 722 6001</strong> e deixe à mão o nome do medicamento, a quantidade e o horário.');
+      html += p('Se a pessoa desmaiar, tiver convulsão, dificuldade para respirar ou não responder, ligue para o <strong>SAMU: 192</strong>.');
+      html += p('Eu não oriento o que fazer nesse caso e nada desta conversa é enviado para fora.');
+    } else {
+      html = p('<strong>Essa pergunta envolve segurança no uso de medicamentos.</strong>');
+      html += p('Dose, combinação de remédios, gravidez e amamentação, crianças, alergias, sintomas depois de um remédio e resultado de exame dependem de cada pessoa. Por isso eu não respondo isso, nem pela IA online: converse com um farmacêutico ou médico e confira a bula do produto.');
+      if (r.indexOf('exame_pessoal') >= 0) html += p('Também não interpreto o resultado de exame de uma pessoa: quem pediu o exame pode explicar o que ele significa no seu caso.');
+      html += p('Posso explicar o assunto em termos gerais, sem orientar o seu caso, se você perguntar de outro jeito.');
+    }
     return R(html, F()._chips ? F()._chips() : []);
+  }
+
+  // Perguntas que não dá para responder sem adivinhar: em vez de chutar (ou mandar para a IA), pergunta de volta com opções.
+  function temaDe(interp) {
+    var t = (interp.conceitos || []).map(function (c) { return c.rotulo; }).concat(interp.farmacos || []);
+    return t.filter(function (x, i) { return x && t.indexOf(x) === i; }).slice(0, 3);
+  }
+  function esclarecimento(interp) {
+    var v = interp && interp.v3;
+    if (!v || v.acao !== 'esclarecer' || v.id === 'academico') return null;
+    var chipsBase = F()._chips ? F()._chips() : [], top = M.contexto.topico(), rot = top && top.rotulo;
+    if (v.motivo === 'ambiguo' && v.incertas && v.incertas.length) {
+      var a = v.incertas[0], cand = (a.candidatos || []).slice(0, 4);
+      return R(p('O termo <strong>' + esc(a.texto) + '</strong> pode ter mais de um sentido: ' + cand.map(esc).join(' ou ') + '. Qual deles você quer?'), cand.map(function (x) { return { label: x, q: 'O que é ' + x + '?' }; }));
+    }
+    if (v.motivo === 'faz_mal' && rot) {
+      return R(p('“Faz mal” pode ser duas perguntas diferentes sobre <strong>' + esc(rot) + '</strong>:') + p('• os efeitos adversos e riscos em termos gerais (conteúdo de estudo);<br>• se é seguro para uma pessoa em particular (um caso real).') + p('Qual das duas você quer?'),
+        [{ label: 'Efeitos adversos em geral', q: 'Quais os efeitos adversos de ' + rot + '?' }, { label: 'É sobre um caso real', q: 'Posso tomar ' + rot + '? É sobre um caso real' }]);
+    }
+    if (v.motivo === 'antecedente' && rot) return R(p('Você vinha falando de <strong>' + esc(rot) + '</strong>, que é uma área ou um tema amplo, e não um medicamento ou conceito específico. De qual <strong>medicamento ou conceito</strong> você quer saber isso (mecanismo, efeitos, dose, classe)?'), chipsBase);
+    if (v.motivo === 'sem_assunto_seg') return R(p('Para responder isso com segurança eu preciso saber <strong>de qual medicamento ou assunto</strong> você está falando. Me diga o nome (por exemplo: dipirona, metformina, TGO).'), chipsBase);
+    if (v.motivo === 'sem_assunto') return R(p('Sobre qual <strong>assunto</strong> você quer saber? Me diga o termo (por exemplo: farmacocinética, metformina, TGO) e o que quer dele.'), chipsBase);
+    return R(p('Não consegui identificar com clareza o que você quer saber. Pode dizer o <strong>assunto</strong> (um medicamento, um conceito, um exame) e o que você quer dele: explicação, comparação, exemplos?'), chipsBase);
+  }
+
+  // Risco "geral" (efeitos adversos, contraindicações, riscos em termos acadêmicos): só material local, nunca provedor online.
+  function soLocalRisco(raw, interp) {
+    var res = M.contexto.resolver(interp, raw), busca = M.rag.preparar(interp, res.texto), loc = '';
+    // só vale texto local que fale do próprio medicamento/assunto perguntado (um item vizinho, como "Farmacodinâmica", não responde "efeitos adversos da losartana")
+    var ATR = ['efeito adverso', 'reacao adversa', 'toxicidade', 'interacao medicamentosa', 'contraindicacao'];
+    var termos = (interp.farmacos || []).concat(res.usou && res.topico ? [res.topico] : []).concat((interp.conceitos || []).map(function (c) { return c.rotulo; })).map(function (x) { return M.busca.norm(x); }).filter(function (x) { return x && ATR.indexOf(x) < 0; });
+    if (!termos.length) { var tc = M.contexto.topico(); if (tc && tc.rotulo) termos = [M.busca.norm(tc.rotulo)]; }
+    if (busca.suficiente) {
+      var rel = termos.length ? (busca.resultados || []).filter(function (r) { var tx = M.busca.norm(r.titulo + ' ' + r.trecho); return termos.some(function (t) { return tx.indexOf(t) >= 0; }); }) : [];
+      if (rel && rel.length) loc = M.rag.formatarLocal({ resultados: rel }, interp);
+    }
+    if (loc) { M.contexto.registrar({ pergunta: raw, html: loc, interp: interp, modo: 'local' }); return R(loc, chipsPos(interp).slice(0, 2)); }
+    var tema = temaDe(interp).concat(res.usou && res.topico ? [res.topico] : []).slice(0, 2).map(function (x) { return '<strong>' + esc(x) + '</strong>'; }).join(' e ');
+    var assunto = interp.v3 && interp.v3.id === 'explicar_interacao' ? 'a interação' : 'efeitos adversos e riscos';
+    return R(p('Não encontrei no material local da FarmacIA um texto sobre ' + assunto + (tema ? ' de ' + tema : '') + '.') + p('Como esse é um assunto de segurança, eu não envio a pergunta para a IA online. Consulte a bula, o farmacêutico ou o professor da disciplina.'), F()._chips ? F()._chips() : []);
   }
 
   function tratar(raw, interp, local, prefixo) {
     var bloq = bloqueioRisco(interp); if (bloq) return Promise.resolve(bloq);   // segunda barreira: nada de risco chega ao provedor
+    if (interp.v3 && interp.v3.risco === 'geral' && !M.config.ia.academicoRiscoOnline) return Promise.resolve(soLocalRisco(raw, interp));   // risco geral: só material local (a menos que a configuração permita a IA online com instrução acadêmica)
     var res = M.contexto.resolver(interp, raw), busca = M.rag.preparar(interp, res.texto), chk = M.ia.pode();
-    if (!busca.suficiente) busca = { resultados: [], cobertura: busca.cobertura, suficiente: false, vazio: busca.vazio };   // material fraco não vira "fonte" nem contexto
+    var proximos = proximosLocais(busca);
+    if (!busca.suficiente) busca = { resultados: [], cobertura: busca.cobertura, suficiente: false, vazio: busca.vazio, proximos: proximos };   // material fraco não vira "fonte" nem contexto
     prefixo = prefixo || '';
+    if (res.usou && res.topico && !prefixo) prefixo = p('Continuando sobre <strong>' + esc(res.topico) + '</strong>.');
     if (!chk.ok) {
       if (chk.motivo === 'sem_consentimento') {
         pendente = { raw: raw, interp: interp, local: local };
@@ -1371,6 +1549,7 @@
   }
 
   function interceptar(raw, local) {
+    M.contexto.iniciar();
     var n = M.busca.norm(raw), cmd = comando(n, raw);
     if (cmd) return cmd.then ? cmd : Promise.resolve(cmd);
     var st = F()._state ? F()._state() : {};
@@ -1381,7 +1560,9 @@
     var forced = !!(local && local.forcarIA);   // pedido de conteúdo vindo do catálogo da FarmacIA (ou o tema que o aluno deu em seguida): vai à IA se ela puder responder
     var regraPlain = lid === 'rule' && window.FarmaRegras && window.FarmaRegras.match(n);   // regra pedida com as próprias palavras (não por correção ortográfica)
     var bloqueio = bloqueioRisco(interp);
-    if (bloqueio) return Promise.resolve(bloqueio);   // risco classificado antes de qualquer roteamento
+    if (bloqueio) { M.contexto.registrar({ pergunta: raw, html: '', interp: interp, modo: 'seguranca' }); return Promise.resolve(bloqueio); }   // risco classificado antes de qualquer roteamento; o turno fica só na memória (não vai ao provedor)
+    var escl = (OVERR[lid] || lid === 'unknown' || ESC_SOC[lid]) && !forced ? esclarecimento(interp) : null;
+    if (escl) return Promise.resolve(escl);
     var v3 = interp.v3, conteudoV3 = !!(v3 && !v3.seguranca && CONTEUDO_V3[v3.id] && v3.confianca >= 0.55 && v3.entidades.some(function (e) { return e.tipo !== 'quantidade' && e.tipo !== 'area'; }));   // pergunta de conteúdo com termo reconhecido e sem risco sinalizado
     var manter = (SOCIAL[lid] && !conteudoV3) || lid === 'glossary' || lid === 'contacts' || lid === 'offscope' || lid === 'ementa' || lid === 'fluxograma' || !!regraPlain;
     var academico = interp.academica || interp.codigoExplicito || (!!interp.disciplina && !temEnt && (!interp.pedagogica || interp.numeral));
@@ -2122,9 +2303,23 @@
     '| Parâmetro | Símbolo |', '|---|---|', '| Meia-vida | t½ |', '| Depuração | CL |', '',
     '```', 't½ = 0,693 × Vd / CL', '```'
   ].join('\n');
-  var menu = null, btnMenu = null, vista = 'raiz';
+  // O menu mora num painel lateral (esquerda): o botão ☰ do cabeçalho abre; o X, o fundo, Esc ou um deslize para a esquerda fecham.
+  var menu = null, btnMenu = null, vista = 'raiz', drawer = null, drawerPanel = null, drawerTimer = 0;
+  function mostrarPainel(abrir) {
+    if (!drawer) return;
+    var raiz = doc.documentElement;
+    window.clearTimeout(drawerTimer);
+    if (abrir) {
+      drawer.hidden = false; void drawer.offsetWidth;   // força o layout para a transição de entrada rodar
+      drawer.classList.add('is-open'); raiz.classList.add('farma-drawer-open');
+    } else {
+      drawer.classList.remove('is-open'); raiz.classList.remove('farma-drawer-open');
+      drawerTimer = window.setTimeout(function () { if (!drawer.classList.contains('is-open')) drawer.hidden = true; }, 300);
+    }
+  }
   function fecharMenu(devolverFoco) {
     if (!menu || menu.hidden) return; menu.hidden = true; btnMenu.setAttribute('aria-expanded', 'false'); vista = 'raiz';
+    mostrarPainel(false);
     if (devolverFoco) btnMenu.focus();
   }
   function linhaMenu(icone, nome, desc, valor, aoClicar) {
@@ -2135,7 +2330,7 @@
     var vl = h('span', 'fm-row-val'); if (typeof valor === 'object' && valor) vl.appendChild(valor); else vl.textContent = valor; if (aoClicar) vl.appendChild(ico('chev')); el.appendChild(vl);
     return el;
   }
-  function focarPrimeiro() { var f = menu.querySelector('button:not([disabled])'); if (f) f.focus(); }
+  function focarPrimeiro() { var f = menu.querySelector('button:not([disabled])'); if (f) f.focus({ preventScroll: true }); }
   function desenharMenu(foco) {
     while (menu.firstChild) menu.removeChild(menu.firstChild);
     if (vista === 'raiz') {
@@ -2167,7 +2362,7 @@
           salvarPrefs(); aplicarPrefs();
           Array.prototype.forEach.call(grupo.children, function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
           if (previa) previa.setAttribute('data-farma-size', prefs.tamanho);
-          var v = btnMenu && btnMenu.parentNode.querySelector('.fm-live'); if (v) v.textContent = (vista === 'tamanho' ? 'Tamanho ' : 'Tema ') + o.nome.toLowerCase();
+          var v = drawer && drawer.querySelector('.fm-live'); if (v) v.textContent = (vista === 'tamanho' ? 'Tamanho ' : 'Tema ') + o.nome.toLowerCase();
         });
         b.addEventListener('keydown', function (e) {
           var ix = Array.prototype.indexOf.call(grupo.children, b), d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
@@ -2200,13 +2395,13 @@
      'Grade e regras da UFRJ são sempre respondidas no aparelho.'].forEach(function (t) { lista.appendChild(h('li', null, t)); });
     box.appendChild(lista);
     var btn = h('button', 'fm-ia-btn' + (on ? ' is-off' : '')); btn.type = 'button'; btn.textContent = on ? 'Desativar IA online' : 'Ativar IA online';
-    btn.addEventListener('click', function () { if (on) ia.desativar(); else ia.ativar(); desenharIA(); var v = btnMenu && btnMenu.parentNode.querySelector('.fm-live'); if (v) v.textContent = ia.ativada() ? 'IA online ativada' : 'IA online desativada'; var f = menu.querySelector('.fm-ia-btn'); if (f) f.focus(); });
+    btn.addEventListener('click', function () { if (on) ia.desativar(); else ia.ativar(); desenharIA(); var v = drawer && drawer.querySelector('.fm-live'); if (v) v.textContent = ia.ativada() ? 'IA online ativada' : 'IA online desativada'; var f = menu.querySelector('.fm-ia-btn'); if (f) f.focus(); });
     box.appendChild(btn);
     while (menu.children.length > 1) menu.removeChild(menu.lastChild);   // mantém o cabeçalho, refaz o corpo
     menu.appendChild(box);
   }
   function abrirMenu() {
-    if (!menu) return; vista = 'raiz'; desenharMenu(false); menu.hidden = false; btnMenu.setAttribute('aria-expanded', 'true'); focarPrimeiro();
+    if (!menu) return; vista = 'raiz'; desenharMenu(false); menu.hidden = false; btnMenu.setAttribute('aria-expanded', 'true'); mostrarPainel(true); focarPrimeiro();
   }
 
   var hist = null, histLista = null, histBusca = null, histLive = null;
@@ -2253,12 +2448,26 @@
 
   function iniciar() {
     aplicarPrefs();
-    btnMenu = doc.getElementById('farma-menu-btn'); var cx = btnMenu && btnMenu.parentNode && btnMenu.closest('.farma-tools');
-    if (!btnMenu || !cx) return;
-    menu = h('div', 'fm-menu'); menu.id = 'farma-menu'; menu.setAttribute('role', 'menu'); menu.hidden = true; cx.appendChild(menu);
-    var live = h('span', 'fm-sr fm-live'); live.setAttribute('aria-live', 'polite'); cx.appendChild(live);
+    btnMenu = doc.getElementById('farma-menu-btn');
+    drawer = doc.getElementById('farma-drawer'); drawerPanel = doc.getElementById('farma-drawer-panel'); var corpo = doc.getElementById('farma-drawer-body');
+    if (!btnMenu || !drawer || !drawerPanel || !corpo) return;
+    menu = h('div', 'fm-menu'); menu.id = 'farma-menu'; menu.setAttribute('role', 'menu'); menu.hidden = true; corpo.appendChild(menu);
+    var live = h('span', 'fm-sr fm-live'); live.setAttribute('aria-live', 'polite'); drawer.appendChild(live);
     btnMenu.addEventListener('click', function (e) { e.stopPropagation(); if (menu.hidden) abrirMenu(); else fecharMenu(true); });
-    doc.addEventListener('click', function (e) { if (!menu.hidden && !menu.contains(e.target) && !btnMenu.contains(e.target)) fecharMenu(false); });
+    var fechar = doc.getElementById('farma-drawer-x'); if (fechar) fechar.addEventListener('click', function () { fecharMenu(true); });
+    // composedPath() é calculado no disparo do clique: continua valendo mesmo quando o item tocado já foi redesenhado (troca de subtela).
+    doc.addEventListener('click', function (e) {
+      if (menu.hidden) return;
+      var rota = e.composedPath ? e.composedPath() : [];
+      if (rota.indexOf(drawerPanel) < 0 && rota.indexOf(btnMenu) < 0) fecharMenu(false);
+    });
+    // Deslizar o painel para a esquerda fecha (abrir é pelo botão ☰).
+    var gx = null, gy = null;
+    drawerPanel.addEventListener('touchstart', function (e) { var t = e.touches[0]; gx = t.clientX; gy = t.clientY; }, { passive: true });
+    drawerPanel.addEventListener('touchend', function (e) {
+      if (gx === null) return; var t = e.changedTouches[0], dx = t.clientX - gx, dy = t.clientY - gy; gx = null;
+      if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) fecharMenu(false);
+    }, { passive: true });
     doc.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
       if (hist && !hist.hidden) { e.preventDefault(); fecharHistorico(true); } else if (!menu.hidden) { e.preventDefault(); fecharMenu(true); }

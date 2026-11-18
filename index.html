@@ -488,41 +488,47 @@
   <!-- FarmacIA -->
   <div id="modal-farmacia" class="bottom-tab-page farma-page" role="tabpanel" aria-hidden="true" aria-labelledby="farma-title">
     <div class="farma-screen" onclick="event.stopPropagation()">
-      <div class="farma-deco" aria-hidden="true">
-        <svg class="fd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="fdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V155C340 173 300 151 238 161C176 171 128 177 76 171C40 166 16 150 0 155Z" fill="url(#fdg)"></path><path d="M232 0C262 34 318 40 346 74C366 98 382 96 390 90V0Z" fill="#fff" fill-opacity=".06"></path><circle cx="338" cy="36" r="1.6" fill="#fff" fill-opacity=".5"></circle><circle cx="356" cy="58" r="1.1" fill="#fff" fill-opacity=".4"></circle><circle cx="318" cy="22" r="1.1" fill="#fff" fill-opacity=".4"></circle></svg>
-        <svg class="fd-blob fd-blob-a" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
-        <svg class="fd-blob fd-blob-b" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
-      </div>
+      <svg class="farma-symbols" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+        <symbol id="farma-hygieia" viewBox="0 0 24 24">
+          <path d="M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M12 15.2V19M8.2 20.5h7.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </symbol>
+      </svg>
       <header class="farma-header">
-        <div class="farma-header-main">
-          <div class="tab-title-row"><div class="tab-title-icon farma-title-icon flex-shrink-0">
-            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z"></path><path d="M12 15.2V19M8.2 20.5h7.6"></path></svg>
-          </div><h2 id="farma-title" class="farma-title">FarmacIA</h2></div>
-          <p class="farma-subtitle">Grade, regras e Farmácia em conversa.</p>
-        </div>
-        <div class="farma-tools">
-          <div class="farma-capsule">
-            <button id="farma-menu-btn" class="farma-tool" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="farma-menu" aria-label="Opções da FarmacIA" title="Opções">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.2"></circle><circle cx="12" cy="12" r="1.2"></circle><circle cx="19" cy="12" r="1.2"></circle></svg>
-            </button>
-            <span class="farma-capsule-sep" aria-hidden="true"></span>
-            <button id="farma-reset" class="farma-reset farma-tool" type="button" aria-label="Nova conversa" title="Nova conversa">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
-            </button>
-          </div>
-        </div>
+        <button id="farma-menu-btn" class="farma-tool farma-menu-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="farma-drawer" aria-label="Abrir menu da FarmacIA" title="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h10.5M4 17.5h16"></path></svg>
+        </button>
+        <h2 id="farma-title" class="farma-title" data-no-i18n>Farmac<span class="farma-title-ia">IA</span></h2>
+        <button id="farma-reset" class="farma-reset farma-tool" type="button" aria-label="Nova conversa" title="Nova conversa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>
+        </button>
       </header>
       <p id="farma-lang-note" class="farma-lang-note" hidden>A FarmacIA entende perguntas em português.</p>
       <div id="farma-messages" class="farma-messages" role="log" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
+      <div id="farma-suggest" class="farma-suggest" data-no-i18n data-no-tab-swipe="true" hidden></div>
       <div id="farma-chips" class="farma-chips" data-no-i18n data-no-tab-swipe="true"></div>
       <form id="farma-form" class="farma-composer" autocomplete="off">
         <div class="farma-composer-box">
-        <input id="farma-input" class="farma-input" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Pergunte qualquer coisa sobre a sua grade..." aria-label="Pergunte qualquer coisa sobre a sua grade">
+          <svg class="farma-composer-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#farma-hygieia"></use></svg>
+          <span class="farma-composer-rule" aria-hidden="true"></span>
+          <input id="farma-input" class="farma-input" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Pergunte à FarmacIA..." aria-label="Pergunte à FarmacIA">
+        </div>
         <button id="farma-send" class="farma-send" type="submit" aria-label="Enviar" title="Enviar" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
         </button>
-        </div>
       </form>
+    </div>
+    <div id="farma-drawer" class="farma-drawer" data-no-tab-swipe="true" hidden>
+      <div class="farma-drawer-scrim" data-farma-drawer-close></div>
+      <aside id="farma-drawer-panel" class="farma-drawer-panel" role="dialog" aria-modal="true" aria-label="Opções da FarmacIA">
+        <div class="farma-drawer-head">
+          <span class="farma-drawer-brand" data-no-i18n><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#farma-hygieia"></use></svg><span>Farmac<span class="farma-title-ia">IA</span></span></span>
+          <button type="button" id="farma-drawer-x" class="farma-drawer-x" aria-label="Fechar menu" title="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div id="farma-drawer-body" class="farma-drawer-body"></div>
+      </aside>
     </div>
   </div>
 
@@ -857,6 +863,7 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
+          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Tela da FarmacIA redesenhada</h4><ul class="release-list"><li>Visual mais limpo: sem faixa verde, com o menu à esquerda e só o botão de nova conversa à direita.</li><li>As opções que ficavam nos três pontinhos agora estão no menu lateral da FarmacIA: toque no botão de menu, no canto superior esquerdo.</li><li>Com o seu nome cadastrado, a FarmacIA te recebe de acordo com o horário: Bom dia, Boa tarde, Boa noite ou Boa madrugada. A saudação some quando a conversa começa.</li><li>Sugestões rápidas em linhas simples, acima do campo de mensagem, que agora mostra o símbolo da farmácia.</li></ul></div>
           <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Menu lateral</h4><ul class="release-list"><li>Toque na sua foto, no canto da tela Planejador, para abrir um menu com atalhos para as telas do app, Configurações, Aparência e Ajuda e suporte. Feche tocando fora, no X ou deslizando para a esquerda.</li><li>Sanfonas mais enxutas no Planejador e em "O que puxar?", com menos rolagem para chegar nas matérias.</li><li>O menu dos três pontinhos da FarmacIA foi refeito: tamanho da fonte em Pequeno, Padrão e Grande, e linhas mais limpas.</li><li>Os destaques em amarelo dos Comunicados agora ficam legíveis no modo escuro.</li></ul></div>
           <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Chapéu e X redesenhados</h4><ul class="release-list"><li>No ícone de Escolha condicionada em "O que puxar?", o chapéu ficou um pouco menor e o X ganhou lugar próprio no canto superior direito, sem círculo e sem encostar na ponta do capelo.</li></ul></div>
           <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">IA online quando o material local não basta</h4><ul class="release-list"><li>A FarmacIA continua respondendo primeiro com o que sabe no aparelho; só quando não entende uma pergunta de conteúdo, e se você permitir, ela consulta uma IA online.</li><li>Novo item "IA online" no menu ⋯: mostra se está ativada, desativada ou esgotada hoje, explica o que é enviado e liga ou desliga com um toque.</li><li>Quando a cota gratuita diária acaba, a FarmacIA avisa e volta a responder só com o material local até o dia seguinte.</li><li>Grade, regras da UFRJ e dados pessoais continuam sendo tratados só no aparelho.</li></ul></div>
