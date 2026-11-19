@@ -14,7 +14,20 @@ const STORAGE_KEYS = {
 };
 const PERIODO_COND = 'Escolha Condicionada';
 // ÚNICA fonte da versão do site: index.html, sw.js e o botão "Verificar atualização" leem daqui.
-const APP_VERSION = '0.6.3';
+const APP_VERSION = '0.6.4';
+// Abre o seletor de imagens do sistema. O navegador decide a interface: com accept="image/*" (sem "capture") o Chrome do Android mostra o
+// seletor de fotos, o Safari do iPhone mostra a biblioteca de fotos e o computador mostra a janela comum de arquivos.
+// showPicker() abre o mesmo seletor que click(), mas recusa abrir fora de um toque do usuário; se falhar, volta para click().
+function pickImage(input) {
+  if (!input) return;
+  input.value = '';   // escolher a mesma foto duas vezes continua disparando "change"
+  try {
+    if (typeof input.showPicker === 'function') { input.showPicker(); return; }
+  } catch (_) { /* sem ativação do usuário, iframe ou navegador sem suporte: usa o caminho clássico */ }
+  input.click();
+}
+window.pickImage = pickImage;
+
 const T = (key, params) => (window.I18N ? window.I18N.t(key, params) : String(key).replace(/\{(\w+)\}/g, (m, k) => (params && k in params ? params[k] : m)));
 const META_COND_CRED = 12;
 const META_COND_HORAS = 180;

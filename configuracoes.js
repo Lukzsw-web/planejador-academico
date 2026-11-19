@@ -641,7 +641,7 @@ function initProfileSettings() {
   updateProfileUI();
   applyProfilePhoto();
   const photoInput = document.getElementById('profile-photo-input');
-  document.getElementById('profile-photo-btn')?.addEventListener('click', () => photoInput?.click());
+  document.getElementById('profile-photo-btn')?.addEventListener('click', () => pickImage(photoInput));
   photoInput?.addEventListener('change', () => { setProfilePhotoFromFile(photoInput.files && photoInput.files[0]); photoInput.value = ''; });
   document.getElementById('profile-photo-remove')?.addEventListener('click', () => { try { localStorage.removeItem(PHOTO_KEY); } catch (_) {} applyProfilePhoto(); });
   const nameInput = document.getElementById('profile-name');

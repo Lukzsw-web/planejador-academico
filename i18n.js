@@ -648,7 +648,11 @@ window.I18N_ROWS = [
     ["Conversa favoritada.", "Conversation added to favorites.", "Conversación añadida a favoritos."],
     ["Conversa removida dos favoritos.", "Conversation removed from favorites.", "Conversación quitada de favoritos."],
     ["Conversa excluída.", "Conversation deleted.", "Conversación eliminada."],
-    ["Farmácia – UFRJ", "Pharmacy – UFRJ", "Farmacia – UFRJ"]
+    ["Farmácia – UFRJ", "Pharmacy – UFRJ", "Farmacia – UFRJ"],
+    ["Faixa do Planejador padronizada", "Standardized Planner bar", "Barra del Planificador unificada"],
+    ["A aba Planejador agora usa a mesma faixa de \"O que puxar?\" e Comunicados, com foto e nome à esquerda e o nome da aba no meio.", "The Planner tab now uses the same top bar as \"What to take?\" and Announcements, with your photo and name on the left and the tab name in the middle.", "La pestaña Planificador ahora usa la misma barra que «¿Qué cursar?» y Comunicados, con tu foto y nombre a la izquierda y el nombre de la pestaña en el centro."],
+    ["Escolha de fotos", "Choosing photos", "Elección de fotos"],
+    ["O botão de foto do perfil e o de imagem das anotações pedem ao aparelho o seletor de fotos (sem abrir a câmera). Qual tela aparece depende do navegador e do sistema.", "The profile photo button and the notes image button ask the device for its photo picker (without opening the camera). Which screen appears depends on the browser and the system.", "El botón de foto de perfil y el de imagen de las anotaciones piden al dispositivo su selector de fotos (sin abrir la cámara). Qué pantalla aparece depende del navegador y del sistema."]
 ];
 
 // =====================================================================

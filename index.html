@@ -52,13 +52,10 @@
   </div>
 
   <div id="home-page" class="home-tab-page bottom-tab-current" role="tabpanel" aria-hidden="false">
-  <header data-tab-band class="bg-[#fce98a] dark:bg-[#c99522] text-gray-800 dark:text-white pt-8 pb-10 px-6 shadow-xl rounded-b-[2.5rem] mb-10 relative flex flex-col items-center overflow-hidden">
-    <button type="button" id="nav-open" class="nav-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span id="nav-open-name" class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
-    <div class="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 50% 0%, #fff 0%, transparent 70%);"></div>
-    
-    <h1 class="text-3xl font-black text-center mt-10 tracking-tight z-10 drop-shadow-sm">Planejador Acadêmico</h1>
-    <p class="text-center font-bold text-sm mt-3 tracking-wide uppercase z-10 opacity-80">Farmácia - UFRJ</p>
-    <p id="home-greeting" class="text-center font-bold text-base mt-4 z-10" data-no-i18n hidden></p>
+  <header class="tab-band" data-tab-band>
+    <button type="button" id="nav-open" class="nav-open tab-band-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span id="nav-open-name" class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+    <h1 class="tab-band-title">Planejador</h1>
+    <div class="tab-band-end"></div>
   </header>
 
   <main class="max-w-3xl mx-auto px-4 sm:px-6 pb-10">
@@ -859,9 +856,8 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda: busca, favoritas e excluir</h4><ul class="release-list"><li>Barra de busca (ignora acentos), estrela para favoritar (as favoritas ficam no topo, com filtro próprio) e botão de excluir em cada anotação, com confirmação em dois toques, como no histórico da FarmacIA.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Faixas e botão da agenda em destaque</h4><ul class="release-list"><li>As faixas do topo agora são uma superfície própria, que se separa do fundo, principalmente no modo escuro. O botão da agenda ganhou borda e fundo.</li><li>Comunicados sem o subtítulo; o texto de "O que puxar?" ficou centralizado.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Correção</span><h4 class="release-title">Piscadas</h4><ul class="release-list"><li>No modo escuro, a tela não pisca mais em branco ao rolar: a raiz da página ainda usava o fundo claro.</li><li>Ao recarregar, o site não mostra mais outra tela antes da aba em que você estava.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Faixa do Planejador padronizada</h4><ul class="release-list"><li>A aba Planejador agora usa a mesma faixa de "O que puxar?" e Comunicados, com foto e nome à esquerda e o nome da aba no meio.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Escolha de fotos</h4><ul class="release-list"><li>O botão de foto do perfil e o de imagem das anotações pedem ao aparelho o seletor de fotos (sem abrir a câmera). Qual tela aparece depende do navegador e do sistema.</li></ul></div>
         </div>
       </section>
       </div>

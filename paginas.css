@@ -1004,3 +1004,30 @@ html #modal-planner .planner-page-subtitle { text-align: center; margin: 0 auto 
 .ag-del.is-sure { background: var(--pa-danger); color: #fff; }
 .ag-star:focus-visible, .ag-del:focus-visible { outline: none; box-shadow: var(--pa-focus); }
 .ag-item.is-fav .ag-bubble { box-shadow: inset 3px 0 0 var(--pa-accent); }
+
+/* Planejador: a faixa antiga (amarela, arredondada, com título grande) cede lugar à mesma faixa das outras abas.
+   As regras antigas de "#home-page > header" usam !important, então as de baixo repetem o seletor e a propriedade. */
+html #home-page > header.tab-band {
+  display: grid !important; position: sticky !important; top: 0 !important; z-index: 70 !important;
+  margin: 0 !important; min-height: 0 !important; overflow: visible !important; isolation: auto;
+  padding: max(calc(.5rem + 5px), env(safe-area-inset-top)) .8rem calc(.5rem + 5px) !important;
+  background: var(--band-bg) !important; color: var(--pq-ink) !important;
+  border: 0 !important; border-bottom: 1px solid var(--band-line) !important; border-radius: 0 !important;
+  box-shadow: 0 1px 0 var(--band-line) !important; text-align: initial;
+}
+html.dark #home-page > header.tab-band { box-shadow: none !important; }
+html #home-page > header.tab-band::before, html #home-page > header.tab-band::after { content: none !important; display: none !important; }
+html #home-page > header.tab-band h1.tab-band-title {
+  margin: 0 !important; color: var(--pq-ink) !important; font-size: 1.15rem !important; font-weight: 600 !important; line-height: 1.12 !important;
+  letter-spacing: -.025em !important; text-transform: none !important; text-shadow: none !important; filter: none !important; text-align: center;
+}
+html #home-page > header.tab-band > button.nav-open { position: relative !important; top: auto !important; left: auto !important; margin: 0 0 0 -.2rem !important; }
+@media (max-width: 380px) { html #home-page > header.tab-band h1.tab-band-title { font-size: .96rem !important; } }
+@media (min-width: 700px) {
+  html #home-page > header.tab-band { padding: max(calc(.55rem + 5px), env(safe-area-inset-top)) max(1.25rem, calc((100vw - 1120px) / 2)) calc(.55rem + 5px) !important; }
+  html #home-page > header.tab-band h1.tab-band-title { font-size: 1.3rem !important; }
+}
+/* a busca deixa de subir sobre o cabeçalho antigo */
+html #home-page #search-wrapper { margin-top: 1rem !important; margin-bottom: 1rem !important; top: .75rem !important; }
+html #home-page #search-wrapper { margin-bottom: .35rem !important; }
+html #home-page #search-wrapper + div { margin-bottom: .75rem; }

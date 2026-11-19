@@ -886,7 +886,7 @@ else { initNavDrawer(); initNavHandle(); }
       next = Math.max(0, Math.min(H, next));
       const delta = next - m; m = next;
       band.style.transform = m ? `translate3d(0, ${-m}px, 0)` : '';
-      band.style.marginBottom = m ? `${baseMargin - m}px` : '';
+      if (m) band.style.setProperty('margin-bottom', `${baseMargin - m}px`, 'important'); else band.style.removeProperty('margin-bottom');   // important: o cabeçalho do Planejador tem margin !important no CSS
       // com a página rolada para além da faixa, a altura que sai/entra não pode empurrar o conteúdo que está na tela
       if (delta && page.scrollTop > H) page.scrollTop = Math.max(0, page.scrollTop - delta);
     }

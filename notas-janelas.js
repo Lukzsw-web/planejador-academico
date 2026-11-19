@@ -189,7 +189,7 @@
     const bU = btn('rt-u', tr('Sublinhado'), '<u>U</u>', cmd('underline'));
     const sep = document.createElement('span'); sep.className = 'rt-sep'; sep.setAttribute('aria-hidden', 'true'); bar.appendChild(sep);
     const bC = btn('rt-c', tr('Lista com quadradinhos'), ICO.check, () => { body.focus(); toggleList(); });
-    const bP = btn('rt-p', tr('Inserir imagem'), ICO.image, () => file.click());
+    const bP = btn('rt-p', tr('Inserir imagem'), ICO.image, () => (window.pickImage ? window.pickImage(file) : file.click()));
     bar.appendChild(file);
 
     function state() {
