@@ -519,21 +519,122 @@ function applyProfilePhoto() {
   document.querySelectorAll('.profile-avatar').forEach(el => { el.classList.toggle('has-photo', !!url); el.style.backgroundImage = url ? `url("${url}")` : ''; });
   const rm = document.getElementById('profile-photo-remove'); if (rm) rm.hidden = !url;
 }
+// Escolha da foto: a galeria nativa do aparelho abre pelo <input type="file" accept="image/*"> e, depois de escolher,
+// o editor de recorte (arrastar + pinça/controle de zoom, máscara redonda como no X) define o enquadramento.
 function setProfilePhotoFromFile(file) {
   if (!file || !/^image\//.test(file.type)) { showToast({ text: T('Escolha um arquivo de imagem.'), mode: 'error' }); return; }
   const img = new Image(), src = URL.createObjectURL(file);
   img.onload = () => {
-    URL.revokeObjectURL(src);
-    try {
-      const S = 320, c = document.createElement('canvas'); c.width = c.height = S;
-      const side = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S); ctx.drawImage(img, sx, sy, side, side, 0, 0, S, S);
-      localStorage.setItem(PHOTO_KEY, c.toDataURL('image/jpeg', 0.85));
-      applyProfilePhoto();
-    } catch (_) { showToast({ text: T('Não foi possível salvar a foto.'), mode: 'error' }); }
+    if (!img.naturalWidth || !img.naturalHeight) { URL.revokeObjectURL(src); showToast({ text: T('Não foi possível abrir essa imagem.'), mode: 'error' }); return; }
+    openPhotoCropper(img, src);
   };
   img.onerror = () => { URL.revokeObjectURL(src); showToast({ text: T('Não foi possível abrir essa imagem.'), mode: 'error' }); };
   img.src = src;
+}
+
+function openPhotoCropper(img, src) {
+  if (document.getElementById('photo-crop')) return;
+  const previousFocus = document.activeElement;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const root = document.createElement('div');
+  root.id = 'photo-crop'; root.className = 'photo-crop'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', T('Ajustar foto do perfil'));
+  root.setAttribute('data-no-tab-swipe', 'true');
+  root.innerHTML = `
+    <div class="pc-bar">
+      <button type="button" class="pc-btn pc-cancel">${T('Cancelar')}</button>
+      <h2 class="pc-title">${T('Ajustar foto')}</h2>
+      <button type="button" class="pc-btn pc-apply">${T('Aplicar')}</button>
+    </div>
+    <div class="pc-stage" tabindex="0" aria-label="${T('Área de ajuste. Arraste para mover, use pinça ou o controle para ampliar.')}">
+      <img class="pc-img" alt="" draggable="false">
+      <div class="pc-mask" aria-hidden="true"></div>
+    </div>
+    <div class="pc-zoom">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>
+      <input type="range" class="pc-range" min="1" max="4" step="0.01" value="1" aria-label="${T('Zoom')}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="3"></rect></svg>
+    </div>`;
+  const stage = root.querySelector('.pc-stage'), image = root.querySelector('.pc-img'), range = root.querySelector('.pc-range');
+  image.src = src; image.width = iw; image.height = ih;
+  document.body.appendChild(root);
+  document.documentElement.classList.add('photo-crop-open');
+
+  let C = 280, s0 = 1, z = 1, ox = 0, oy = 0;
+  const clampOffsets = () => {
+    const s = s0 * z, mx = Math.max(0, (iw * s - C) / 2), my = Math.max(0, (ih * s - C) / 2);
+    ox = Math.min(mx, Math.max(-mx, ox)); oy = Math.min(my, Math.max(-my, oy));
+  };
+  const paint = () => {
+    clampOffsets();
+    image.style.transform = `translate(-50%, -50%) translate(${ox}px, ${oy}px) scale(${s0 * z})`;
+    range.value = String(z);
+  };
+  const layout = () => {
+    const r = stage.getBoundingClientRect();
+    const old = C; C = Math.max(160, Math.min(360, Math.floor(Math.min(r.width, r.height) - 40)));
+    root.style.setProperty('--pc-size', C + 'px');
+    s0 = C / Math.min(iw, ih);
+    if (old !== C) { ox = 0; oy = 0; }
+    paint();
+  };
+  const setZoom = (nz, fx = 0, fy = 0) => {          // fx/fy: ponto fixo, relativo ao centro do recorte
+    nz = Math.min(4, Math.max(1, nz));
+    const k = nz / z; ox = fx - (fx - ox) * k; oy = fy - (fy - oy) * k; z = nz; paint();
+  };
+
+  // gestos: um dedo arrasta, dois dedos fazem pinça (e arrastam pelo ponto médio); roda do mouse amplia
+  const pts = new Map(); let pinch = null;
+  const center = () => { const r = stage.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  stage.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    stage.setPointerCapture?.(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; }
+    stage.classList.add('is-grab');
+  });
+  stage.addEventListener('pointermove', e => {
+    const p = pts.get(e.pointerId); if (!p) return;
+    if (pts.size >= 2 && pinch) {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y) || 1, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, c = center();
+      ox += mx - pinch.mx; oy += my - pinch.my;
+      setZoom(z * d / pinch.d, mx - c.x, my - c.y);
+      pinch = { d, mx, my };
+    } else if (pts.size === 1) {
+      ox += e.clientX - p.x; oy += e.clientY - p.y; pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); paint();
+    }
+  });
+  const endPtr = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) stage.classList.remove('is-grab'); };
+  stage.addEventListener('pointerup', endPtr); stage.addEventListener('pointercancel', endPtr);
+  stage.addEventListener('wheel', e => { e.preventDefault(); const c = center(); setZoom(z * Math.exp(-e.deltaY * 0.0015), e.clientX - c.x, e.clientY - c.y); }, { passive: false });
+  range.addEventListener('input', () => setZoom(parseFloat(range.value) || 1));
+  stage.addEventListener('keydown', e => {
+    const step = 16, map = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+    if (map[e.key]) { e.preventDefault(); ox += map[e.key][0]; oy += map[e.key][1]; paint(); }
+    else if (e.key === '+' || e.key === '=') { e.preventDefault(); setZoom(z + 0.1); }
+    else if (e.key === '-') { e.preventDefault(); setZoom(z - 0.1); }
+  });
+
+  const close = () => {
+    window.removeEventListener('resize', layout); document.removeEventListener('keydown', onKey, true);
+    root.remove(); URL.revokeObjectURL(src); document.documentElement.classList.remove('photo-crop-open');
+    try { previousFocus && previousFocus.focus && previousFocus.focus({ preventScroll: true }); } catch (_) {}
+  };
+  const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', onKey, true);
+  root.querySelector('.pc-cancel').addEventListener('click', close);
+  root.querySelector('.pc-apply').addEventListener('click', () => {
+    try {
+      const S = 320, s = s0 * z, side = C / s;
+      const sx = iw / 2 - ox / s - side / 2, sy = ih / 2 - oy / s - side / 2;
+      const c = document.createElement('canvas'); c.width = c.height = S;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S);
+      ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, sx, sy, side, side, 0, 0, S, S);
+      localStorage.setItem(PHOTO_KEY, c.toDataURL('image/jpeg', 0.88));
+      applyProfilePhoto(); close();
+    } catch (_) { showToast({ text: T('Não foi possível salvar a foto.'), mode: 'error' }); }
+  });
+  window.addEventListener('resize', layout);
+  requestAnimationFrame(() => { layout(); root.querySelector('.pc-apply').focus({ preventScroll: true }); });
 }
 
 function initProfileSettings() {

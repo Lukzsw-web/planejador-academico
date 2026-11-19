@@ -619,8 +619,8 @@ function navThemeCycle() {
 function updateNavDrawerUser() {
   const name = window.UserProfile ? window.UserProfile.name() : '';
   // Identificação compacta do cabeçalho: sem nome, fica só avatar + seta.
-  const headName = document.getElementById('nav-open-name');
-  if (headName) { headName.textContent = name; headName.hidden = !name; }
+  // a faixa do topo se repete no Planejador, em "O que puxar?" e em Comunicados: mesmo nome em todas
+  document.querySelectorAll('.nav-open-name').forEach(headName => { headName.textContent = name; headName.hidden = !name; });
   const tag = document.getElementById('nav-tag');
   if (tag) {
     const info = navTagInfo();
@@ -676,7 +676,7 @@ function openNavDrawer(fromDrag = false) {
   }
   drawer.classList.add('is-open'); scrim.classList.add('is-open');
   document.documentElement.classList.add('nav-open');
-  if (opener) opener.setAttribute('aria-expanded', 'true');
+  document.querySelectorAll('button.nav-open').forEach(b => b.setAttribute('aria-expanded', 'true'));
   if (handle) handle.setAttribute('aria-expanded', 'true');
   navDrawerOpen = true;
   navOpenedAt = performance.now();
@@ -692,9 +692,10 @@ function closeNavDrawer(returnFocus = true) {
   drawer.style.transform = ''; scrim.style.opacity = '';
   document.documentElement.classList.remove('nav-open');
   if (handle) handle.setAttribute('aria-expanded', 'false');
-  // Devolve o foco a quem abriu: o botão do cabeçalho só existe visível na primeira aba.
-  const focusTarget = activeBottomTabId === 'home-page' ? opener : handle;
-  if (opener) opener.setAttribute('aria-expanded', 'false');
+  // Devolve o foco a quem abriu: o botão da faixa da aba atual (se ela tiver faixa visível) ou a alça lateral.
+  const bandOpener = getBottomTabElement(activeBottomTabId)?.querySelector('button.nav-open');
+  const focusTarget = bandOpener && bandOpener.offsetParent !== null && !bandOpener.closest('[inert]') ? bandOpener : handle;
+  document.querySelectorAll('button.nav-open').forEach(b => b.setAttribute('aria-expanded', 'false'));
   if (focusTarget && returnFocus) focusTarget.focus({ preventScroll: true });
   const finish = () => { if (!navDrawerOpen) { drawer.hidden = true; scrim.hidden = true; } };
   const still = animationsOff() || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -849,3 +850,112 @@ function initNavDrawer() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initNavDrawer(); initNavHandle(); });
 else { initNavDrawer(); initNavHandle(); }
+
+
+// Espaço que a dock ocupa a partir da borda de baixo (altura + distância da borda), em --dock-h: o fim da aba
+// Planejador (45 px acima da dock) depende dele, e ele muda com a escala, a altura e o tamanho da tela.
+(function syncDockHeight() {
+  const nav = document.getElementById('bottom-nav');
+  if (!nav) return;
+  const apply = () => document.documentElement.style.setProperty('--dock-h', (window.innerHeight - nav.getBoundingClientRect().top) + 'px');
+  apply();
+  window.addEventListener('resize', apply);
+  if (window.ResizeObserver) new ResizeObserver(apply).observe(nav);
+})();
+
+
+// ---- Faixa do topo (Planejador, "O que puxar?" e Comunicados) ------------------------------------
+// Deslizar o dedo para CIMA sobre a faixa a faz subir até sumir; deslizar para BAIXO no lugar onde ela estava a traz de volta.
+// Proteções: nada disso roda com a página ampliada (pinça), com dois dedos na tela, nem em arrasto horizontal
+// (que continua sendo da troca de abas). Dentro da faixa, touch-action só libera a pinça (ver paginas.css).
+(function initTabBands() {
+  const BASE_GAP = 0;
+  document.querySelectorAll('[data-tab-band]').forEach(band => {
+    const page = band.closest('.bottom-tab-page, .home-tab-page');
+    if (!page) return;
+    const baseMargin = parseFloat(getComputedStyle(band).marginBottom) || BASE_GAP;
+    const hit = document.createElement('div');                 // zona de "trazer de volta", só ativa com a faixa escondida
+    hit.className = 'tab-band-reveal';
+    hit.innerHTML = '<div class="tab-band-reveal-hit" role="button" tabindex="-1" aria-label="Mostrar a faixa do topo"></div>';
+    band.insertAdjacentElement('afterend', hit);
+    const zone = hit.firstElementChild;
+    let m = 0, H = 0, raf = 0, swipedAt = 0, drag = null;
+    const reduce = () => (typeof animationsOff === 'function' && animationsOff()) || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const measure = () => { if (m === 0) H = band.offsetHeight || H; return H; };
+    function apply(next) {
+      next = Math.max(0, Math.min(H, next));
+      const delta = next - m; m = next;
+      band.style.transform = m ? `translate3d(0, ${-m}px, 0)` : '';
+      band.style.marginBottom = m ? `${baseMargin - m}px` : '';
+      // com a página rolada para além da faixa, a altura que sai/entra não pode empurrar o conteúdo que está na tela
+      if (delta && page.scrollTop > H) page.scrollTop = Math.max(0, page.scrollTop - delta);
+    }
+    function settle() {
+      const hidden = m >= H && H > 0;
+      page.classList.toggle('is-band-hidden', hidden);
+      band.toggleAttribute('inert', hidden); band.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+      zone.tabIndex = hidden ? 0 : -1;
+    }
+    function animateTo(target) {
+      cancelAnimationFrame(raf);
+      const from = m;
+      if (reduce() || from === target) { apply(target); settle(); return; }
+      const t0 = performance.now(), dur = 220;
+      const step = now => {
+        const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+        apply(from + (target - from) * e);
+        if (k < 1) raf = requestAnimationFrame(step); else settle();
+      };
+      raf = requestAnimationFrame(step);
+    }
+    const cancelDrag = () => { if (!drag) return; const d = drag; drag = null; if (d.active) animateTo(d.m0 >= H / 2 ? H : 0); };
+    // um gesto serve aos dois sentidos: sobre a faixa (esconder) e sobre a zona vazia (mostrar)
+    function bind(el, dir) {                                   // dir: -1 esconder (dedo sobe), +1 mostrar (dedo desce)
+      el.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        if (isPageZoomed()) return;
+        if (drag) { cancelDrag(); return; }                    // segundo dedo = pinça: o gesto da faixa sai de cena
+        cancelAnimationFrame(raf); measure();
+        drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), m0: m, active: false };
+      });
+      el.addEventListener('pointermove', e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        if (isPageZoomed()) { cancelDrag(); return; }
+        const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (!drag.active) {
+          if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) { drag = null; return; }     // horizontal: é da troca de abas
+          if (Math.abs(dy) < 8 || Math.abs(dy) < Math.abs(dx) * 1.2) return;
+          if (Math.sign(dy) !== dir) { drag = null; return; }                         // sentido que não é o deste gesto
+          drag.active = true; drag.y = e.clientY - Math.sign(dy) * 8; try { el.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+        apply(drag.m0 - (e.clientY - drag.y));
+      });
+      const end = cancelled => e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const d = drag; drag = null;
+        if (!d.active) return;
+        swipedAt = performance.now();
+        const vy = (e.clientY - d.y) / Math.max(1, performance.now() - d.t);
+        if (cancelled) { animateTo(d.m0 >= H / 2 ? H : 0); return; }
+        const goHide = dir < 0 ? (m > H * 0.35 || vy < -0.45) : !(m < H * 0.65 || vy > 0.45);
+        animateTo(goHide ? H : 0);
+      };
+      el.addEventListener('pointerup', end(false)); el.addEventListener('pointercancel', end(true));
+    }
+    bind(band, -1); bind(zone, +1);
+    // depois de um deslize não deve sobrar um "clique" nos botões da faixa
+    band.addEventListener('click', e => { if (performance.now() - swipedAt < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
+    // toque simples na zona vazia: repassa o toque ao que está por baixo (só a "alça" central traz a faixa de volta)
+    zone.addEventListener('click', e => {
+      if (performance.now() - swipedAt < 350) return;
+      const r = zone.getBoundingClientRect(), onHandle = e.clientY - r.top < 24 && Math.abs(e.clientX - (r.left + r.width / 2)) < 36;
+      if (onHandle || e.detail === 0) { animateTo(0); return; }
+      zone.style.pointerEvents = 'none';
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      zone.style.pointerEvents = '';
+      if (under && under !== zone) { if (under.matches?.('input, textarea, select, [contenteditable="true"]')) under.focus?.(); else under.click?.(); }
+    });
+    zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); animateTo(0); } });
+    window.addEventListener('resize', () => { if (m === 0) { H = band.offsetHeight || H; } else { H = band.offsetHeight || H; apply(m >= H - 1 ? H : m); } });
+  });
+})();

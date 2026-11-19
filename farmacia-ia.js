@@ -1711,6 +1711,7 @@
     hist: '<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 7v5l3 2"></path>',
     chev: '<path d="m9 18 6-6-6-6"></path>',
     back: '<path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>',
+    star: '<path d="M12 3.6l2.55 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z"></path>',
     trash: '<path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>',
     search: '<circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path>',
     list: '<path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path>',
@@ -2229,7 +2230,7 @@
   function nomeDe(lista, id) { for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return lista[i].nome; return ''; }
 
   // ---------- histórico de conversas (localStorage, funciona offline) ----------
-  var MAX_CONV = 40, MAX_MSG = 80, MAX_HTML = 24000;
+  var MAX_CONV = 40, MAX_MSG = 80, MAX_HTML = 24000, MAX_FAV = 30;
   var conversas = (function () { var t = ler(HIST_KEY); try { var a = JSON.parse(t || '[]'); return Array.isArray(a) ? a.filter(function (c) { return c && typeof c.id === 'string' && Array.isArray(c.msgs); }) : []; } catch (e) { return []; } })();
   var atual = null;
   function salvarHist() {
@@ -2238,12 +2239,19 @@
     if (tentativa.length !== conversas.length) conversas = tentativa;
   }
   function ordenadas() { return conversas.slice().sort(function (a, b) { return b.atualizado - a.atualizado; }); }
+  // no histórico: favoritas primeiro (cada grupo da mais recente para a mais antiga)
+  function ordenadasHist() { return conversas.slice().sort(function (a, b) { return (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || b.atualizado - a.atualizado; }); }
   function garantirConversa(primeiroTexto) {
     if (atual) return atual;
     var agora = Date.now();
     atual = { id: 'c' + agora.toString(36) + Math.random().toString(36).slice(2, 6), criado: agora, atualizado: agora, titulo: limitar(String(primeiroTexto).replace(/\s+/g, ' ').trim(), 56), msgs: [], chips: [] };
     conversas.push(atual);
-    if (conversas.length > MAX_CONV) { conversas = ordenadas().slice(0, MAX_CONV); }
+    // ao passar do limite, saem as mais antigas; as favoritas (estrela) e a conversa em andamento ficam
+    if (conversas.length > MAX_CONV) {
+      var fixas = conversas.filter(function (c) { return c.fav || c === atual; });
+      var resto = ordenadas().filter(function (c) { return !c.fav && c !== atual; }).slice(0, Math.max(0, MAX_CONV - fixas.length));
+      conversas = fixas.concat(resto);
+    }
     return atual;
   }
   V.novaConversa = function () { atual = null; };
@@ -2276,7 +2284,16 @@
     listar: ordenadas,
     obter: function (id) { for (var i = 0; i < conversas.length; i++) if (conversas[i].id === id) return conversas[i]; return null; },
     excluir: function (id) { conversas = conversas.filter(function (c) { return c.id !== id; }); if (atual && atual.id === id) atual = null; salvarHist(); },
-    continuar: function (id) { var c = V.historico.obter(id); if (c) atual = c; return c; }
+    continuar: function (id) { var c = V.historico.obter(id); if (c) atual = c; return c; },
+    // estrela: marca/desmarca; devolve o novo estado, ou null se bateu no limite de favoritas
+    favoritar: function (id) {
+      var c = V.historico.obter(id); if (!c) return false;
+      if (!c.fav && conversas.filter(function (x) { return x.fav; }).length >= MAX_FAV) return null;
+      c.fav = !c.fav; salvarHist(); return !!c.fav;
+    },
+    totalFavoritas: function () { return conversas.filter(function (x) { return x.fav; }).length; },
+    // apaga tudo (favoritas incluídas) e também a conversa que estava em andamento
+    limpar: function () { conversas = []; atual = null; M.armazenar.apagar(HIST_KEY); }
   };
   function rotuloData(ts) {
     var d = new Date(ts), hoje = new Date(), ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
@@ -2404,16 +2421,18 @@
     if (!menu) return; vista = 'raiz'; desenharMenu(false); menu.hidden = false; btnMenu.setAttribute('aria-expanded', 'true'); mostrarPainel(true); focarPrimeiro();
   }
 
-  var hist = null, histLista = null, histBusca = null, histLive = null;
+  var hist = null, histLista = null, histBusca = null, histLive = null, histSoFav = false, histFavBtn = null, histLimparBtn = null, histLimparTimer = 0;
   function renderHistorico() {
-    var q = semAcento(histBusca.value.trim()), todas = ordenadas(), itens = todas.filter(function (c) {
+    var q = semAcento(histBusca.value.trim()), todas = ordenadasHist(), itens = todas.filter(function (c) {
+      if (histSoFav && !c.fav) return false;
       if (!q) return true;
       return semAcento(c.titulo + ' ' + c.msgs.filter(function (m) { return m.r === 'u'; }).map(function (m) { return m.t; }).join(' ')).indexOf(q) >= 0;
     });
     while (histLista.firstChild) histLista.removeChild(histLista.firstChild);
     if (!itens.length) {
-      var v = h('li', 'fm-h-empty'); v.appendChild(h('strong', null, todas.length ? 'Nada encontrado' : 'Nenhuma conversa ainda'));
-      v.appendChild(h('span', null, todas.length ? 'Tente outras palavras do título ou das suas perguntas.' : 'Depois da sua primeira pergunta, a conversa fica guardada aqui, só neste aparelho.')); histLista.appendChild(v); return;
+      var v = h('li', 'fm-h-empty'), soFavVazio = histSoFav && !q && todas.length;
+      v.appendChild(h('strong', null, soFavVazio ? 'Nenhuma favorita ainda' : todas.length ? 'Nada encontrado' : 'Nenhuma conversa ainda'));
+      v.appendChild(h('span', null, soFavVazio ? 'Toque na estrela de uma conversa para fixá-la aqui.' : todas.length ? 'Tente outras palavras do título ou das suas perguntas.' : 'Depois da sua primeira pergunta, a conversa fica guardada aqui, só neste aparelho.')); histLista.appendChild(v); atualizarFerramentasHist(); return;
     }
     itens.forEach(function (c) {
       var li = h('li', 'fm-h-li'), abrir = h('button', 'fm-h-item'); abrir.type = 'button';
@@ -2421,14 +2440,34 @@
       abrir.appendChild(h('span', 'fm-h-date', rotuloData(c.atualizado)));
       var pv = previaDe(c); if (pv) abrir.appendChild(h('span', 'fm-h-prev', pv));
       abrir.addEventListener('click', function () { var conv = V.historico.continuar(c.id); fecharHistorico(false); if (conv && V.aoContinuar) V.aoContinuar(conv); });
+      var fav = h('button', 'fm-h-fav' + (c.fav ? ' is-fav' : '')); fav.type = 'button'; fav.setAttribute('aria-pressed', c.fav ? 'true' : 'false');
+      fav.setAttribute('aria-label', (c.fav ? 'Tirar dos favoritos: ' : 'Favoritar: ') + (c.titulo || 'sem título')); fav.appendChild(ico('star'));
+      fav.addEventListener('click', function () {
+        var r = V.historico.favoritar(c.id);
+        if (r === null) { histLive.textContent = 'Limite de ' + MAX_FAV + ' favoritas. Tire a estrela de alguma para marcar outra.'; return; }
+        histLive.textContent = r ? 'Conversa favoritada.' : 'Conversa removida dos favoritos.'; renderHistorico();
+      });
       var del = h('button', 'fm-h-del'); del.type = 'button'; del.setAttribute('aria-label', 'Excluir conversa: ' + (c.titulo || 'sem título')); del.appendChild(ico('trash'));
       del.addEventListener('click', function () {
         if (del.getAttribute('data-sure')) { V.historico.excluir(c.id); histLive.textContent = 'Conversa excluída.'; renderHistorico(); return; }
         del.setAttribute('data-sure', '1'); del.classList.add('is-sure'); del.setAttribute('aria-label', 'Confirmar exclusão'); del.textContent = 'Excluir?';
         setTimeout(function () { if (del.isConnected) { del.removeAttribute('data-sure'); del.classList.remove('is-sure'); del.textContent = ''; del.appendChild(ico('trash')); del.setAttribute('aria-label', 'Excluir conversa: ' + (c.titulo || 'sem título')); } }, 3200);
       });
-      li.appendChild(abrir); li.appendChild(del); histLista.appendChild(li);
+      li.appendChild(abrir); li.appendChild(fav); li.appendChild(del); histLista.appendChild(li);
     });
+    atualizarFerramentasHist();
+  }
+  function atualizarFerramentasHist() {
+    if (!histFavBtn) return;
+    var total = conversas.length, nf = V.historico.totalFavoritas();
+    histFavBtn.setAttribute('aria-pressed', histSoFav ? 'true' : 'false'); histFavBtn.classList.toggle('is-on', histSoFav);
+    histFavBtn.disabled = !nf && !histSoFav;
+    histLimparBtn.disabled = !total;
+    if (!histLimparBtn.getAttribute('data-sure')) histLimparBtn.querySelector('.fm-h-clear-txt').textContent = 'Apagar tudo';
+  }
+  function desarmarLimpar() {
+    clearTimeout(histLimparTimer);
+    if (histLimparBtn) { histLimparBtn.removeAttribute('data-sure'); histLimparBtn.classList.remove('is-sure'); histLimparBtn.setAttribute('aria-label', 'Apagar todo o histórico'); }
   }
   function abrirHistorico() {
     var tela = doc.querySelector('#modal-farmacia .farma-screen'); if (!tela) return;
@@ -2438,10 +2477,22 @@
       topo.appendChild(vb); topo.appendChild(h('h3', null, 'Histórico')); hist.appendChild(topo);
       var cx = h('label', 'fm-search fm-hist-search'); cx.appendChild(ico('search')); histBusca = h('input'); histBusca.type = 'search'; histBusca.placeholder = 'Buscar nas conversas'; histBusca.setAttribute('aria-label', 'Buscar nas conversas');
       histBusca.addEventListener('input', renderHistorico); cx.appendChild(histBusca); hist.appendChild(cx);
+      var tools = h('div', 'fm-h-tools');
+      histFavBtn = h('button', 'fm-h-filter'); histFavBtn.type = 'button'; histFavBtn.appendChild(ico('star')); histFavBtn.appendChild(h('span', null, 'Favoritas'));
+      histFavBtn.addEventListener('click', function () { histSoFav = !histSoFav; renderHistorico(); });
+      histLimparBtn = h('button', 'fm-h-clear'); histLimparBtn.type = 'button'; histLimparBtn.setAttribute('aria-label', 'Apagar todo o histórico'); histLimparBtn.appendChild(ico('trash')); histLimparBtn.appendChild(h('span', 'fm-h-clear-txt', 'Apagar tudo'));
+      histLimparBtn.addEventListener('click', function () {
+        if (histLimparBtn.getAttribute('data-sure')) { desarmarLimpar(); V.historico.limpar(); histSoFav = false; histLive.textContent = 'Todo o histórico foi apagado.'; renderHistorico(); return; }
+        histLimparBtn.setAttribute('data-sure', '1'); histLimparBtn.classList.add('is-sure'); histLimparBtn.setAttribute('aria-label', 'Confirmar: apagar todas as conversas, inclusive as favoritas');
+        histLimparBtn.querySelector('.fm-h-clear-txt').textContent = 'Apagar ' + conversas.length + (conversas.length === 1 ? ' conversa?' : ' conversas?');
+        histLive.textContent = 'Toque de novo para apagar todas as conversas, inclusive as favoritas.';
+        histLimparTimer = setTimeout(function () { desarmarLimpar(); atualizarFerramentasHist(); }, 4000);
+      });
+      tools.appendChild(histFavBtn); tools.appendChild(histLimparBtn); hist.appendChild(tools);
       histLista = h('ul', 'fm-h-list'); hist.appendChild(histLista); histLive = h('span', 'fm-sr'); histLive.setAttribute('aria-live', 'polite'); hist.appendChild(histLive);
       tela.appendChild(hist);
     }
-    histBusca.value = ''; renderHistorico(); hist.hidden = false; histBusca.focus();
+    histBusca.value = ''; histSoFav = false; desarmarLimpar(); renderHistorico(); hist.hidden = false; histBusca.focus();
   }
   function fecharHistorico(foco) { if (hist && !hist.hidden) { hist.hidden = true; if (foco && btnMenu) btnMenu.focus(); } }
   V.abrirHistorico = abrirHistorico;

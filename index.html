@@ -49,7 +49,7 @@
   </div>
 
   <div id="home-page" class="home-tab-page bottom-tab-current" role="tabpanel" aria-hidden="false">
-  <header class="bg-[#fce98a] dark:bg-[#c99522] text-gray-800 dark:text-white pt-8 pb-10 px-6 shadow-xl rounded-b-[2.5rem] mb-10 relative flex flex-col items-center overflow-hidden">
+  <header data-tab-band class="bg-[#fce98a] dark:bg-[#c99522] text-gray-800 dark:text-white pt-8 pb-10 px-6 shadow-xl rounded-b-[2.5rem] mb-10 relative flex flex-col items-center overflow-hidden">
     <button type="button" id="nav-open" class="nav-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span id="nav-open-name" class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
     <div class="absolute top-0 left-0 w-full h-full bg-white opacity-5 pointer-events-none" style="background-image: radial-gradient(circle at 50% 0%, #fff 0%, transparent 70%);"></div>
     
@@ -252,18 +252,14 @@
 
   <!-- Aba Comunicados (dock) -->
   <div id="modal-comunicados" class="bottom-tab-page comunicados-page" role="tabpanel" aria-hidden="true">
+  <header class="tab-band" data-tab-band>
+    <button type="button" class="nav-open tab-band-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+    <h2 class="tab-band-title">Comunicados</h2>
+    <div class="tab-band-end"></div>
+  </header>
     <div class="comunicados-screen modal-content">
-      <div class="com-deco" aria-hidden="true">
-        <svg class="cd-cap" viewBox="0 0 390 210" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="cdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V155C346 143 308 165 252 161C190 157 150 133 96 145C54 155 24 171 0 155Z" fill="url(#cdg)"></path><path d="M0 52C34 70 70 62 98 92C122 118 104 150 62 160C34 166 12 160 0 154Z" fill="#fff" fill-opacity=".05"></path><path d="M206 0C236 28 292 24 330 60C358 86 380 82 390 76V0Z" fill="#fff" fill-opacity=".055"></path></svg>
-        <svg class="cd-blob cd-blob-a" viewBox="0 0 260 240" focusable="false"><path d="M30 28C86 -6 186 8 222 74C256 136 206 214 128 230C60 244 4 206 4 142C4 96 -4 58 30 28Z"></path></svg>
-        <svg class="cd-blob cd-blob-b" viewBox="0 0 240 300" focusable="false"><path d="M210 12C150 -4 84 40 78 108C72 166 14 190 12 238C10 282 64 304 124 296C196 286 236 236 236 160C236 96 262 30 210 12Z"></path></svg>
-      </div>
       <header class="comunicados-head">
-        <div class="comunicados-head-main">
-          <div class="tab-title-row"><span class="comunicados-head-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.2v3.6a1 1 0 0 0 1 1h2.3l5.2 3.9a.6.6 0 0 0 1-.5V5.8a.6.6 0 0 0-1-.5L6.8 9.2H4.5a1 1 0 0 0-1 1z"></path><path d="M16.6 9.2a4 4 0 0 1 0 5.6"></path><path d="M19.2 6.6a7.7 7.7 0 0 1 0 10.8"></path></svg></span>
-          <h2 class="comunicados-title">Comunicados</h2></div>
-          <p class="comunicados-sub">Avisos da coordenação e da equipe do curso.</p>
-        </div>
+        <p class="comunicados-sub">Avisos da coordenação e da equipe do curso.</p>
       </header>
       <div class="comunicados-bar"><span id="comunicados-status" class="comunicados-status" role="status"></span><button type="button" id="comunicados-refresh" class="comunicados-refresh">Atualizar</button></div>
       <div class="com-search" id="comunicados-search" hidden>
@@ -373,21 +369,17 @@
 
   <!-- Aba O que puxar? — planejador de período -->
   <div id="modal-planner" class="bottom-tab-page planner-page" role="tabpanel" aria-hidden="true">
-    <div class="planner-screen" onclick="event.stopPropagation()">
-      <div class="planner-deco" aria-hidden="true">
-        <svg class="pd-head" viewBox="0 0 390 270" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="pdg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e3a29"></stop><stop offset="1" stop-color="#17563b"></stop></linearGradient></defs><path d="M0 0H390V148C352 140 318 164 262 174C196 186 148 158 92 166C52 172 22 150 0 148Z" fill="url(#pdg)"></path><path d="M168 0C204 44 262 52 300 92C334 128 372 118 390 100V0Z" fill="#fff" fill-opacity=".055"></path><path d="M0 70C40 96 78 88 112 126C142 160 120 206 66 226C34 238 12 232 0 226Z" fill="#fff" fill-opacity=".045"></path></svg>
-        <svg class="pd-blob pd-blob-a" viewBox="0 0 220 340" focusable="false"><path d="M220 0C160 14 122 66 118 120C114 172 70 188 40 230C8 274 40 330 96 336L220 340Z"></path></svg>
-        <svg class="pd-blob pd-blob-b" viewBox="0 0 260 230" focusable="false"><path d="M0 40C56 18 126 38 156 92C184 142 238 148 260 230H0Z"></path></svg>
-      </div>
-      <header class="planner-topbar">
-        <div class="planner-heading-copy">
-          <div class="tab-title-row"><div class="tab-title-icon p-2 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-500 flex-shrink-0"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1.5"></rect><path d="M9 12h6M9 16h6M7.5 12h.01M7.5 16h.01"></path></svg></div><h2 class="planner-page-title">O que puxar?</h2></div>
-          <p class="planner-page-subtitle">Exibe apenas as matérias que você já pode puxar.</p>
-        </div>
-        <button type="button" id="planner-notes-open" class="planner-notes-btn" aria-label="Abrir anotações" title="Anotações">
+  <header class="tab-band" data-tab-band>
+    <button type="button" class="nav-open tab-band-open" data-pa-action="drawer-open" aria-label="Abrir menu" aria-haspopup="dialog" aria-expanded="false" aria-controls="nav-drawer"><span class="profile-avatar" aria-hidden="true"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg></span><span class="nav-open-name" data-no-i18n hidden></span><svg class="nav-open-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+    <h2 class="tab-band-title">O que puxar?</h2>
+    <div class="tab-band-end"><button type="button" id="planner-notes-open" class="planner-notes-btn" aria-label="Abrir anotações" title="Anotações">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.2" y="3.4" width="14" height="17.2" rx="2"></rect><path d="M3 7.6h4.4M3 12h4.4M3 16.4h4.4"></path><path d="M10.6 8.2h5M10.6 12h5M10.6 15.8h2.8"></path><path d="M15.4 3.4v4.2l1.5-1.1 1.5 1.1V3.4" class="notes-ribbon"></path></svg>
           <span class="notes-count" hidden aria-hidden="true">0</span>
-        </button>
+        </button></div>
+  </header>
+    <div class="planner-screen" onclick="event.stopPropagation()">
+      <header class="planner-topbar">
+        <p class="planner-page-subtitle">Exibe apenas as matérias que você já pode puxar.</p>
       </header>
 
       <section class="planner-summary-panel" aria-label="Resumo do período planejado">
@@ -863,27 +855,11 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
-          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Tela da FarmacIA redesenhada</h4><ul class="release-list"><li>Visual mais limpo: sem faixa verde, com o menu à esquerda e só o botão de nova conversa à direita.</li><li>As opções que ficavam nos três pontinhos agora estão no menu lateral da FarmacIA: toque no botão de menu, no canto superior esquerdo.</li><li>Com o seu nome cadastrado, a FarmacIA te recebe de acordo com o horário: Bom dia, Boa tarde, Boa noite ou Boa madrugada. A saudação some quando a conversa começa.</li><li>Sugestões rápidas em linhas simples, acima do campo de mensagem, que agora mostra o símbolo da farmácia.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Menu lateral</h4><ul class="release-list"><li>Toque na sua foto, no canto da tela Planejador, para abrir um menu com atalhos para as telas do app, Configurações, Aparência e Ajuda e suporte. Feche tocando fora, no X ou deslizando para a esquerda.</li><li>Sanfonas mais enxutas no Planejador e em "O que puxar?", com menos rolagem para chegar nas matérias.</li><li>O menu dos três pontinhos da FarmacIA foi refeito: tamanho da fonte em Pequeno, Padrão e Grande, e linhas mais limpas.</li><li>Os destaques em amarelo dos Comunicados agora ficam legíveis no modo escuro.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Chapéu e X redesenhados</h4><ul class="release-list"><li>No ícone de Escolha condicionada em "O que puxar?", o chapéu ficou um pouco menor e o X ganhou lugar próprio no canto superior direito, sem círculo e sem encostar na ponta do capelo.</li></ul></div>
-          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">IA online quando o material local não basta</h4><ul class="release-list"><li>A FarmacIA continua respondendo primeiro com o que sabe no aparelho; só quando não entende uma pergunta de conteúdo, e se você permitir, ela consulta uma IA online.</li><li>Novo item "IA online" no menu ⋯: mostra se está ativada, desativada ou esgotada hoje, explica o que é enviado e liga ou desliga com um toque.</li><li>Quando a cota gratuita diária acaba, a FarmacIA avisa e volta a responder só com o material local até o dia seguinte.</li><li>Grade, regras da UFRJ e dados pessoais continuam sendo tratados só no aparelho.</li></ul></div>
-          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Respostas como página de consulta</h4><ul class="release-list">
-<li>As respostas correm pela página, sem balão e sem o cálice repetido; uma margem verde acompanha cada resposta e os títulos usam letra serifada. Suas mensagens ficam à direita, em verde suave.</li>
-<li>O cabeçalho ganhou uma cápsula com três pontinhos e atualizar, separados por um divisor. O atualizar continua funcionando sozinho.</li>
-<li>Menu dos três pontinhos: Tamanho da fonte (Pequeno, Padrão, Grande, com prévia ao vivo isolada da conversa), Tema (só o verde por enquanto, já preparado para outros) e Histórico.</li>
-<li>Histórico de conversas guardado só neste aparelho, funciona sem internet: título, data, prévia, busca, continuar conversa e excluir (com confirmação).</li>
-<li>Novos blocos de resposta: Definição, Conceito importante, Atenção, Alerta, Observação, Dica, Exemplo e Resumo; comparação lado a lado (estilos A e C, escolhidos pela quantidade de informação); tabelas com copiar e, quando grandes, busca, ordenação e "mostrar mais"; gráficos de barras, linhas e setores com leitura de valores, teclado e "ver como tabela"; fórmulas; fluxogramas; mapas conceituais; código com botão de copiar.</li>
-<li>Gráficos e diagramas só aparecem com dados reais e completos; sem isso, a FarmacIA explica em texto em vez de inventar números.</li>
-<li>Perguntas sobre farmacocinética × farmacodinâmica, etapas do corpo (absorção a excreção), meia-vida e volume de distribuição agora mostram comparação, etapas e fórmulas, usando só o que o glossário já dizia.</li>
-<li>Sem bibliotecas novas e sem internet: tudo é feito com HTML, CSS e SVG próprios. Todo conteúdo passa por sanitização antes de aparecer.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Menos arquivos, mesmo site</h4><ul class="release-list"><li>Os arquivos pequenos de estilo e de código foram reunidos por assunto: fontes, animações e navegação agora moram no base.css; Comunicados, Configurações e Notas dividem o paginas.css; avisos, cards e o núcleo do site ficam no nucleo.js; agenda e janelas flutuantes ficam no notas-janelas.js.</li><li>Nada mudou no uso: as regras e funções foram apenas reunidas, na mesma ordem de antes, e o site continua funcionando sem internet.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Zoom e perfil</h4><ul class="release-list"><li>Com a tela ampliada pela pinça, agora dá para arrastar para os lados sem a página travar e voltar ao ponto de origem.</li><li>O banner do Centro de Ciências da Saúde voltou a aparecer no perfil.</li><li>O ícone de Escolha condicionada em "O que puxar?" ganhou um X mais fino e afastado do chapéu.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Respostas da FarmacIA mais organizadas</h4><ul class="release-list"><li>As explicações da FarmacIA agora aparecem com títulos, listas, tabelas, citações, links e blocos de código com cores, tudo com conteúdo filtrado por segurança.</li><li>A formatação funciona sem internet depois do primeiro acesso.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Fluxograma do curso na FarmacIA</h4><ul class="release-list"><li>Nas sugestões rápidas da FarmacIA, o card "Fluxograma do curso" mostra a grade do currículo novo direto no chat. Toque na imagem para ampliar e use os botões para baixar ou abrir o PDF.</li><li>O fluxograma também fica disponível sem internet depois do primeiro acesso.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda de verdade</h4><ul class="release-list"><li>A agenda virou uma aba inteira, por cima da barra, no estilo de "Todas as notas": título grande no meio, contagem de anotações, balões menores e arredondados separados por "Este mês" e pelos meses anteriores. No cantinho tem um botão redondo pra escrever uma nova.</li><li>Anotar de dentro de uma disciplina e abrir o card de informações (segurando o dedo na matéria) agora viram janelinhas flutuantes: arraste com um dedo, estique ou encolha com a pinça.</li><li>Dá pra deixar até 2 janelas abertas ao mesmo tempo, e elas continuam lá quando você troca de aba. Pra fechar, toque no X ou arraste a janela até o balãozinho "Fechar" que aparece embaixo, no meio da tela.</li><li>Quer a agenda sempre à mão? Em Acessibilidade tem um botão flutuante pra você largar onde preferir.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">"O que puxar?" com roupa nova!</h4><ul class="release-list"><li>A aba foi redesenhada do zero: topo verde com ondinhas, cartão de resumo com créditos e carga horária em números grandes, busca com o filtro ao lado e grupos em cartões.</li><li>O botão da agenda foi pro canto de cima, com a contagem de anotações.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Um cantinho com a sua cara</h4><ul class="release-list"><li>A faixa das Configurações agora é uma foto do Centro de Ciências da Saúde, e você pode escolher sua foto de perfil. Ela fica só no seu aparelho e nunca vai pra nuvem.</li><li>O "Meu perfil" ganhou um "Voltar" pequeno e discreto, e as outras páginas das Configurações foram redesenhadss.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Arrumando a casa</h4><ul class="release-list"><li>Os balões de aviso agora saem da frente: é só puxar pra baixo e eles despencam da tela.</li><li>O filtro de disciplinas virou uma folha de marcar, sem pílulas coloridas.</li><li>Se você aumentava demais a barra ou a letra, os ícones vazavam pra fora. Agora eles encolhem pra caber.</li><li>Aposentei a lista infinita de novidades: de agora em diante, aqui só tem o que mudou na versão atual. Quem gostou da like.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Faixa do topo em todas as abas</h4><ul class="release-list"><li>"O que puxar?" e Comunicados ganharam a mesma faixa do Planejador, com o nome da aba no meio e sua foto e nome à esquerda.</li><li>Deslize para cima na faixa para escondê-la; deslize para baixo (ou toque no topo) para trazê-la de volta. Com zoom ativo o gesto fica desligado, para não atrapalhar a pinça nem o arrastar da tela.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda com editor</h4><ul class="release-list"><li>Negrito, itálico e sublinhado, listas com quadradinhos que riscam o item ao marcar e imagens dentro da anotação.</li><li>As imagens ficam guardadas só neste aparelho.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Foto de perfil com recorte</h4><ul class="release-list"><li>Ao escolher a imagem na galeria do celular, abre um editor para arrastar e dar zoom antes de salvar.</li></ul></div>
+          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Favoritas e limpeza do histórico</h4><ul class="release-list"><li>Estrela para favoritar conversas (elas ficam no topo e não são apagadas pelo limite) e botão para apagar todo o histórico.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Fundo único</h4><ul class="release-list"><li>Planejador, "O que puxar?" e Comunicados usam o mesmo fundo das Configurações, liso, sem ondas. No modo escuro o fundo é preto puro, o que economiza bateria em telas OLED.</li></ul></div>
         </div>
       </section>
       </div>

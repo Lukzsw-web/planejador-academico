@@ -2,17 +2,335 @@
  * Cada seção abaixo era um arquivo próprio (notas.js e janelas.js); a ordem das seções importa (scripts clássicos compartilham globais). */
 
 // =====================================================================
+// Seção: notas-editor
+// =====================================================================
+/* Editor de texto das anotações: negrito, itálico, sublinhado, lista com quadradinhos marcáveis e imagens.
+ * O texto é guardado em duas formas: n.text (texto simples, como sempre foi; usado em prévia e contagem) e n.html (formatação, passa por
+ * uma lista de permissões: só div, br, b, i, u e imagens). Imagens ficam no IndexedDB deste aparelho (não pesam no localStorage). */
+(function () {
+  'use strict';
+  const DB = 'planejador_notas_img_v1', STORE = 'imgs';
+  const MAX_IMGS = 12, MAX_SIDE = 1280;
+  const ID_RE = /^[a-z0-9]{6,40}$/;
+  const tr = (s, p) => (typeof T === 'function' ? T(s, p) : s);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const uid = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  // ----- imagens (IndexedDB) -----
+  let dbp = null;
+  function db() {
+    if (!dbp) dbp = new Promise((ok, no) => {
+      try {
+        const r = indexedDB.open(DB, 1);
+        r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+        r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+      } catch (e) { no(e); }
+    });
+    return dbp;
+  }
+  const idb = (mode, fn) => db().then(d => new Promise((ok, no) => {
+    const t = d.transaction(STORE, mode), req = fn(t.objectStore(STORE));
+    t.oncomplete = () => ok(req && req.result); t.onerror = t.onabort = () => no(t.error);
+  }));
+  const putImg = (id, blob) => idb('readwrite', s => s.put(blob, id));
+  const getImg = id => idb('readonly', s => s.get(id));
+  const urls = new Map();
+  function hydrate(root) {
+    root.querySelectorAll('img[data-img]').forEach(img => {
+      const id = img.getAttribute('data-img');
+      if (urls.has(id)) { img.src = urls.get(id); return; }
+      getImg(id).then(b => {
+        if (b) { const u = URL.createObjectURL(b); urls.set(id, u); img.src = u; img.classList.remove('is-missing'); }
+        else { img.classList.add('is-missing'); img.alt = tr('Imagem indisponível neste aparelho'); }
+      }).catch(() => { img.classList.add('is-missing'); img.alt = tr('Imagem indisponível neste aparelho'); });
+    });
+  }
+  function idsOf(html) { const o = []; String(html || '').replace(/data-img="([a-z0-9]+)"/g, (_, i) => o.push(i)); return o; }
+  // limpeza ao abrir o site: apaga imagens que nenhuma anotação usa mais
+  function gc(notes) {
+    if (!window.indexedDB) return;
+    const keep = new Set(); notes.forEach(n => idsOf(n.html).forEach(i => keep.add(i)));
+    idb('readonly', s => s.getAllKeys()).then(keys => {
+      const drop = (keys || []).filter(k => !keep.has(k)); if (!drop.length) return;
+      idb('readwrite', s => { drop.forEach(k => s.delete(k)); return null; }).catch(() => {});
+    }).catch(() => {});
+  }
+  function shrink(file) {
+    return new Promise((ok, no) => {
+      const u = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(u);
+        const k = Math.min(1, MAX_SIDE / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(im, 0, 0, w, h);
+        c.toBlob(b => b ? ok(b) : no(new Error('blob')), 'image/jpeg', 0.82);
+      };
+      im.onerror = () => { URL.revokeObjectURL(u); no(new Error('img')); };
+      im.src = u;
+    });
+  }
+
+  // ----- HTML permitido -----
+  const BLOCK = { DIV: 1, P: 1 };
+  function styleFlags(el) {
+    const s = (el.getAttribute && el.getAttribute('style') || '').toLowerCase();
+    return { b: /font-weight:\s*(bold|[6-9]00)/.test(s), i: /font-style:\s*italic/.test(s), u: /text-decoration[^;]*underline/.test(s) };
+  }
+  function inline(node) {
+    let out = '';
+    node.childNodes.forEach(c => {
+      if (c.nodeType === 3) { out += esc(c.nodeValue.replace(/​/g, '')); return; }
+      if (c.nodeType !== 1) return;
+      const t = c.tagName;
+      if (t === 'BR') { out += '<br>'; return; }
+      if (t === 'SCRIPT' || t === 'STYLE' || t === 'IFRAME' || t === 'OBJECT' || t === 'BUTTON' || t === 'SVG') return;
+      if (t === 'IMG') { const id = c.getAttribute('data-img'); if (id && ID_RE.test(id)) out += '<img data-img="' + id + '">'; return; }
+      let inner = inline(c); if (!inner) return;
+      const f = styleFlags(c);
+      if (t === 'B' || t === 'STRONG' || f.b) inner = '<b>' + inner + '</b>';
+      if (t === 'I' || t === 'EM' || f.i) inner = '<i>' + inner + '</i>';
+      if (t === 'U' || f.u) inner = '<u>' + inner + '</u>';
+      out += inner;
+    });
+    return out;
+  }
+  // um bloco de nível raiz -> texto HTML limpo (uma linha por bloco)
+  function blocks(root) {
+    let out = '', run = null;
+    const flush = () => { if (run !== null) { out += '<div>' + (run || '<br>') + '</div>'; run = null; } };
+    root.childNodes.forEach(c => {
+      if (c.nodeType === 1 && BLOCK[c.tagName]) {
+        flush();
+        const cls = c.getAttribute('class') || '';
+        if (/\brt-img\b/.test(cls)) {
+          const im = c.querySelector('img[data-img]'), id = im && im.getAttribute('data-img');
+          if (id && ID_RE.test(id)) out += '<div class="rt-img"><img data-img="' + id + '"></div>';
+          return;
+        }
+        // div dentro de div (colagem): cada filho bloco vira linha própria
+        if (c.querySelector('div,p') && !/\bck\b/.test(cls)) { out += blocks(c); return; }
+        const inn = inline(c);
+        if (/\bck\b/.test(cls)) out += '<div class="ck" data-done="' + (c.getAttribute('data-done') === '1' ? '1' : '0') + '">' + (inn || '<br>') + '</div>';
+        else out += '<div>' + (inn || '<br>') + '</div>';
+        return;
+      }
+      if (c.nodeType === 1 && c.tagName === 'BUTTON') return;
+      const piece = inline({ childNodes: [c] });
+      if (c.nodeType === 1 && c.tagName === 'BR') { flush(); out += '<div><br></div>'; return; }
+      run = (run || '') + piece;
+    });
+    flush();
+    return out;
+  }
+  function sanitize(html) {
+    const d = new DOMParser().parseFromString('<body>' + String(html || '') + '</body>', 'text/html');
+    return blocks(d.body);
+  }
+  function textToHtml(t) {
+    return String(t || '').split('\n').map(l => '<div>' + (l ? esc(l) : '<br>') + '</div>').join('');
+  }
+  // texto simples a partir do HTML limpo (linhas; quadradinhos viram ☐ / ☑)
+  function plain(html) {
+    const d = new DOMParser().parseFromString('<body>' + html + '</body>', 'text/html'), lines = [];
+    d.body.querySelectorAll(':scope > div').forEach(b => {
+      if (b.classList.contains('rt-img')) return;
+      const t = b.textContent.replace(/​/g, '');
+      lines.push(b.classList.contains('ck') ? (b.getAttribute('data-done') === '1' ? '☑ ' : '☐ ') + t : t);
+    });
+    while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+    return lines.join('\n');
+  }
+  const hasImg = html => /data-img="/.test(html || '');
+
+  // ----- seleção -----
+  function lineOf(body) {
+    const s = getSelection(); if (!s || !s.rangeCount) return null;
+    let n = s.anchorNode; if (!n || !body.contains(n)) return null;
+    while (n && n.parentNode !== body) n = n.parentNode;
+    return n || null;
+  }
+  function caretOffset(body, node, off) {
+    const r = document.createRange(); r.selectNodeContents(body); r.setEnd(node, off); return r.toString().length;
+  }
+  function placeAtStart(el) {
+    const r = document.createRange(), s = getSelection();
+    r.selectNodeContents(el); r.collapse(true); s.removeAllRanges(); s.addRange(r);
+  }
+  function atLineStart(line) {
+    const s = getSelection(); if (!s.rangeCount || !s.isCollapsed) return false;
+    const r = document.createRange(); r.selectNodeContents(line); r.setEnd(s.anchorNode, s.anchorOffset);
+    return r.toString().replace(/​/g, '') === '' && !r.cloneContents().querySelector('img');
+  }
+
+  const ICO = {
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.2l2.8 2.8L16.2 9"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17.5l5-4.5 3.5 3 3-2.5 4.5 4"/></svg>'
+  };
+
+  /* create({ placeholder, label, onChange(html, text), onStatus(msg, warn) }) -> { root, body, load(note), focus() } */
+  function create(o) {
+    const root = document.createElement('div'); root.className = 'rt';
+    const bar = document.createElement('div'); bar.className = 'rt-bar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', tr('Formatação do texto'));
+    const body = document.createElement('div'); body.className = 'rt-body notas-text';
+    body.contentEditable = 'true'; body.spellcheck = true; body.setAttribute('role', 'textbox'); body.setAttribute('aria-multiline', 'true');
+    body.setAttribute('aria-label', o.label || tr('Texto da anotação')); body.dataset.placeholder = o.placeholder || '';
+    body.dataset.noTabSwipe = '';
+    const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true; file.tabIndex = -1;
+    let note = null, last = '', loading = false;
+
+    const btn = (cls, label, html, run) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'rt-btn ' + cls; b.setAttribute('aria-label', label); b.title = label; b.innerHTML = html;
+      b.addEventListener('mousedown', e => e.preventDefault());   // não rouba o foco (o teclado do celular continua aberto)
+      b.addEventListener('click', run); bar.appendChild(b); return b;
+    };
+    const cmd = name => () => { body.focus(); try { document.execCommand('styleWithCSS', false, false); } catch (_) {} document.execCommand(name); changed(); state(); };
+    const bB = btn('rt-b', tr('Negrito'), '<b>B</b>', cmd('bold'));
+    const bI = btn('rt-i', tr('Itálico'), '<i>I</i>', cmd('italic'));
+    const bU = btn('rt-u', tr('Sublinhado'), '<u>U</u>', cmd('underline'));
+    const sep = document.createElement('span'); sep.className = 'rt-sep'; sep.setAttribute('aria-hidden', 'true'); bar.appendChild(sep);
+    const bC = btn('rt-c', tr('Lista com quadradinhos'), ICO.check, () => { body.focus(); toggleList(); });
+    const bP = btn('rt-p', tr('Inserir imagem'), ICO.image, () => file.click());
+    bar.appendChild(file);
+
+    function state() {
+      const on = n => { try { return document.queryCommandState(n); } catch (_) { return false; } };
+      const inb = document.activeElement === body;
+      bB.setAttribute('aria-pressed', String(inb && on('bold'))); bI.setAttribute('aria-pressed', String(inb && on('italic'))); bU.setAttribute('aria-pressed', String(inb && on('underline')));
+      const l = inb ? lineOf(body) : null; bC.setAttribute('aria-pressed', String(!!(l && l.classList && l.classList.contains('ck'))));
+    }
+    function ensure() {
+      if (!body.firstChild || !body.querySelector(':scope > div')) { body.innerHTML = '<div><br></div>'; if (document.activeElement === body) placeAtStart(body.firstChild); return; }
+      // texto solto na raiz (primeira digitação): vira uma linha, mantendo o cursor
+      const loose = [...body.childNodes].some(c => c.nodeType === 3 || (c.nodeType === 1 && !BLOCK[c.tagName] && c.tagName !== 'BUTTON'));
+      if (!loose) return;
+      const s = getSelection(); let off = -1;
+      if (s.rangeCount && body.contains(s.anchorNode)) off = caretOffset(body, s.anchorNode, s.anchorOffset);
+      body.innerHTML = blocks(body) || '<div><br></div>'; decorate();
+      if (off >= 0) setCaret(off);
+    }
+    function setCaret(off) {
+      const w = document.createTreeWalker(body, NodeFilter.SHOW_TEXT); let n, left = off;
+      while ((n = w.nextNode())) { if (left <= n.nodeValue.length) { const r = document.createRange(); r.setStart(n, left); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return; } left -= n.nodeValue.length; }
+      const l = body.lastElementChild; if (l) { const r = document.createRange(); r.selectNodeContents(l); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    }
+    function decorate() {
+      body.querySelectorAll('.rt-img').forEach(d => {
+        d.contentEditable = 'false';
+        if (!d.querySelector('.rt-img-del')) {
+          const x = document.createElement('button'); x.type = 'button'; x.className = 'rt-img-del'; x.contentEditable = 'false';
+          x.setAttribute('aria-label', tr('Remover imagem')); x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+          d.appendChild(x);
+        }
+        const im = d.querySelector('img'); if (im && !im.alt) im.alt = tr('Imagem anexada');
+      });
+      body.querySelectorAll('.ck').forEach(c => { c.setAttribute('data-done', c.getAttribute('data-done') === '1' ? '1' : '0'); });
+      hydrate(body);
+    }
+    function changed() {
+      if (loading) return;
+      ensure();
+      const html = blocks(body), t = plain(html);
+      if (html.length > 60000 || t.length > (o.maxText || 20000)) {
+        loading = true; body.innerHTML = last || '<div><br></div>'; decorate(); loading = false; setCaret(1e9);
+        o.onStatus && o.onStatus(tr('Limite de tamanho da anotação atingido.'), true); return;
+      }
+      last = html; body.classList.toggle('is-empty', !t.trim() && !hasImg(html));
+      o.onChange && o.onChange(html, t);
+    }
+    function toggleList() {
+      ensure(); const line = lineOf(body); if (!line || line.nodeType !== 1 || line.classList.contains('rt-img')) return;
+      if (line.classList.contains('ck')) { line.classList.remove('ck'); line.removeAttribute('data-done'); }
+      else { line.classList.add('ck'); line.setAttribute('data-done', '0'); }
+      changed(); state();
+    }
+    function insertImg(blob, id) {
+      ensure();
+      const wrap = document.createElement('div'); wrap.className = 'rt-img'; const im = document.createElement('img'); im.setAttribute('data-img', id); im.alt = tr('Imagem anexada'); wrap.appendChild(im);
+      const u = URL.createObjectURL(blob); urls.set(id, u); im.src = u;
+      let line = lineOf(body); const after = document.createElement('div'); after.innerHTML = '<br>';
+      if (line && line.nodeType === 1) {
+        const empty = !line.textContent.trim() && !line.querySelector('img') && !line.classList.contains('rt-img') && !line.classList.contains('ck');
+        if (empty) { line.replaceWith(wrap); wrap.after(after); } else { line.after(wrap); wrap.after(after); }
+      } else { body.append(wrap, after); }
+      decorate(); placeAtStart(after);
+    }
+    async function addFile(f) {
+      if (!f || !/^image\//.test(f.type)) return;
+      if (body.querySelectorAll('.rt-img').length >= MAX_IMGS) { o.onStatus && o.onStatus(tr('Limite de {n} imagens por anotação.', { n: MAX_IMGS }), true); return; }
+      try {
+        const blob = await shrink(f), id = uid(); await putImg(id, blob);
+        body.focus(); insertImg(blob, id); changed();
+      } catch (_) { o.onStatus && o.onStatus(tr('Não foi possível guardar a imagem neste aparelho.'), true); }
+    }
+
+    file.addEventListener('change', () => { const f = file.files && file.files[0]; file.value = ''; addFile(f); });
+    body.addEventListener('input', () => { changed(); state(); });
+    body.addEventListener('focus', state);
+    document.addEventListener('selectionchange', () => { if (document.activeElement === body) state(); });
+    body.addEventListener('keydown', e => {
+      const line = lineOf(body);
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && line && line.classList && line.classList.contains('ck')) { e.preventDefault(); line.setAttribute('data-done', line.getAttribute('data-done') === '1' ? '0' : '1'); changed(); return; }
+      if (!line || line.nodeType !== 1 || !line.classList.contains('ck')) return;
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        if (!line.textContent.replace(/​/g, '').trim()) { line.classList.remove('ck'); line.removeAttribute('data-done'); changed(); state(); return; }
+        const s = getSelection(), r = s.getRangeAt(0); r.deleteContents();
+        const tail = document.createRange(); tail.setStart(r.endContainer, r.endOffset); tail.setEnd(line, line.childNodes.length);
+        const frag = tail.extractContents(), nl = document.createElement('div'); nl.className = 'ck'; nl.setAttribute('data-done', '0');
+        nl.appendChild(frag); if (!nl.textContent && !nl.querySelector('img')) nl.innerHTML = '<br>';
+        if (!line.textContent && !line.querySelector('br')) line.innerHTML = '<br>';
+        line.after(nl); placeAtStart(nl); changed(); return;
+      }
+      if (e.key === 'Backspace' && atLineStart(line)) { e.preventDefault(); line.classList.remove('ck'); line.removeAttribute('data-done'); changed(); state(); }
+    });
+    // toque no quadradinho (margem esquerda da linha) marca/desmarca; toque no X da imagem remove
+    body.addEventListener('click', e => {
+      const del = e.target.closest && e.target.closest('.rt-img-del');
+      if (del) { e.preventDefault(); const d = del.closest('.rt-img'), nx = d.nextElementSibling; d.remove(); if (!body.querySelector(':scope > div')) body.innerHTML = '<div><br></div>'; changed(); (nx || body).focus && body.focus(); return; }
+      const c = e.target.closest && e.target.closest('.ck');
+      if (c && c.parentNode === body) {
+        const x = c.getBoundingClientRect(); if (e.clientX - x.left <= 34 && e.clientX >= x.left) { e.preventDefault(); c.setAttribute('data-done', c.getAttribute('data-done') === '1' ? '0' : '1'); changed(); }
+      }
+    });
+    body.addEventListener('paste', e => {
+      const cd = e.clipboardData; if (!cd) return;
+      const img = [...(cd.files || [])].find(f => /^image\//.test(f.type));
+      e.preventDefault();
+      if (img) { addFile(img); return; }
+      const t = cd.getData('text/plain'); if (t) document.execCommand('insertText', false, t);
+    });
+    body.addEventListener('drop', e => { const f = e.dataTransfer && [...e.dataTransfer.files].find(x => /^image\//.test(x.type)); if (f) { e.preventDefault(); addFile(f); } });
+    body.addEventListener('blur', () => { if (bar.contains(document.activeElement)) return; state(); });
+
+    root.append(bar, body);
+    return {
+      root, body,
+      load(n) {
+        note = n; loading = true;
+        const h = typeof n.html === 'string' && n.html ? sanitize(n.html) : textToHtml(n.text);
+        body.innerHTML = h || '<div><br></div>'; last = h; decorate();
+        body.classList.toggle('is-empty', !String(n.text || '').trim() && !hasImg(h)); loading = false; state();
+      },
+      focus() { try { body.focus({ preventScroll: true }); } catch (_) {} }
+    };
+  }
+
+  window.NotasRich = { create, sanitize, textToHtml, plain, hasImg, gc, idsOf };
+})();
+
+// =====================================================================
 // Seção: notas-agenda
 // =====================================================================
 /* Notas — agenda central: todas as anotações em balões agrupados por mês e o editor de uma anotação por vez.
  * A anotação de dentro de uma disciplina (janela) está na seção janelas-notas (mais abaixo, neste arquivo) e o botão flutuante da
- * agenda (Acessibilidade) na seção notas-botao-flutuante; os dois usam Notas._core daqui. Tudo fica no localStorage deste aparelho (planejador_notas_v1).
- * Texto digitado entra sempre por textContent/value, nunca como HTML. */
+ * agenda (Acessibilidade) na seção notas-botao-flutuante; os dois usam Notas._core daqui. Tudo fica no localStorage deste aparelho (planejador_notas_v1); imagens no IndexedDB (ver seção notas-editor).
+ * Texto digitado entra por textContent/value; a formatação (n.html) só entra depois de passar por NotasRich.sanitize. */
 (function () {
   'use strict';
   const KEY = 'planejador_notas_v1';
   const MAX_NOTES = 60, MAX_TEXT = 20000, MAX_TITLE = 80;
   const st = { notes: [], active: null, delArmed: null, timer: null, dirty: false };
+  let rich = null;
   const $ = id => document.getElementById(id);
   const tr = (s, p) => (typeof T === 'function' ? T(s, p) : s);
   const uid = () => 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -25,7 +343,7 @@
 
   function discName(code) { try { const d = typeof getDisciplinaByCode === 'function' ? getDisciplinaByCode(code) : null; return d && d.nome ? d.nome : ''; } catch (_) { return ''; } }
   function valid(n) { return n && typeof n === 'object' && typeof n.id === 'string' && typeof n.text === 'string' && typeof n.title === 'string'; }
-  const filled = n => !!(n.text.trim() || n.title.trim());
+  const filled = n => !!(n.text.trim() || n.title.trim() || (window.NotasRich && window.NotasRich.hasImg(n.html)));
 
   function load() {
     try {
@@ -33,8 +351,10 @@
       if (r && Array.isArray(r.notes)) {
         st.notes = r.notes.filter(valid).slice(0, MAX_NOTES).map(n => ({
           id: n.id.slice(0, 40), label: typeof n.label === 'string' ? n.label.slice(0, 8) : '', code: isCode(n.code) ? n.code : null,
-          title: n.title.slice(0, MAX_TITLE), text: n.text.slice(0, MAX_TEXT), updated: Number(n.updated) || 0
+          title: n.title.slice(0, MAX_TITLE), text: n.text.slice(0, MAX_TEXT), updated: Number(n.updated) || 0,
+          html: typeof n.html === 'string' && n.html.length <= 60000 && window.NotasRich ? window.NotasRich.sanitize(n.html) : ''
         }));
+        if (window.NotasRich) window.NotasRich.gc(st.notes);
         st.active = typeof r.active === 'string' ? r.active : null;
       }
     } catch (_) {}
@@ -52,12 +372,12 @@
   }
   function addFree() {
     if (st.notes.length >= MAX_NOTES) return null;
-    const n = { id: uid(), label: nextLabel(), code: null, title: '', text: '', updated: Date.now() };
+    const n = { id: uid(), label: nextLabel(), code: null, title: '', text: '', html: '', updated: Date.now() };
     st.notes.push(n); return n;
   }
   function forCode(code) {
     let n = st.notes.find(x => x.code === code);
-    if (!n && st.notes.length < MAX_NOTES) { n = { id: uid(), label: '', code, title: '', text: '', updated: Date.now() }; st.notes.push(n); }
+    if (!n && st.notes.length < MAX_NOTES) { n = { id: uid(), label: '', code, title: '', text: '', html: '', updated: Date.now() }; st.notes.push(n); }
     return n || null;
   }
   const byId = id => st.notes.find(n => n.id === id) || null;
@@ -99,6 +419,8 @@
     const when = document.createElement('span'); when.className = 'ag-when'; when.textContent = whenLabel(n);
     b.append(title, when);
     if (n.text.trim()) { const body = document.createElement('span'); body.className = 'ag-body'; body.textContent = n.text.slice(0, 600); b.appendChild(body); }
+    const ni = (String(n.html || '').match(/data-img=/g) || []).length;
+    if (ni) { const im = document.createElement('span'); im.className = 'ag-imgs'; im.textContent = ni === 1 ? tr('1 imagem') : tr('{n} imagens', { n: ni }); b.appendChild(im); }
     return b;
   }
   function renderAgenda() {
@@ -127,9 +449,9 @@
 
   // ----- editor (uma anotação por vez) -----
   function renderPage() {
-    const n = current(); const title = $('notas-title-input'), text = $('notas-text'), sub = $('notas-sub'), del = $('notas-del');
+    const n = current(); const title = $('notas-title-input'), sub = $('notas-sub'), del = $('notas-del');
     if (!n) return;
-    title.value = n.title; text.value = n.text;
+    title.value = n.title; if (rich) rich.load(n);
     title.placeholder = n.code ? (discName(n.code) || n.code) : tr('Sem título');
     sub.textContent = n.code ? n.code + (discName(n.code) ? ' · ' + discName(n.code) : '') : '';
     del.textContent = tr('Excluir anotação'); del.classList.remove('is-danger'); st.delArmed = null;
@@ -137,7 +459,7 @@
   function flush() { if (st.timer) { clearTimeout(st.timer); st.timer = null; } if (st.dirty) { st.dirty = false; save(); refreshMarks(); } }
   function onInput() {
     const n = current(); if (!n) return;
-    n.title = $('notas-title-input').value.slice(0, MAX_TITLE); n.text = $('notas-text').value.slice(0, MAX_TEXT); n.updated = Date.now();
+    n.title = $('notas-title-input').value.slice(0, MAX_TITLE); n.updated = Date.now();
     st.dirty = true; setStatus(tr('Salvando…'));
     if (st.timer) clearTimeout(st.timer);
     st.timer = setTimeout(() => { st.timer = null; st.dirty = false; save(); refreshMarks(); }, 350);
@@ -183,7 +505,16 @@
     $('agenda-new')?.addEventListener('click', create);
     $('agenda-list')?.addEventListener('click', e => { const b = e.target.closest('.ag-bubble'); if (b) edit(b.dataset.id); });
     $('notas-title-input')?.addEventListener('input', onInput);
-    $('notas-text')?.addEventListener('input', onInput);
+    // o textarea original dá lugar ao editor com formatação (mesmo id, mesma classe)
+    const ta = $('notas-text');
+    if (ta && window.NotasRich) {
+      rich = window.NotasRich.create({
+        placeholder: ta.getAttribute('placeholder') || '', label: ta.getAttribute('aria-label') || '', maxText: MAX_TEXT,
+        onChange(html, text) { const n = current(); if (!n) return; n.html = html; n.text = text; onInput(); },
+        onStatus: setStatus
+      });
+      rich.body.id = 'notas-text'; ta.replaceWith(rich.root);
+    } else ta?.addEventListener('input', () => { const n = current(); if (n) { n.text = ta.value.slice(0, MAX_TEXT); onInput(); } });
     $('notas-del')?.addEventListener('click', remove);
     $('notas-close')?.addEventListener('click', () => { if (typeof closeModal === 'function') closeModal('modal-notas'); });
     // fechar por qualquer caminho (X, fundo, Esc) passa por aqui
@@ -609,19 +940,23 @@ function cancelPlannerLongPress() {
       build(body) {
         const title = document.createElement('input'); title.type = 'text'; title.className = 'notas-title-input'; title.maxLength = MAX_TITLE;
         title.placeholder = nm || code; title.value = n.title; title.setAttribute('aria-label', tr('Título da anotação'));
-        const text = document.createElement('textarea'); text.className = 'notas-text'; text.maxLength = MAX_TEXT;
-        text.placeholder = tr('Escreva aqui. Fica salvo neste aparelho.'); text.value = n.text; text.setAttribute('aria-label', tr('Texto da anotação'));
+        const ed = window.NotasRich.create({
+          placeholder: tr('Escreva aqui. Fica salvo neste aparelho.'), label: tr('Texto da anotação'), maxText: MAX_TEXT,
+          onChange(html, t) { n.html = html; n.text = t; input(); },
+          onStatus(m, warn) { status.textContent = m; status.classList.toggle('is-warn', !!warn); }
+        });
+        ed.load(n); const text = ed.body;
         const status = document.createElement('p'); status.className = 'notas-status'; status.setAttribute('role', 'status');
         const del = document.createElement('button'); del.type = 'button'; del.className = 'notas-del'; del.textContent = tr('Excluir anotação');
         const foot = document.createElement('div'); foot.className = 'notas-foot'; foot.append(status, del);
-        body.append(title, text, foot);
+        body.append(title, ed.root, foot);
         const input = () => {
-          n.title = title.value.slice(0, MAX_TITLE); n.text = text.value.slice(0, MAX_TEXT); n.updated = Date.now();
+          n.title = title.value.slice(0, MAX_TITLE); n.updated = Date.now();
           dirty = true; status.textContent = tr('Salvando…'); status.classList.remove('is-warn');
           if (timer) clearTimeout(timer);
           timer = setTimeout(() => { persist(); status.textContent = tr('Salvo neste aparelho.'); }, 350);
         };
-        title.addEventListener('input', input); text.addEventListener('input', input);
+        title.addEventListener('input', input);
         del.addEventListener('click', () => {
           if (!armed) {
             armed = true; del.textContent = tr('Confirmar exclusão'); del.classList.add('is-danger');
@@ -631,7 +966,7 @@ function cancelPlannerLongPress() {
           const i = st.notes.indexOf(n); if (i >= 0) st.notes.splice(i, 1);
           save(); refreshMarks(); if (agendaOpen()) renderAgenda(); window.Janelas.closeKey('note:' + n.id);
         });
-        if (n.text || n.title) status.textContent = ''; else setTimeout(() => { if (text.isConnected) try { text.focus({ preventScroll: true }); } catch (_) {} }, 60);
+        if (filled(n)) status.textContent = ''; else setTimeout(() => { if (text.isConnected) ed.focus(); }, 60);
       },
       onClose() {
         if (gone) return;
