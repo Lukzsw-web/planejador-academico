@@ -351,7 +351,7 @@
       if (r && Array.isArray(r.notes)) {
         st.notes = r.notes.filter(valid).slice(0, MAX_NOTES).map(n => ({
           id: n.id.slice(0, 40), label: typeof n.label === 'string' ? n.label.slice(0, 8) : '', code: isCode(n.code) ? n.code : null,
-          title: n.title.slice(0, MAX_TITLE), text: n.text.slice(0, MAX_TEXT), updated: Number(n.updated) || 0,
+          title: n.title.slice(0, MAX_TITLE), text: n.text.slice(0, MAX_TEXT), updated: Number(n.updated) || 0, fav: n.fav === true,
           html: typeof n.html === 'string' && n.html.length <= 60000 && window.NotasRich ? window.NotasRich.sanitize(n.html) : ''
         }));
         if (window.NotasRich) window.NotasRich.gc(st.notes);
@@ -372,12 +372,12 @@
   }
   function addFree() {
     if (st.notes.length >= MAX_NOTES) return null;
-    const n = { id: uid(), label: nextLabel(), code: null, title: '', text: '', html: '', updated: Date.now() };
+    const n = { id: uid(), label: nextLabel(), code: null, title: '', text: '', html: '', fav: false, updated: Date.now() };
     st.notes.push(n); return n;
   }
   function forCode(code) {
     let n = st.notes.find(x => x.code === code);
-    if (!n && st.notes.length < MAX_NOTES) { n = { id: uid(), label: '', code, title: '', text: '', html: '', updated: Date.now() }; st.notes.push(n); }
+    if (!n && st.notes.length < MAX_NOTES) { n = { id: uid(), label: '', code, title: '', text: '', html: '', fav: false, updated: Date.now() }; st.notes.push(n); }
     return n || null;
   }
   const byId = id => st.notes.find(n => n.id === id) || null;
@@ -411,36 +411,77 @@
     const base = sameDay(n.updated, Date.now()) ? hm : fmtDate(n.updated, { day: 'numeric', month: 'short' }) + ' · ' + hm;
     return n.code ? base + ' · ' + n.code : base;
   }
+  const ICO_STAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6l2.55 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z"></path></svg>';
+  const ICO_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg>';
+  const agq = { q: '', fav: false };
+  const fold = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const noteName = n => n.title.trim() || (n.code ? (discName(n.code) || n.code) : tr('Sem título'));
   function bubble(n) {
+    const item = document.createElement('div'); item.className = 'ag-item' + (n.fav ? ' is-fav' : '');
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'ag-bubble'; b.dataset.id = n.id;
     const title = document.createElement('span'); title.className = 'ag-title';
-    title.textContent = n.title.trim() || (n.code ? (discName(n.code) || n.code) : tr('Sem título'));
+    title.textContent = noteName(n);
     const when = document.createElement('span'); when.className = 'ag-when'; when.textContent = whenLabel(n);
     b.append(title, when);
     if (n.text.trim()) { const body = document.createElement('span'); body.className = 'ag-body'; body.textContent = n.text.slice(0, 600); b.appendChild(body); }
     const ni = (String(n.html || '').match(/data-img=/g) || []).length;
     if (ni) { const im = document.createElement('span'); im.className = 'ag-imgs'; im.textContent = ni === 1 ? tr('1 imagem') : tr('{n} imagens', { n: ni }); b.appendChild(im); }
-    return b;
+    const acts = document.createElement('div'); acts.className = 'ag-acts';
+    const star = document.createElement('button'); star.type = 'button'; star.className = 'ag-star' + (n.fav ? ' is-fav' : ''); star.dataset.id = n.id;
+    star.setAttribute('aria-pressed', n.fav ? 'true' : 'false');
+    star.setAttribute('aria-label', (n.fav ? tr('Tirar dos favoritos') : tr('Favoritar')) + ': ' + noteName(n)); star.innerHTML = ICO_STAR;
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'ag-del'; del.dataset.id = n.id;
+    del.setAttribute('aria-label', tr('Excluir anotação') + ': ' + noteName(n)); del.innerHTML = ICO_TRASH;
+    acts.append(star, del); item.append(b, acts);
+    return item;
   }
   function renderAgenda() {
-    const box = $('agenda-list'); if (!box) return; box.textContent = '';
-    const list = st.notes.filter(filled).sort((a, b) => b.updated - a.updated);
-    const empty = $('agenda-empty'); if (empty) empty.hidden = list.length > 0;
-    const cnt = $('agenda-count'); if (cnt) cnt.textContent = list.length === 1 ? tr('1 anotação') : tr('{n} anotações', { n: list.length });
+    const box = $('agenda-list'); if (!box) return; const keepTop = box.scrollTop; box.textContent = '';
+    const all = st.notes.filter(filled), q = fold(agq.q).trim();
+    const list = all.filter(n => (!agq.fav || n.fav) && (!q || fold(noteName(n) + ' ' + n.text + ' ' + (n.code || '')).includes(q)))
+      .sort((a, b) => (agq.fav ? 0 : (b.fav ? 1 : 0) - (a.fav ? 1 : 0)) || b.updated - a.updated);
+    const empty = $('agenda-empty'); if (empty) {
+      empty.hidden = list.length > 0;
+      if (!list.length && all.length) { empty.querySelector('strong').textContent = tr('Nada encontrado.'); empty.querySelector('span').textContent = agq.fav && !q ? tr('Toque na estrela de uma anotação para favoritá-la.') : tr('Tente outras palavras.'); }
+      else if (!all.length) { empty.querySelector('strong').textContent = tr('Nenhuma anotação ainda.'); empty.querySelector('span').textContent = tr('Toque no botão redondo para escrever a primeira.'); }
+    }
+    const cnt = $('agenda-count'); if (cnt) cnt.textContent = (q || agq.fav) ? tr('{n} de {t}', { n: list.length, t: all.length }) : (list.length === 1 ? tr('1 anotação') : tr('{n} anotações', { n: list.length }));
+    const ff = $('agenda-fav-filter'); if (ff) { ff.setAttribute('aria-pressed', String(agq.fav)); ff.classList.toggle('is-on', agq.fav); }
+    const tools = $('agenda-tools'); if (tools) tools.hidden = !all.length;
     let last = null, sec = null;
     list.forEach(n => {
-      const k = groupKey(n.updated);
+      const k = (n.fav && !agq.fav) ? 'fav' : groupKey(n.updated);
       if (k !== last) {
         last = k; sec = document.createElement('section'); sec.className = 'ag-group';
-        const h = document.createElement('h3'); h.className = 'ag-month'; h.textContent = groupLabel(n.updated);
+        const h = document.createElement('h3'); h.className = 'ag-month'; h.textContent = k === 'fav' ? tr('Favoritas') : groupLabel(n.updated);
         sec.appendChild(h); box.appendChild(sec);
       }
       sec.appendChild(bubble(n));
     });
+    box.scrollTop = keepTop;
+  }
+  function agendaDelete(id) {
+    const i = st.notes.findIndex(n => n.id === id); if (i < 0) return;
+    st.notes.splice(i, 1); if (st.active === id) st.active = null;
+    save(); refreshMarks(); renderAgenda(); if (window.Janelas) window.Janelas.closeKey('note:' + id);
+    const cnt = $('agenda-count'); if (cnt) cnt.setAttribute('aria-label', tr('Anotação excluída.'));
+  }
+  function agendaClick(e) {
+    const star = e.target.closest('.ag-star');
+    if (star) { const n = st.notes.find(x => x.id === star.dataset.id); if (n) { n.fav = !n.fav; save(); renderAgenda(); const again = $('agenda-list').querySelector('.ag-star[data-id="' + n.id + '"]'); if (again) again.focus({ preventScroll: true }); } return; }
+    const del = e.target.closest('.ag-del');
+    if (del) {
+      if (del.dataset.sure) { agendaDelete(del.dataset.id); return; }
+      del.dataset.sure = '1'; del.classList.add('is-sure'); del.textContent = tr('Excluir?'); del.setAttribute('aria-label', tr('Confirmar exclusão'));
+      setTimeout(() => { if (del.isConnected && del.dataset.sure) { delete del.dataset.sure; del.classList.remove('is-sure'); del.innerHTML = ICO_TRASH; del.setAttribute('aria-label', tr('Excluir anotação')); } }, 3200);
+      return;
+    }
+    const b = e.target.closest('.ag-bubble'); if (b) edit(b.dataset.id);
   }
   const agendaOpen = () => !!$('modal-agenda')?.classList.contains('active');
   function openAgenda() {
+    agq.q = ''; agq.fav = false; const sb = $('agenda-search'); if (sb) sb.value = '';
     renderAgenda();
     if (typeof openModal === 'function') openModal('modal-agenda');
     const l = $('agenda-list'); if (l) l.scrollTop = 0;
@@ -503,7 +544,9 @@
     $('planner-notes-open')?.addEventListener('click', openAgenda);
     $('agenda-close')?.addEventListener('click', closeAgenda);
     $('agenda-new')?.addEventListener('click', create);
-    $('agenda-list')?.addEventListener('click', e => { const b = e.target.closest('.ag-bubble'); if (b) edit(b.dataset.id); });
+    $('agenda-list')?.addEventListener('click', agendaClick);
+    $('agenda-search')?.addEventListener('input', e => { agq.q = e.target.value; renderAgenda(); });
+    $('agenda-fav-filter')?.addEventListener('click', () => { agq.fav = !agq.fav; renderAgenda(); });
     $('notas-title-input')?.addEventListener('input', onInput);
     // o textarea original dá lugar ao editor com formatação (mesmo id, mesma classe)
     const ta = $('notas-text');

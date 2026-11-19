@@ -19,6 +19,9 @@
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
       const useDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+      // aba aberta da última vez: o CSS esconde as outras até o JS posicionar as telas (evita piscar a tela errada ao recarregar)
+      const bootTab = localStorage.getItem('planejador_active_tab_v1');
+      document.documentElement.dataset.boot = ['home-page', 'modal-planner', 'modal-farmacia', 'modal-comunicados', 'modal-settings'].includes(bootTab) ? bootTab : 'home-page';
       document.documentElement.classList.toggle('dark', useDark);
       document.documentElement.classList.toggle('light', !useDark);
       const ts = localStorage.getItem('planejador_textsize_v1');
@@ -28,7 +31,7 @@
       const csMeta = document.getElementById('color-scheme-meta');
       if (csMeta) csMeta.content = useDark ? 'dark' : 'only light';
       const tcMeta = document.getElementById('theme-color-meta');
-      if (tcMeta) tcMeta.content = useDark ? '#0f1115' : '#24564b';
+      if (tcMeta) tcMeta.content = useDark ? '#000000' : '#24564b';
     } catch (_) {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
@@ -258,9 +261,6 @@
     <div class="tab-band-end"></div>
   </header>
     <div class="comunicados-screen modal-content">
-      <header class="comunicados-head">
-        <p class="comunicados-sub">Avisos da coordenação e da equipe do curso.</p>
-      </header>
       <div class="comunicados-bar"><span id="comunicados-status" class="comunicados-status" role="status"></span><button type="button" id="comunicados-refresh" class="comunicados-refresh">Atualizar</button></div>
       <div class="com-search" id="comunicados-search" hidden>
         <div class="com-search-shell">
@@ -549,6 +549,10 @@
         <h2 id="agenda-heading" class="agenda-heading">Todas as anotações</h2>
         <p id="agenda-count" class="agenda-count" aria-live="polite"></p>
       </header>
+      <div id="agenda-tools" class="agenda-tools" hidden>
+        <label class="agenda-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg><input id="agenda-search" type="search" class="agenda-search-input" placeholder="Buscar nas anotações" aria-label="Buscar nas anotações" autocomplete="off" enterkeyhint="search" maxlength="80"></label>
+        <button type="button" id="agenda-fav-filter" class="agenda-favfilter" aria-pressed="false" aria-label="Mostrar só as favoritas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6l2.55 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.2-4.1 5.8-.8z"></path></svg></button>
+      </div>
       <div id="agenda-list" class="agenda-list"></div>
       <div id="agenda-empty" class="agenda-empty" hidden>
         <strong>Nenhuma anotação ainda.</strong>
@@ -855,11 +859,9 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Faixa do topo em todas as abas</h4><ul class="release-list"><li>"O que puxar?" e Comunicados ganharam a mesma faixa do Planejador, com o nome da aba no meio e sua foto e nome à esquerda.</li><li>Deslize para cima na faixa para escondê-la; deslize para baixo (ou toque no topo) para trazê-la de volta. Com zoom ativo o gesto fica desligado, para não atrapalhar a pinça nem o arrastar da tela.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda com editor</h4><ul class="release-list"><li>Negrito, itálico e sublinhado, listas com quadradinhos que riscam o item ao marcar e imagens dentro da anotação.</li><li>As imagens ficam guardadas só neste aparelho.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Foto de perfil com recorte</h4><ul class="release-list"><li>Ao escolher a imagem na galeria do celular, abre um editor para arrastar e dar zoom antes de salvar.</li></ul></div>
-          <div class="release-group"><span class="release-tag">FarmacIA</span><h4 class="release-title">Favoritas e limpeza do histórico</h4><ul class="release-list"><li>Estrela para favoritar conversas (elas ficam no topo e não são apagadas pelo limite) e botão para apagar todo o histórico.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Fundo único</h4><ul class="release-list"><li>Planejador, "O que puxar?" e Comunicados usam o mesmo fundo das Configurações, liso, sem ondas. No modo escuro o fundo é preto puro, o que economiza bateria em telas OLED.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Agenda: busca, favoritas e excluir</h4><ul class="release-list"><li>Barra de busca (ignora acentos), estrela para favoritar (as favoritas ficam no topo, com filtro próprio) e botão de excluir em cada anotação, com confirmação em dois toques, como no histórico da FarmacIA.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Faixas e botão da agenda em destaque</h4><ul class="release-list"><li>As faixas do topo agora são uma superfície própria, que se separa do fundo, principalmente no modo escuro. O botão da agenda ganhou borda e fundo.</li><li>Comunicados sem o subtítulo; o texto de "O que puxar?" ficou centralizado.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Correção</span><h4 class="release-title">Piscadas</h4><ul class="release-list"><li>No modo escuro, a tela não pisca mais em branco ao rolar: a raiz da página ainda usava o fundo claro.</li><li>Ao recarregar, o site não mostra mais outra tela antes da aba em que você estava.</li></ul></div>
         </div>
       </section>
       </div>

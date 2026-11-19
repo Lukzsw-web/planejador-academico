@@ -941,3 +941,66 @@ html.dark .rt-body .ck[data-done="1"]::before { background-image: url("data:imag
 .ag-imgs { display: block; margin-top: .3rem; font-size: .76rem; font-weight: 700; color: var(--pa-muted); }
 .jwk-note .rt { flex: 0 1 auto; }
 .jwk-note .rt-body { min-height: 8.5rem; max-height: 38dvh; }
+
+
+/* =========================================================
+   v0.6.3 — sem piscadas: raiz da página no mesmo fundo do app e telas certas desde o primeiro quadro
+   ========================================================= */
+/* Causa do "pisca branco" no escuro: o html ficava #f5f6f8 e só o body era escuro; ao rolar rápido, a área ainda não pintada mostrava o fundo claro do html. */
+html, html.light { background: #F4F3EB !important; }
+html.dark, html.dark body { background: #000 !important; }
+html:not(.dark) body { background: #F4F3EB !important; }
+/* Causa do "pisca de outra tela" no recarregar: as cinco telas nascem empilhadas e só o JS escolhe a certa. O index.html grava a aba em data-boot. */
+html[data-boot="home-page"] :is(.home-tab-page, .bottom-tab-page):not(#home-page) { visibility: hidden !important; }
+html[data-boot="modal-planner"] :is(.home-tab-page, .bottom-tab-page):not(#modal-planner) { visibility: hidden !important; }
+html[data-boot="modal-farmacia"] :is(.home-tab-page, .bottom-tab-page):not(#modal-farmacia) { visibility: hidden !important; }
+html[data-boot="modal-comunicados"] :is(.home-tab-page, .bottom-tab-page):not(#modal-comunicados) { visibility: hidden !important; }
+html[data-boot="modal-settings"] :is(.home-tab-page, .bottom-tab-page):not(#modal-settings) { visibility: hidden !important; }
+
+/* =========================================================
+   v0.6.3 — faixas em destaque, botão da agenda, busca/estrela/excluir da agenda
+   ========================================================= */
+/* A faixa passa a ser uma superfície própria (clara no claro, grafite no escuro) com filete inferior marcado: no preto puro ela se separa do fundo. */
+:root { --band-bg: #FFFFFF; --band-line: rgba(31, 41, 36, .16); --band-chip: #EEEDE3; }
+html.dark { --band-bg: #1A1D21; --band-line: #34393F; --band-chip: #2A2F35; }
+html .tab-band { background: var(--band-bg); border-bottom: 1px solid var(--band-line); box-shadow: 0 1px 0 var(--band-line); }
+html.dark .tab-band { box-shadow: none; }
+html .tab-band > button.nav-open .profile-avatar { box-shadow: 0 0 0 2px var(--band-bg), 0 0 0 3.5px var(--band-line); }
+/* botão da agenda: ficha com borda, como um selo, não mais solto no fundo */
+html #modal-planner .tab-band .planner-notes-btn {
+  width: 44px; height: 44px; border: 1px solid var(--band-line) !important; border-radius: 10px;
+  background: var(--band-chip) !important; color: var(--pq-ink) !important;
+}
+html #modal-planner .tab-band .planner-notes-btn:active { background: color-mix(in srgb, var(--band-chip) 70%, var(--pq-ink)) !important; }
+html #modal-planner .tab-band .planner-notes-btn .notes-count { border-color: var(--band-bg); }
+html #modal-planner .tab-band .planner-notes-btn svg { width: 24px; height: 24px; }
+
+/* "O que puxar?": texto de apoio centralizado */
+html #modal-planner .planner-topbar { text-align: center; }
+html #modal-planner .planner-page-subtitle { text-align: center; margin: 0 auto !important; max-width: 24rem; }
+
+/* Agenda: busca + favoritas */
+.agenda-tools { display: flex; align-items: center; gap: .5rem; padding: 0 .9rem .5rem; }
+.agenda-tools[hidden] { display: none !important; }
+.agenda-search { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: .55rem; min-height: 44px; padding: 0 .85rem; border: 1px solid var(--pa-line); border-radius: 10px; background: var(--pa-surface-soft); color: var(--pa-muted); }
+.agenda-search:focus-within { border-color: var(--pa-ink); box-shadow: var(--pa-focus); }
+.agenda-search svg { flex: 0 0 auto; width: 18px; height: 18px; }
+.agenda-search-input { flex: 1 1 auto; min-width: 0; height: 42px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--pa-ink); font: inherit; font-size: .95rem; -webkit-appearance: none; appearance: none; }
+.agenda-search-input::placeholder { color: var(--pa-muted); opacity: 1; }
+.agenda-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.agenda-favfilter { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--pa-line); border-radius: 10px; background: transparent; color: var(--pa-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.agenda-favfilter svg { width: 20px; height: 20px; }
+.agenda-favfilter.is-on { background: var(--pa-ink); border-color: var(--pa-ink); color: var(--pa-surface); }
+.agenda-favfilter.is-on svg { fill: currentColor; }
+.agenda-favfilter:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.ag-item { position: relative; }
+.ag-item .ag-bubble { padding-right: 5.6rem; }
+.ag-acts { position: absolute; top: .3rem; right: .3rem; display: flex; align-items: center; }
+.ag-star, .ag-del { min-width: 40px; height: 40px; padding: 0 .45rem; display: inline-grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--pa-muted); font: inherit; font-size: .74rem; font-weight: 800; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ag-star svg, .ag-del svg { width: 18px; height: 18px; }
+.ag-star.is-fav { color: var(--pa-accent); }
+.ag-star.is-fav svg { fill: currentColor; }
+.ag-star:active, .ag-del:active { background: var(--pa-line); }
+.ag-del.is-sure { background: var(--pa-danger); color: #fff; }
+.ag-star:focus-visible, .ag-del:focus-visible { outline: none; box-shadow: var(--pa-focus); }
+.ag-item.is-fav .ag-bubble { box-shadow: inset 3px 0 0 var(--pa-accent); }

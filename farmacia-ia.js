@@ -2312,14 +2312,18 @@
   }
 
   // ---------- menu de três pontinhos, tamanho com prévia e histórico ----------
-  var PREVIA_MD = [
-    '## Meia-vida', '',
-    'A **meia-vida** indica quanto tempo o organismo leva para reduzir a concentração do fármaco à metade.', '',
-    '- Quanto maior, mais lenta a eliminação', '- Ajuda a definir o intervalo entre doses', '',
-    '```definicao', 'Tempo para a concentração plasmática cair pela metade.', '```', '',
-    '| Parâmetro | Símbolo |', '|---|---|', '| Meia-vida | t½ |', '| Depuração | CL |', '',
-    '```', 't½ = 0,693 × Vd / CL', '```'
-  ].join('\n');
+  // Textos da interface nesta parte passam por I18N (inglês/espanhol); as respostas da FarmacIA continuam em português.
+  function tx(s, p) { return window.I18N ? window.I18N.t(s, p) : String(s).replace(/\{(\w+)\}/g, function (m, k) { return p && k in p ? p[k] : m; }); }
+  function previaMd() {
+    return [
+      '## ' + tx('Meia-vida'), '',
+      tx('A **meia-vida** indica quanto tempo o organismo leva para reduzir a concentração do fármaco à metade.'), '',
+      '- ' + tx('Quanto maior, mais lenta a eliminação'), '- ' + tx('Ajuda a definir o intervalo entre doses'), '',
+      '```definicao', tx('Tempo para a concentração plasmática cair pela metade.'), '```', '',
+      '| ' + tx('Parâmetro') + ' | ' + tx('Símbolo') + ' |', '|---|---|', '| ' + tx('Meia-vida') + ' | t½ |', '| ' + tx('Depuração') + ' | CL |', '',
+      '```', 't½ = 0,693 × Vd / CL', '```'
+    ].join('\n');
+  }
   // O menu mora num painel lateral (esquerda): o botão ☰ do cabeçalho abre; o X, o fundo, Esc ou um deslize para a esquerda fecham.
   var menu = null, btnMenu = null, vista = 'raiz', drawer = null, drawerPanel = null, drawerTimer = 0;
   function mostrarPainel(abrir) {
@@ -2351,7 +2355,7 @@
   function desenharMenu(foco) {
     while (menu.firstChild) menu.removeChild(menu.firstChild);
     if (vista === 'raiz') {
-      menu.setAttribute('aria-label', 'Opções da FarmacIA');
+      menu.setAttribute('aria-label', tx('Opções da FarmacIA'));
       var cap = h('div', 'fm-menu-cap', 'Opções da FarmacIA'); cap.setAttribute('role', 'presentation'); menu.appendChild(cap);
       var tema = TEMAS.filter(function (t) { return t.id === prefs.tema; })[0] || TEMAS[0], sw = h('span', 'fm-row-sw'); sw.appendChild(h('i', 'fm-swatch')); sw.firstChild.style.background = tema.cor; sw.appendChild(doc.createTextNode(tema.nome));
       menu.appendChild(linhaMenu('size', 'Tamanho da fonte', null, nomeDe(TAMANHOS, prefs.tamanho), function () { vista = 'tamanho'; desenharMenu(true); }));
@@ -2365,10 +2369,10 @@
       desenharIA();
     } else {
       var lista = vista === 'tamanho' ? TAMANHOS : TEMAS, atualId = vista === 'tamanho' ? prefs.tamanho : prefs.tema;
-      menu.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema');
-      var topo = h('div', 'fm-sub-head'), voltar = h('button', 'fm-back'); voltar.type = 'button'; voltar.setAttribute('aria-label', 'Voltar ao menu'); voltar.appendChild(ico('back'));
-      voltar.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); }); topo.appendChild(voltar); topo.appendChild(h('strong', null, vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema')); menu.appendChild(topo);
-      var grupo = h('div', 'fm-opts'); grupo.setAttribute('role', 'radiogroup'); grupo.setAttribute('aria-label', vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema'); if (vista === 'tamanho') grupo.className += ' fm-opts-size';
+      menu.setAttribute('aria-label', tx(vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema'));
+      var topo = h('div', 'fm-sub-head'), voltar = h('button', 'fm-back'); voltar.type = 'button'; voltar.setAttribute('aria-label', tx('Voltar ao menu')); voltar.appendChild(ico('back'));
+      voltar.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); }); topo.appendChild(voltar); topo.appendChild(h('strong', null, tx(vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema'))); menu.appendChild(topo);
+      var grupo = h('div', 'fm-opts'); grupo.setAttribute('role', 'radiogroup'); grupo.setAttribute('aria-label', tx(vista === 'tamanho' ? 'Tamanho da fonte' : 'Tema')); if (vista === 'tamanho') grupo.className += ' fm-opts-size';
       var previa = null;
       lista.forEach(function (o) {
         var b = h('button', 'fm-opt' + (o.id === atualId ? ' is-on' : '')); b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(o.id === atualId)); b.tabIndex = o.id === atualId ? 0 : -1; b.setAttribute('data-id', o.id);
@@ -2379,7 +2383,7 @@
           salvarPrefs(); aplicarPrefs();
           Array.prototype.forEach.call(grupo.children, function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; });
           if (previa) previa.setAttribute('data-farma-size', prefs.tamanho);
-          var v = drawer && drawer.querySelector('.fm-live'); if (v) v.textContent = (vista === 'tamanho' ? 'Tamanho ' : 'Tema ') + o.nome.toLowerCase();
+          var v = drawer && drawer.querySelector('.fm-live'); if (v) v.textContent = tx(vista === 'tamanho' ? 'Tamanho {o}' : 'Tema {o}', { o: o.nome.toLowerCase() });
         });
         b.addEventListener('keydown', function (e) {
           var ix = Array.prototype.indexOf.call(grupo.children, b), d = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 0;
@@ -2391,15 +2395,15 @@
       if (vista === 'tamanho') {
         var rot = h('div', 'fm-preview-label', 'Prévia'); menu.appendChild(rot);
         previa = h('div', 'fm-preview farma-bubble'); previa.setAttribute('data-farma-size', prefs.tamanho); previa.setAttribute('data-farma-theme', prefs.tema); previa.setAttribute('aria-hidden', 'true'); if ('inert' in previa) previa.inert = true;
-        var corpo = h('div', 'farma-md'); corpo.innerHTML = md(PREVIA_MD); previa.appendChild(corpo); menu.appendChild(previa); aprimorar(previa);
+        var corpo = h('div', 'farma-md'); corpo.innerHTML = md(previaMd()); previa.appendChild(corpo); menu.appendChild(previa); aprimorar(previa);
       }
     }
     if (foco) focarPrimeiro();
   }
   function desenharIA() {
     var ia = FarmaMod.ia, on = ia.ativada(), fim = ia.esgotada();
-    menu.setAttribute('aria-label', 'IA online');
-    var topo = h('div', 'fm-sub-head'), voltar = h('button', 'fm-back'); voltar.type = 'button'; voltar.setAttribute('aria-label', 'Voltar ao menu'); voltar.appendChild(ico('back'));
+    menu.setAttribute('aria-label', tx('IA online'));
+    var topo = h('div', 'fm-sub-head'), voltar = h('button', 'fm-back'); voltar.type = 'button'; voltar.setAttribute('aria-label', tx('Voltar ao menu')); voltar.appendChild(ico('back'));
     voltar.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); }); topo.appendChild(voltar); topo.appendChild(h('strong', null, 'IA online')); menu.appendChild(topo);
     var box = h('div', 'fm-ia');
     box.appendChild(h('p', 'fm-ia-lead', 'A FarmacIA responde primeiro com o material local, sem enviar nada. Só quando não entende a pergunta, e se você permitir, ela consulta uma IA online.'));
@@ -2441,17 +2445,17 @@
       var pv = previaDe(c); if (pv) abrir.appendChild(h('span', 'fm-h-prev', pv));
       abrir.addEventListener('click', function () { var conv = V.historico.continuar(c.id); fecharHistorico(false); if (conv && V.aoContinuar) V.aoContinuar(conv); });
       var fav = h('button', 'fm-h-fav' + (c.fav ? ' is-fav' : '')); fav.type = 'button'; fav.setAttribute('aria-pressed', c.fav ? 'true' : 'false');
-      fav.setAttribute('aria-label', (c.fav ? 'Tirar dos favoritos: ' : 'Favoritar: ') + (c.titulo || 'sem título')); fav.appendChild(ico('star'));
+      fav.setAttribute('aria-label', tx(c.fav ? 'Tirar dos favoritos: {t}' : 'Favoritar: {t}', { t: c.titulo || tx('sem título') })); fav.appendChild(ico('star'));
       fav.addEventListener('click', function () {
         var r = V.historico.favoritar(c.id);
-        if (r === null) { histLive.textContent = 'Limite de ' + MAX_FAV + ' favoritas. Tire a estrela de alguma para marcar outra.'; return; }
+        if (r === null) { histLive.textContent = tx('Limite de {n} favoritas. Tire a estrela de alguma para marcar outra.', { n: MAX_FAV }); return; }
         histLive.textContent = r ? 'Conversa favoritada.' : 'Conversa removida dos favoritos.'; renderHistorico();
       });
-      var del = h('button', 'fm-h-del'); del.type = 'button'; del.setAttribute('aria-label', 'Excluir conversa: ' + (c.titulo || 'sem título')); del.appendChild(ico('trash'));
+      var del = h('button', 'fm-h-del'); del.type = 'button'; del.setAttribute('aria-label', tx('Excluir conversa: {t}', { t: c.titulo || tx('sem título') })); del.appendChild(ico('trash'));
       del.addEventListener('click', function () {
         if (del.getAttribute('data-sure')) { V.historico.excluir(c.id); histLive.textContent = 'Conversa excluída.'; renderHistorico(); return; }
-        del.setAttribute('data-sure', '1'); del.classList.add('is-sure'); del.setAttribute('aria-label', 'Confirmar exclusão'); del.textContent = 'Excluir?';
-        setTimeout(function () { if (del.isConnected) { del.removeAttribute('data-sure'); del.classList.remove('is-sure'); del.textContent = ''; del.appendChild(ico('trash')); del.setAttribute('aria-label', 'Excluir conversa: ' + (c.titulo || 'sem título')); } }, 3200);
+        del.setAttribute('data-sure', '1'); del.classList.add('is-sure'); del.setAttribute('aria-label', tx('Confirmar exclusão')); del.textContent = 'Excluir?';
+        setTimeout(function () { if (del.isConnected) { del.removeAttribute('data-sure'); del.classList.remove('is-sure'); del.textContent = ''; del.appendChild(ico('trash')); del.setAttribute('aria-label', tx('Excluir conversa: {t}', { t: c.titulo || tx('sem título') })); } }, 3200);
       });
       li.appendChild(abrir); li.appendChild(fav); li.appendChild(del); histLista.appendChild(li);
     });
@@ -2467,24 +2471,24 @@
   }
   function desarmarLimpar() {
     clearTimeout(histLimparTimer);
-    if (histLimparBtn) { histLimparBtn.removeAttribute('data-sure'); histLimparBtn.classList.remove('is-sure'); histLimparBtn.setAttribute('aria-label', 'Apagar todo o histórico'); }
+    if (histLimparBtn) { histLimparBtn.removeAttribute('data-sure'); histLimparBtn.classList.remove('is-sure'); histLimparBtn.setAttribute('aria-label', tx('Apagar todo o histórico')); }
   }
   function abrirHistorico() {
     var tela = doc.querySelector('#modal-farmacia .farma-screen'); if (!tela) return;
     if (!hist) {
-      hist = h('section', 'fm-hist'); hist.setAttribute('role', 'dialog'); hist.setAttribute('aria-modal', 'true'); hist.setAttribute('aria-label', 'Histórico de conversas'); hist.hidden = true;
-      var topo = h('div', 'fm-hist-head'), vb = h('button', 'fm-back'); vb.type = 'button'; vb.setAttribute('aria-label', 'Fechar histórico'); vb.appendChild(ico('back')); vb.addEventListener('click', function () { fecharHistorico(true); });
+      hist = h('section', 'fm-hist'); hist.setAttribute('role', 'dialog'); hist.setAttribute('aria-modal', 'true'); hist.setAttribute('aria-label', tx('Histórico de conversas')); hist.hidden = true;
+      var topo = h('div', 'fm-hist-head'), vb = h('button', 'fm-back'); vb.type = 'button'; vb.setAttribute('aria-label', tx('Fechar histórico')); vb.appendChild(ico('back')); vb.addEventListener('click', function () { fecharHistorico(true); });
       topo.appendChild(vb); topo.appendChild(h('h3', null, 'Histórico')); hist.appendChild(topo);
-      var cx = h('label', 'fm-search fm-hist-search'); cx.appendChild(ico('search')); histBusca = h('input'); histBusca.type = 'search'; histBusca.placeholder = 'Buscar nas conversas'; histBusca.setAttribute('aria-label', 'Buscar nas conversas');
+      var cx = h('label', 'fm-search fm-hist-search'); cx.appendChild(ico('search')); histBusca = h('input'); histBusca.type = 'search'; histBusca.placeholder = tx('Buscar nas conversas'); histBusca.setAttribute('aria-label', tx('Buscar nas conversas'));
       histBusca.addEventListener('input', renderHistorico); cx.appendChild(histBusca); hist.appendChild(cx);
       var tools = h('div', 'fm-h-tools');
       histFavBtn = h('button', 'fm-h-filter'); histFavBtn.type = 'button'; histFavBtn.appendChild(ico('star')); histFavBtn.appendChild(h('span', null, 'Favoritas'));
       histFavBtn.addEventListener('click', function () { histSoFav = !histSoFav; renderHistorico(); });
-      histLimparBtn = h('button', 'fm-h-clear'); histLimparBtn.type = 'button'; histLimparBtn.setAttribute('aria-label', 'Apagar todo o histórico'); histLimparBtn.appendChild(ico('trash')); histLimparBtn.appendChild(h('span', 'fm-h-clear-txt', 'Apagar tudo'));
+      histLimparBtn = h('button', 'fm-h-clear'); histLimparBtn.type = 'button'; histLimparBtn.setAttribute('aria-label', tx('Apagar todo o histórico')); histLimparBtn.appendChild(ico('trash')); histLimparBtn.appendChild(h('span', 'fm-h-clear-txt', 'Apagar tudo'));
       histLimparBtn.addEventListener('click', function () {
         if (histLimparBtn.getAttribute('data-sure')) { desarmarLimpar(); V.historico.limpar(); histSoFav = false; histLive.textContent = 'Todo o histórico foi apagado.'; renderHistorico(); return; }
-        histLimparBtn.setAttribute('data-sure', '1'); histLimparBtn.classList.add('is-sure'); histLimparBtn.setAttribute('aria-label', 'Confirmar: apagar todas as conversas, inclusive as favoritas');
-        histLimparBtn.querySelector('.fm-h-clear-txt').textContent = 'Apagar ' + conversas.length + (conversas.length === 1 ? ' conversa?' : ' conversas?');
+        histLimparBtn.setAttribute('data-sure', '1'); histLimparBtn.classList.add('is-sure'); histLimparBtn.setAttribute('aria-label', tx('Confirmar: apagar todas as conversas, inclusive as favoritas'));
+        histLimparBtn.querySelector('.fm-h-clear-txt').textContent = tx(conversas.length === 1 ? 'Apagar {n} conversa?' : 'Apagar {n} conversas?', { n: conversas.length });
         histLive.textContent = 'Toque de novo para apagar todas as conversas, inclusive as favoritas.';
         histLimparTimer = setTimeout(function () { desarmarLimpar(); atualizarFerramentasHist(); }, 4000);
       });
