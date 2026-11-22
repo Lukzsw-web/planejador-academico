@@ -101,57 +101,95 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  function buildResponse(row, query) {
-    var p = row.payload || {};
-    var campus = p[query.campus];
-    var day = campus && campus[query.day];
-    if (!day) {
-      return {
-        id: 'cardapio',
-        html: '<p>Não encontrei o cardápio desse dia na última coleta disponível. Tente outro dia ou consulte o BandejApp.</p>',
-        chips: []
-      };
-    }
-
-    var date = dateForDay(row, query.day);
-    var meals = query.meal === 'ambos' ? ['almoco', 'janta'] : [query.meal];
-    var out = '<p><strong>' + esc(DAY_LABEL[query.day]) + (date ? ', ' + esc(date) : '') +
-      '</strong><br>' + esc(REST[query.campus]) + '</p>';
-
-    meals.forEach(function (meal) {
-      var data = day[meal];
-      out += '<p><strong>' + (meal === 'almoco' ? 'Almoço' : 'Jantar') + '</strong></p>';
-      if (!data || typeof data !== 'object') {
-        out += '<p>Sem informação disponível para esta refeição.</p>';
-        return;
+  // ---------- Cardápio interativo ----------
+  // Dentro da resposta: restaurantes (botões), dias de domingo a sábado (cartões) e o cardápio do dia escolhido.
+  // Os cliques trocam o conteúdo no próprio cartão, com a última coleta já guardada no aparelho (funciona offline).
+  var PLACES = [['ct', 'Central', 'CT e Letras'], ['pv', 'Praia Vermelha', 'IFCS e PV'], ['dc', 'Duque de Caxias', ''], ['mc', 'Macaé', '']];
+  var WD = { domingo: 'Dom', segunda: 'Seg', terca: 'Ter', quarta: 'Qua', quinta: 'Qui', sexta: 'Sex', sabado: 'Sáb' };
+  var MON = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+  function parseDate(str) {
+    var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str || '');
+    return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+  }
+  function relLabel(d) {
+    if (!d) return '';
+    var t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    var n = Math.round((d - t) / 86400000);
+    if (n === 0) return 'Hoje';
+    if (n === 1) return 'Amanhã';
+    if (n === -1) return 'Ontem';
+    return n < 0 ? 'Há ' + (-n) + ' dias' : 'Em ' + n + ' dias';
+  }
+  function placeButtons(campus) {
+    return PLACES.map(function (pl) {
+      var on = pl[0] === campus;
+      return '<button type="button" class="cd-place' + (on ? ' is-on' : '') + '" data-cd-place="' + pl[0] + '" aria-label="Restaurante ' + esc(pl[1] + (pl[2] ? ' (' + pl[2] + ')' : '')) + (on ? ', selecionado' : '') + '">' +
+        '<strong>' + esc(pl[1]) + '</strong>' + (pl[2] ? '<small>' + esc(pl[2]) + '</small>' : '') + '</button>';
+    }).join('');
+  }
+  function dayButtons(row, day) {
+    return DAYS.map(function (k) {
+      var raw = dateForDay(row, k), d = parseDate(raw), on = k === day, rel = relLabel(d);
+      var dt = d ? d.getDate() + ' ' + MON[d.getMonth()] : '';
+      return '<button type="button" class="cd-day' + (on ? ' is-on' : '') + (rel === 'Hoje' ? ' is-today' : '') + '" data-cd-day="' + k + '" aria-label="' + esc(DAY_LABEL[k] + (dt ? ', ' + dt : '') + (rel ? ', ' + rel : '') + (on ? ', selecionado' : '')) + '">' +
+        '<span class="cd-wd">' + WD[k] + '</span>' + (dt ? '<span class="cd-dt">' + esc(dt) + '</span>' : '') + (rel ? '<span class="cd-rel">' + esc(rel) + '</span>' : '') + '</button>';
+    }).join('');
+  }
+  function mealsHTML(row, campus, day) {
+    var data = row.payload && row.payload[campus], dd = data && data[day], out = '';
+    if (!dd) return '<p class="cd-empty">Não encontrei o cardápio desse dia na última coleta. Tente outro dia ou consulte o BandejApp.</p>';
+    ['almoco', 'janta'].forEach(function (meal) {
+      var m = dd[meal], items = '';
+      if (m && typeof m === 'object') {
+        FIELDS.forEach(function (f) {
+          var v = m[f[0]];
+          if (v != null && String(v).trim() !== '') items += '<li><strong>' + f[1] + ':</strong> ' + esc(v) + '</li>';
+        });
       }
-      var any = false;
-      out += '<ul>';
-      FIELDS.forEach(function (field) {
-        var value = data[field[0]];
-        if (value == null || String(value).trim() === '') return;
-        any = true;
-        out += '<li><strong>' + field[1] + ':</strong> ' + esc(value) + '</li>';
-      });
-      out += '</ul>';
-      if (!any) out += '<p>O cardápio desta refeição ainda não foi publicado.</p>';
+      out += '<section class="cd-meal"><h4>' + (meal === 'almoco' ? 'Almoço' : 'Jantar') + '</h4>' +
+        (items ? '<ul>' + items + '</ul>' : '<p class="cd-empty">' + (m ? 'O cardápio desta refeição ainda não foi publicado.' : 'Sem informação disponível para esta refeição.') + '</p>') + '</section>';
     });
-
+    return out;
+  }
+  function cardInner(row, campus, day) {
+    var foot = '';
     if (row.coletado_em) {
-      var collected = new Date(row.coletado_em);
-      if (!isNaN(collected.getTime())) {
-        out += '<p><small>Última coleta: ' + esc(collected.toLocaleString('pt-BR')) + '.</small></p>';
-      }
+      var c = new Date(row.coletado_em);
+      if (!isNaN(c.getTime())) foot = 'Última coleta: ' + esc(c.toLocaleString('pt-BR')) + '. ';
     }
-    out += '<p>Fonte: BandejApp UFRJ.</p>';
+    return '<div class="cd-places" role="group" aria-label="Restaurante">' + placeButtons(campus) + '</div>' +
+      '<div class="cd-days" role="group" aria-label="Dia da semana">' + dayButtons(row, day) + '</div>' +
+      '<p class="cd-title"><strong>' + esc(DAY_LABEL[day]) + (dateForDay(row, day) ? ', ' + esc(dateForDay(row, day)) : '') + '</strong><span>' + esc(REST[campus]) + '</span></p>' +
+      '<div class="cd-body">' + mealsHTML(row, campus, day) + '</div>' +
+      '<p class="cd-foot">' + foot + 'Fonte: BandejApp UFRJ.</p>';
+  }
+  function buildResponse(row, query) {
     return {
       id: 'cardapio',
-      html: out,
-      chips: [
-        { label: 'Almoço', q: 'Cardápio de hoje no ' + (query.campus === 'ct' ? 'CT' : query.campus.toUpperCase()) + ' - almoço' },
-        { label: 'Jantar', q: 'Cardápio de hoje no ' + (query.campus === 'ct' ? 'CT' : query.campus.toUpperCase()) + ' - jantar' }
-      ]
+      html: '<p>Aqui está o <strong>cardápio do bandejão</strong>. Escolha o restaurante e o dia:</p><div class="cd" data-cd-campus="' + query.campus + '" data-cd-day="' + query.day + '">' + cardInner(row, query.campus, query.day) + '</div>',
+      chips: []
     };
+  }
+  // Cliques dentro do cartão: troca restaurante ou dia sem criar uma nova mensagem.
+  function onClick(e) {
+    var btn = e.target.closest && e.target.closest('[data-cd-place], [data-cd-day]');
+    var card = btn && btn.closest('.cd');
+    if (!card) return;
+    var cached = readCache(); if (!cached) return;
+    e.preventDefault(); e.stopPropagation();
+    var campus = card.getAttribute('data-cd-campus'), day = card.getAttribute('data-cd-day');
+    if (btn.hasAttribute('data-cd-place')) campus = btn.getAttribute('data-cd-place'); else day = btn.getAttribute('data-cd-day');
+    var strip = card.querySelector('.cd-days'), left = strip ? strip.scrollLeft : 0, kind = btn.hasAttribute('data-cd-place') ? 'place' : 'day';
+    card.setAttribute('data-cd-campus', campus); card.setAttribute('data-cd-day', day);
+    card.innerHTML = cardInner(cached.row, campus, day);
+    strip = card.querySelector('.cd-days'); if (strip) strip.scrollLeft = left;
+    var again = card.querySelector(kind === 'place' ? '[data-cd-place="' + campus + '"]' : '[data-cd-day="' + day + '"]');
+    if (again) try { again.focus({ preventScroll: true }); } catch (_) {}
+  }
+  // ao aparecer, o dia escolhido fica visível dentro da faixa de dias
+  function revealSelected(card) {
+    var on = card.querySelector('.cd-day.is-on'), strip = card.querySelector('.cd-days');
+    if (on && strip) strip.scrollLeft = Math.max(0, on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2);
   }
   function intercept(raw) {
     var query = detect(raw);
@@ -175,6 +213,10 @@
       return result || original.call(this, raw, local);
     };
     mod.__cardapioInstalled = true;
+    root.document.addEventListener('click', onClick, true);
+    new root.MutationObserver(function (muts) {
+      muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) (n.matches('.cd') ? [n] : [].slice.call(n.querySelectorAll('.cd'))).forEach(revealSelected); }); });
+    }).observe(root.document.body, { childList: true, subtree: true });
     sync(false).catch(function () {});
     root.addEventListener('online', function () { sync(true).catch(function () {}); });
   }

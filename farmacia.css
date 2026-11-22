@@ -827,3 +827,45 @@ html.no-anim .farma-drawer-panel, html.no-anim .farma-drawer-scrim { transition:
 .fm-h-filter.is-on .fm-ico svg { fill: currentColor; }
 .fm-h-filter:disabled, .fm-h-clear:disabled { opacity: .4; cursor: default; background: transparent; }
 .fm-h-clear.is-sure { background: var(--fm-ale-bg); color: var(--fm-ale-fg); }
+
+/* v0.6.6 — limite de rolagem do chat: a área de mensagens passa a começar 10 px abaixo do botão de três risquinhos (antes, 58 px).
+   O espaço que sobrou vira padding no topo, então a primeira mensagem continua exatamente onde estava; ao rolar, o texto some 10 px abaixo do botão. */
+#modal-farmacia .farma-messages { margin-top: 1px; }
+html:not(.farma-typing) #modal-farmacia .farma-messages { padding-top: calc(3.1rem - 1px + .5rem); }
+html.farma-typing #modal-farmacia .farma-messages { margin-top: 1px; }
+
+/* v0.6.6 — cardápio do bandejão dentro da conversa: restaurantes, dias (domingo a sábado) e refeições do dia */
+.cd { display: grid; gap: .7rem; margin-top: .6rem; max-width: 100%; }
+.cd-places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+.cd-place {
+  display: grid; gap: .1rem; align-content: center; min-height: 48px; padding: .45rem .7rem; text-align: left; font: inherit; cursor: pointer;
+  border: 1px solid var(--fa-rule); border-radius: 10px; background: transparent; color: var(--fa-ink); -webkit-tap-highlight-color: transparent;
+}
+.cd-place strong { font-size: .86rem; font-weight: 700; line-height: 1.2; }
+.cd-place small { font-size: .72rem; line-height: 1.2; color: var(--fa-ink-2); }
+.cd-place.is-on { background: var(--fa-mark); border-color: var(--fa-mark); color: var(--cd-on, #fff); }
+.cd-place.is-on small { color: inherit; opacity: .88; }
+.cd-days { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 1px 1px .35rem; margin: 0 -1px; scrollbar-width: none; }
+.cd-days::-webkit-scrollbar { display: none; }
+.cd-day {
+  flex: 0 0 auto; width: 4.3rem; display: grid; justify-items: center; align-content: start; gap: .1rem; padding: .55rem .25rem .5rem; scroll-snap-align: center; font: inherit; cursor: pointer;
+  border: 1px solid transparent; border-radius: 10px; background: var(--fa-field); color: var(--fa-ink); -webkit-tap-highlight-color: transparent;
+}
+.cd-wd { font-size: 1.05rem; font-weight: 700; line-height: 1.15; }
+.cd-dt { font-size: .72rem; font-weight: 600; line-height: 1.2; letter-spacing: .02em; }
+.cd-rel { margin-top: .45rem; font-size: .7rem; line-height: 1.15; color: var(--fa-ink-2); text-align: center; }
+.cd-day.is-today:not(.is-on) { border-color: var(--fa-mark); }
+.cd-day.is-on { background: var(--fa-mark); border-color: var(--fa-mark); color: var(--cd-on, #fff); }
+.cd-day.is-on .cd-rel { color: inherit; opacity: .92; }
+.cd-place:focus-visible, .cd-day:focus-visible { outline: 2px solid var(--fa-ink); outline-offset: 2px; }
+.cd-place:active, .cd-day:active { transform: scale(.98); }
+.cd-title { margin: .1rem 0 0; display: grid; gap: .1rem; }
+.cd-title span { font-size: .8rem; color: var(--fa-ink-2); }
+.cd-body { display: grid; gap: .6rem; }
+.cd-meal { padding-top: .55rem; border-top: 1px solid var(--fa-rule); }
+.cd-meal h4 { margin: 0 0 .3rem; font-size: .9rem; font-weight: 700; }
+.cd-meal ul { margin: 0; padding-left: 1.05rem; display: grid; gap: .25rem; }
+.cd-empty { margin: 0; font-size: .85rem; color: var(--fa-ink-2); }
+.cd-foot { margin: 0; font-size: .72rem; color: var(--fa-ink-2); }
+html.dark { --cd-on: #04140B; }
+@media (min-width: 700px) { .cd-days { flex-wrap: wrap; overflow: visible; } }

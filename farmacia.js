@@ -1064,6 +1064,8 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       ico: '<rect x="3.5" y="4" width="17" height="16" rx="2.5"></rect><path d="M3.5 9.5h17M3.5 14.8h17M9.2 9.5V20M14.8 9.5V20"></path>' },
     { label: 'Fluxograma em PDF do curso', q: 'Fluxograma do curso',
       ico: '<circle cx="6" cy="5.5" r="2.2"></circle><circle cx="6" cy="18.5" r="2.2"></circle><circle cx="18" cy="10" r="2.2"></circle><path d="M6 7.7v8.6M6 14.5c0-2.8 2.3-4.5 6-4.5h3.8"></path>' },
+    { label: 'Cardápio do bandeco hoje', q: 'Cardápio do bandeco hoje',
+      ico: '<circle cx="9.5" cy="12" r="6.2"></circle><circle cx="9.5" cy="12" r="2.6"></circle><path d="M17.2 4.5v4.2c0 1.1.8 1.9 2 1.9s2-.8 2-1.9V4.5M19.2 10.6V20"></path>' },
     { label: 'O que você pode fazer?', q: 'O que você pode fazer?',
       ico: '<circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.5a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.3-2.6 4"></path><path d="M12 17.4v.2"></path>' }
   ];
@@ -1242,7 +1244,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
   function answerAbout() {
     var html = p((userName() ? nameHTML() + ', e' : 'E') + 'scolha o que quer fazer e eu já começo:') + featuresHTML() +
-      '<p class="fd-foot">Ainda estou em <strong>beta</strong>. Não sei o cardápio do RU, horários de aula, salas nem notas.</p>';
+      '<p class="fd-foot">Ainda estou em <strong>beta</strong>. Não sei horários de aula, salas nem notas.</p>';
     return R(html, []);
   }
   function answerMyName() {
