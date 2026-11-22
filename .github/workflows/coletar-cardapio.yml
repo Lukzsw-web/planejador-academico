@@ -1,0 +1,54 @@
+
+name: Coletar cardápio do BandejApp
+
+on:
+  schedule:
+    # 06:00 e 12:00 no horário de Brasília (UTC-3).
+    - cron: "0 9,15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: bandejapp-cardapio-scraper
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Playwright
+        run: npm install --prefix "$RUNNER_TEMP/bandejapp-scraper" playwright@1.56.1 --no-audit --no-fund
+
+      - name: Instalar Chromium
+        run: "$RUNNER_TEMP/bandejapp-scraper/node_modules/.bin/playwright install --with-deps chromium"
+
+      - name: Obter token OIDC do GitHub
+        shell: bash
+        run: |
+          OIDC_URL="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=farmacia-bandejapp-scraper"
+
+          TOKEN="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "$OIDC_URL" |
+            node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).value))")"
+
+          if [ -z "$TOKEN" ]; then
+            echo "Não foi possível obter token OIDC."
+            exit 1
+          fi
+
+          echo "GITHUB_OIDC_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Coletar e salvar cardápio
+        env:
+          NODE_PATH: ${{ runner.temp }}/bandejapp-scraper/node_modules
+          SUPABASE_INGEST_URL: https://tbmjgnaaehyqbridlqil.supabase.co/functions/v1/bandejapp-coletar
+        run: node .github/scripts/coletar-bandejapp.cjs
