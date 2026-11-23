@@ -497,15 +497,57 @@
       <div id="farma-suggest" class="farma-suggest" data-no-i18n data-no-tab-swipe="true" hidden></div>
       <div id="farma-chips" class="farma-chips" data-no-i18n data-no-tab-swipe="true"></div>
       <form id="farma-form" class="farma-composer" autocomplete="off">
-        <div class="farma-composer-box">
-          <svg class="farma-composer-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#farma-hygieia"></use></svg>
-          <span class="farma-composer-rule" aria-hidden="true"></span>
-          <input id="farma-input" class="farma-input" type="text" enterkeyhint="send" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Pergunte à FarmacIA..." aria-label="Pergunte à FarmacIA">
+        <div id="farma-box" class="farma-composer-box">
+          <div id="farma-anexos" class="farma-anexos" data-no-tab-swipe="true" role="list" aria-label="Anexos" hidden></div>
+          <div class="farma-composer-line">
+            <svg class="farma-composer-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#farma-hygieia"></use></svg>
+            <span class="farma-composer-rule" aria-hidden="true"></span>
+            <textarea id="farma-input" class="farma-input" rows="1" enterkeyhint="send" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Pergunte à FarmacIA..." aria-label="Pergunte à FarmacIA"></textarea>
+          </div>
+          <div id="farma-bar" class="farma-composer-bar">
+            <button id="farma-plus" class="farma-plus" type="button" aria-haspopup="dialog" aria-controls="farma-sheet" aria-expanded="false" aria-label="Adicionar" title="Adicionar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+            <button id="farma-opcao" class="farma-opcao" type="button" hidden aria-label="Remover opção selecionada">
+              <span id="farma-opcao-nome" class="farma-opcao-nome"></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"></path></svg>
+            </button>
+            <button id="farma-send" class="farma-send" type="submit" aria-label="Enviar" title="Enviar" disabled hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+            </button>
+          </div>
         </div>
-        <button id="farma-send" class="farma-send" type="submit" aria-label="Enviar" title="Enviar" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
-        </button>
       </form>
+    </div>
+    <div id="farma-sheet" class="farma-sheet" data-no-tab-swipe="true" hidden>
+      <div class="farma-sheet-scrim" data-farma-sheet-close></div>
+      <section class="farma-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="farma-sheet-title">
+        <div class="farma-sheet-head">
+          <button type="button" class="farma-sheet-x" data-farma-sheet-close aria-label="Fechar" title="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+          <h3 id="farma-sheet-title" class="farma-sheet-title">Selecionar opção</h3>
+          <span class="farma-sheet-gap" aria-hidden="true"></span>
+        </div>
+        <div class="farma-sheet-tiles">
+          <button type="button" class="farma-tile" data-farma-pick="camera">
+            <span class="farma-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"></path><circle cx="12" cy="13" r="3"></circle></svg></span>
+            <span>Câmera</span>
+          </button>
+          <button type="button" class="farma-tile" data-farma-pick="fotos">
+            <span class="farma-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="9" cy="9" r="1.8"></circle><path d="M21 15l-3.1-3.1a2 2 0 0 0-2.8 0L6 21"></path></svg></span>
+            <span>Fotos</span>
+          </button>
+          <button type="button" class="farma-tile" data-farma-pick="arquivos">
+            <span class="farma-tile-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4M12 18v-6M9 15l3-3 3 3"></path></svg></span>
+            <span>Arquivos</span>
+          </button>
+        </div>
+        <ul id="farma-sheet-list" class="farma-sheet-list" role="listbox" aria-label="Opções"></ul>
+        <input id="farma-file-camera" type="file" accept="image/*" capture="environment" hidden tabindex="-1">
+        <input id="farma-file-fotos" type="file" accept="image/*" hidden tabindex="-1">
+        <input id="farma-file-arquivos" type="file" hidden tabindex="-1">
+      </section>
     </div>
     <div id="farma-drawer" class="farma-drawer" data-no-tab-swipe="true" hidden>
       <div class="farma-drawer-scrim" data-farma-drawer-close></div>
@@ -856,8 +898,8 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Cardápio do bandeco</h4><ul class="release-list"><li>O restaurante agora é escolhido numa sanfona: aparece o selecionado e, ao tocar, as outras opções.</li><li>A faixa dos dias ganhou um trilho: arraste o dedo sobre ela para ver todos os dias, sem abrir o menu nem trocar de aba.</li></ul></div>
-          <div class="release-group"><span class="release-tag">Ajustes</span><h4 class="release-title">Detalhes visuais</h4><ul class="release-list"><li>Novo ícone de prato e talheres nas sugestões rápidas.</li><li>"BandejApp" na fonte do cardápio agora é um link para o site do cardápio.</li><li>O balão da tag do menu lateral ficou sem sombra.</li><li>O gradiente dos títulos e do cálice não mostra mais o ponto central.</li><li>Removida a legenda com data e restaurante abaixo dos dias.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Nova barra de mensagem</h4><ul class="release-list"><li>O envio agora é uma seta em bola verde dentro da barra e só aparece quando há texto. Ao digitar, o texto sobe e aparece o botão "+".</li><li>O "+" abre as opções: tirar foto, escolher da galeria, anexar arquivo e o Conversor para PDF.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Editor de imagem</h4><ul class="release-list"><li>Editor de imagem em tela cheia: cortar, girar, desenhar, apagar, desfazer, compartilhar e baixar.</li></ul></div>
         </div>
       </section>
       </div>
@@ -943,7 +985,9 @@
   <script src="markdown-it.min.js"></script>
   <script src="highlight.min.js"></script>
   <script src="farmacia-ia.js"></script>
-  <script src="farmacia-cardapio.js?v=20261123-2"></script>
+  <script src="farmacia-cardapio.js"></script>
+  <script src="editor-imagem.js"></script>
+  <script src="farmacia-barra.js"></script>
   <script src="comunicados.js"></script>
   <script src="notas-janelas.js"></script>
 
