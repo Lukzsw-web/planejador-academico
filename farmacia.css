@@ -836,16 +836,35 @@ html.farma-typing #modal-farmacia .farma-messages { margin-top: 1px; }
 
 /* v0.6.6 — cardápio do bandejão dentro da conversa: restaurantes, dias (domingo a sábado) e refeições do dia */
 .cd { display: grid; gap: .7rem; margin-top: .6rem; max-width: 100%; }
-.cd-places { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
-.cd-place {
-  display: grid; gap: .1rem; align-content: center; min-height: 48px; padding: .45rem .7rem; text-align: left; font: inherit; cursor: pointer;
-  border: 1px solid var(--fa-rule); border-radius: 10px; background: transparent; color: var(--fa-ink); -webkit-tap-highlight-color: transparent;
+.cd-places { display: block; }
+/* sanfona de restaurantes */
+.cd-select { position: relative; }
+.cd-pick, .cd-opt {
+  display: flex; align-items: center; gap: .7rem; width: 100%; text-align: left; font: inherit; cursor: pointer; color: var(--fa-ink);
+  border: 1px solid var(--fa-rule); border-radius: 10px; background: transparent; -webkit-tap-highlight-color: transparent;
 }
-.cd-place strong { font-size: .86rem; font-weight: 700; line-height: 1.2; }
-.cd-place small { font-size: .72rem; line-height: 1.2; color: var(--fa-ink-2); }
-.cd-place.is-on { background: var(--fa-mark); border-color: var(--fa-mark); color: var(--cd-on, #fff); }
-.cd-place.is-on small { color: inherit; opacity: .88; }
-.cd-days { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 1px 1px .35rem; margin: 0 -1px; scrollbar-width: none; }
+.cd-pick { min-height: 54px; padding: .5rem .8rem; }
+.cd-pin { display: grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; color: var(--fa-mark); }
+.cd-pin svg { width: 20px; height: 20px; fill: currentColor; }
+.cd-pl { display: grid; gap: .1rem; min-width: 0; flex: 1 1 auto; }
+.cd-pl-t { font-size: .92rem; font-weight: 700; line-height: 1.2; }
+.cd-pl-s { font-size: .74rem; line-height: 1.2; color: var(--fa-ink-2); }
+.cd-chev { display: grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; transition: transform .2s ease; }
+.cd-chev svg { width: 20px; height: 20px; }
+.cd-select.is-open .cd-chev { transform: rotate(180deg); }
+.cd-select.is-open .cd-pick { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.cd-opts { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .2s ease; }
+.cd-select.is-open .cd-opts { grid-template-rows: 1fr; }
+.cd-opts-in { overflow: hidden; min-height: 0; border: 0 solid var(--fa-rule); border-radius: 0 0 10px 10px; }
+.cd-select.is-open .cd-opts-in { border-width: 0 1px 1px; }
+.cd-opt { display: grid; gap: .1rem; align-content: center; min-height: 52px; padding: .45rem .8rem .45rem calc(.8rem + 22px + .7rem); border: 0; border-radius: 0; }
+.cd-opt + .cd-opt { border-top: 1px solid var(--fa-rule); }
+.cd-opt:active, .cd-pick:active { background: var(--fa-field); }
+html.no-anim .cd-opts, html.no-anim .cd-chev { transition: none; }
+@media (prefers-reduced-motion: reduce) { .cd-opts, .cd-chev { transition: none; } }
+.cd-days-wrap { display: grid; gap: .2rem; }
+.cd-days { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 1px 1px .2rem; margin: 0 -1px; scrollbar-width: none; cursor: grab; -webkit-overflow-scrolling: touch; }
+.cd-days.is-drag { scroll-snap-type: none; cursor: grabbing; user-select: none; }
 .cd-days::-webkit-scrollbar { display: none; }
 .cd-day {
   flex: 0 0 auto; width: 4.3rem; display: grid; justify-items: center; align-content: start; gap: .1rem; padding: .55rem .25rem .5rem; scroll-snap-align: center; font: inherit; cursor: pointer;
@@ -857,10 +876,8 @@ html.farma-typing #modal-farmacia .farma-messages { margin-top: 1px; }
 .cd-day.is-today:not(.is-on) { border-color: var(--fa-mark); }
 .cd-day.is-on { background: var(--fa-mark); border-color: var(--fa-mark); color: var(--cd-on, #fff); }
 .cd-day.is-on .cd-rel { color: inherit; opacity: .92; }
-.cd-place:focus-visible, .cd-day:focus-visible { outline: 2px solid var(--fa-ink); outline-offset: 2px; }
-.cd-place:active, .cd-day:active { transform: scale(.98); }
-.cd-title { margin: .1rem 0 0; display: grid; gap: .1rem; }
-.cd-title span { font-size: .8rem; color: var(--fa-ink-2); }
+.cd-pick:focus-visible, .cd-opt:focus-visible, .cd-day:focus-visible { outline: 2px solid var(--fa-ink); outline-offset: 2px; }
+.cd-day:active { transform: scale(.98); }
 .cd-body { display: grid; gap: .6rem; }
 .cd-meal { padding-top: .55rem; border-top: 1px solid var(--fa-rule); }
 .cd-meal h4 { margin: 0 0 .3rem; font-size: .9rem; font-weight: 700; }
@@ -869,3 +886,12 @@ html.farma-typing #modal-farmacia .farma-messages { margin-top: 1px; }
 .cd-foot { margin: 0; font-size: .72rem; color: var(--fa-ink-2); }
 html.dark { --cd-on: #04140B; }
 @media (min-width: 700px) { .cd-days { flex-wrap: wrap; overflow: visible; } }
+
+/* Trilho dos dias: arrastar o dedo na faixa (ou no trilho) move os dias; vale só aqui, sem abrir o menu nem trocar de aba */
+html .bottom-tab-page .cd-days, html .bottom-tab-page .cd-days * { touch-action: pan-x pan-y pinch-zoom !important; }
+html .bottom-tab-page .cd-rail, html .bottom-tab-page .cd-rail * { touch-action: none !important; }
+.cd-rail { position: relative; height: 22px; display: flex; align-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cd-rail[hidden] { display: none; }
+.cd-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: var(--fa-rule); }
+.cd-thumb { position: relative; display: block; height: 4px; border-radius: 2px; background: var(--fa-mark); transition: height .12s ease; }
+.cd-rail.is-drag .cd-thumb { height: 6px; }

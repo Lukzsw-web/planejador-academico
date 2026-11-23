@@ -662,7 +662,15 @@ window.I18N_ROWS = [
     ["Nas sugestões rápidas, o botão \"Cardápio do bandeco hoje\" mostra os bandejões e os dias da semana. Vem selecionado o Bandejão Central e o dia da pergunta.", "In quick suggestions, the \"Today's cafeteria menu\" button shows the cafeterias and the days of the week. Central Cafeteria and the day you asked are preselected.", "En las sugerencias rápidas, el botón \"Menú del comedor de hoy\" muestra los comedores y los días de la semana. Vienen preseleccionados el Comedor Central y el día de la consulta."],
     ["Cores da FarmacIA", "FarmacIA colors", "Colores de FarmacIA"],
     ["O gradiente dos títulos e do cálice agora gira em círculo, de forma contínua. O cálice completa uma volta a cada 20 segundos.", "The gradient on the titles and the chalice now rotates in a circle, continuously. The chalice completes one turn every 20 seconds.", "El degradado de los títulos y del cáliz ahora gira en círculo, de forma continua. El cáliz completa una vuelta cada 20 segundos."],
-    ["O limite de rolagem do chat ficou 10 px abaixo do botão do menu.", "The chat scroll limit is now 10 px below the menu button.", "El límite de desplazamiento del chat quedó 10 px debajo del botón del menú."]
+    ["O limite de rolagem do chat ficou 10 px abaixo do botão do menu.", "The chat scroll limit is now 10 px below the menu button.", "El límite de desplazamiento del chat quedó 10 px debajo del botón del menú."],
+    ["Cardápio do bandeco", "Cafeteria menu", "Menú del comedor"],
+    ["O restaurante agora é escolhido numa sanfona: aparece o selecionado e, ao tocar, as outras opções.", "The restaurant is now chosen from an accordion: the selected one is shown and, when tapped, the other options.", "El restaurante ahora se elige en un acordeón: aparece el seleccionado y, al tocar, las demás opciones."],
+    ["A faixa dos dias ganhou um trilho: arraste o dedo sobre ela para ver todos os dias, sem abrir o menu nem trocar de aba.", "The day strip now has a rail: drag your finger over it to see every day, without opening the menu or switching tabs.", "La franja de días ahora tiene un riel: arrastra el dedo sobre ella para ver todos los días, sin abrir el menú ni cambiar de pestaña."],
+    ["Detalhes visuais", "Visual details", "Detalles visuales"],
+    ["Novo ícone de prato e talheres nas sugestões rápidas.", "New plate and cutlery icon in quick suggestions.", "Nuevo icono de plato y cubiertos en las sugerencias rápidas."],
+    ["O balão da tag do menu lateral ficou sem sombra.", "The side menu tag bubble no longer has a shadow.", "El globo de la etiqueta del menú lateral quedó sin sombra."],
+    ["O gradiente dos títulos e do cálice não mostra mais o ponto central.", "The gradient on the titles and chalice no longer shows the center point.", "El degradado de los títulos y del cáliz ya no muestra el punto central."],
+    ["Removida a legenda com data e restaurante abaixo dos dias.", "Removed the caption with date and restaurant below the days.", "Se quitó la leyenda con fecha y restaurante debajo de los días."]
 ];
 
 // =====================================================================

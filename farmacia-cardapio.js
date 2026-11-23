@@ -104,7 +104,7 @@
   // ---------- Cardápio interativo ----------
   // Dentro da resposta: restaurantes (botões), dias de domingo a sábado (cartões) e o cardápio do dia escolhido.
   // Os cliques trocam o conteúdo no próprio cartão, com a última coleta já guardada no aparelho (funciona offline).
-  var PLACES = [['ct', 'Central', 'CT e Letras'], ['pv', 'Praia Vermelha', 'IFCS e PV'], ['dc', 'Duque de Caxias', ''], ['mc', 'Macaé', '']];
+  var PLACES = [['ct', 'Restaurante Central', 'CT 1 / 2 e Letras'], ['pv', 'Praia Vermelha', 'IFCS – Centro'], ['dc', 'Duque de Caxias', ''], ['mc', 'Macaé', '']];
   var WD = { domingo: 'Dom', segunda: 'Seg', terca: 'Ter', quarta: 'Qua', quinta: 'Qui', sexta: 'Sex', sabado: 'Sáb' };
   var MON = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
   function parseDate(str) {
@@ -120,12 +120,20 @@
     if (n === -1) return 'Ontem';
     return n < 0 ? 'Há ' + (-n) + ' dias' : 'Em ' + n + ' dias';
   }
+  var PIN = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.2a7.2 7.2 0 0 0-7.2 7.2c0 5 6.1 11.4 6.4 11.7a1.1 1.1 0 0 0 1.6 0c.3-.3 6.4-6.7 6.4-11.7A7.2 7.2 0 0 0 12 2.2zm0 9.7a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>';
+  var CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function placeLabel(pl) { return '<span class="cd-pl-t">' + esc(pl[1]) + '</span>' + (pl[2] ? '<span class="cd-pl-s">' + esc(pl[2]) + '</span>' : ''); }
+  // Sanfona: o botão mostra o restaurante escolhido; ao abrir, aparecem os demais.
   function placeButtons(campus) {
-    return PLACES.map(function (pl) {
-      var on = pl[0] === campus;
-      return '<button type="button" class="cd-place' + (on ? ' is-on' : '') + '" data-cd-place="' + pl[0] + '" aria-label="Restaurante ' + esc(pl[1] + (pl[2] ? ' (' + pl[2] + ')' : '')) + (on ? ', selecionado' : '') + '">' +
-        '<strong>' + esc(pl[1]) + '</strong>' + (pl[2] ? '<small>' + esc(pl[2]) + '</small>' : '') + '</button>';
+    var cur = PLACES.filter(function (pl) { return pl[0] === campus; })[0] || PLACES[0];
+    var others = PLACES.filter(function (pl) { return pl !== cur; }).map(function (pl) {
+      return '<button type="button" class="cd-opt" role="option" data-cd-place="' + pl[0] + '" aria-label="Restaurante ' + esc(pl[1] + (pl[2] ? ', ' + pl[2] : '')) + '">' + placeLabel(pl) + '</button>';
     }).join('');
+    return '<div class="cd-select">' +
+      '<button type="button" class="cd-pick" data-cd-toggle aria-expanded="false" aria-haspopup="listbox" aria-label="Restaurante: ' + esc(cur[1] + (cur[2] ? ', ' + cur[2] : '')) + '. Tocar para escolher outro">' +
+        '<span class="cd-pin">' + PIN + '</span><span class="cd-pl">' + placeLabel(cur) + '</span><span class="cd-chev">' + CHEV + '</span></button>' +
+      '<div class="cd-opts" role="listbox" aria-label="Outros restaurantes"><div class="cd-opts-in">' + others + '</div></div>' +
+    '</div>';
   }
   function dayButtons(row, day) {
     return DAYS.map(function (k) {
@@ -157,9 +165,9 @@
       var c = new Date(row.coletado_em);
       if (!isNaN(c.getTime())) foot = 'Última coleta: ' + esc(c.toLocaleString('pt-BR')) + '. ';
     }
-    return '<div class="cd-places" role="group" aria-label="Restaurante">' + placeButtons(campus) + '</div>' +
-      '<div class="cd-days" role="group" aria-label="Dia da semana">' + dayButtons(row, day) + '</div>' +
-      '<p class="cd-title"><strong>' + esc(DAY_LABEL[day]) + (dateForDay(row, day) ? ', ' + esc(dateForDay(row, day)) : '') + '</strong><span>' + esc(REST[campus]) + '</span></p>' +
+    return '<div class="cd-places">' + placeButtons(campus) + '</div>' +
+      '<div class="cd-days-wrap"><div class="cd-days" data-no-tab-swipe="true" role="group" aria-label="Dia da semana">' + dayButtons(row, day) + '</div>' +
+      '<div class="cd-rail" data-no-tab-swipe="true" aria-hidden="true"><span class="cd-thumb"></span></div></div>' +
       '<div class="cd-body">' + mealsHTML(row, campus, day) + '</div>' +
       '<p class="cd-foot">' + foot + 'Fonte: BandejApp UFRJ.</p>';
   }
@@ -170,11 +178,70 @@
       chips: []
     };
   }
+  // Sanfona de restaurantes
+  function setOpen(sel, on) {
+    sel.classList.toggle('is-open', on);
+    var t = sel.querySelector('.cd-pick'); if (t) t.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+  function closeSelects(except) {
+    [].forEach.call(root.document.querySelectorAll('.cd-select.is-open'), function (sel) { if (sel !== except) setOpen(sel, false); });
+  }
+  // Trilho dos dias: mostra onde a faixa está e também pode ser arrastado.
+  function updateRail(card) {
+    var strip = card && card.querySelector('.cd-days'), rail = card && card.querySelector('.cd-rail'), th = rail && rail.querySelector('.cd-thumb');
+    if (!strip || !th) return;
+    var over = strip.scrollWidth - strip.clientWidth;
+    if (over <= 2) { rail.hidden = true; return; }
+    rail.hidden = false;
+    var w = rail.clientWidth, tw = Math.max(28, w * strip.clientWidth / strip.scrollWidth);
+    th.style.width = tw + 'px';
+    th.style.transform = 'translateX(' + (strip.scrollLeft / over * (w - tw)) + 'px)';
+  }
+  var railDrag = null, stripDrag = null, draggedAt = 0;
+  function railTo(drag, x) {
+    var r = drag.rail.getBoundingClientRect(), th = drag.rail.querySelector('.cd-thumb'), tw = th ? th.offsetWidth : 28;
+    var over = drag.strip.scrollWidth - drag.strip.clientWidth, room = Math.max(1, r.width - tw);
+    drag.strip.scrollLeft = Math.min(over, Math.max(0, (x - r.left - tw / 2) / room * over));
+  }
+  function onDown(e) {
+    var t = e.target; if (!t || !t.closest) return;
+    var rail = t.closest('.cd-rail');
+    if (rail) {
+      var strip = rail.parentNode.querySelector('.cd-days'); if (!strip) return;
+      railDrag = { rail: rail, strip: strip, id: e.pointerId };
+      try { rail.setPointerCapture(e.pointerId); } catch (_) {}
+      rail.classList.add('is-drag'); railTo(railDrag, e.clientX); e.preventDefault(); return;
+    }
+    // mouse: arrastar a própria faixa (no toque quem rola é o navegador)
+    var days = e.pointerType === 'mouse' && e.button === 0 && t.closest('.cd-days');
+    if (days) stripDrag = { strip: days, x: e.clientX, left: days.scrollLeft, moved: false };
+  }
+  function onMove(e) {
+    if (railDrag && e.pointerId === railDrag.id) { railTo(railDrag, e.clientX); return; }
+    if (stripDrag) {
+      var dx = e.clientX - stripDrag.x;
+      if (!stripDrag.moved && Math.abs(dx) > 5) { stripDrag.moved = true; stripDrag.strip.classList.add('is-drag'); }
+      if (stripDrag.moved) stripDrag.strip.scrollLeft = stripDrag.left - dx;
+    }
+  }
+  function onUp() {
+    if (railDrag) { railDrag.rail.classList.remove('is-drag'); railDrag = null; }
+    if (stripDrag) { if (stripDrag.moved) draggedAt = Date.now(); stripDrag.strip.classList.remove('is-drag'); stripDrag = null; }
+  }
   // Cliques dentro do cartão: troca restaurante ou dia sem criar uma nova mensagem.
   function onClick(e) {
-    var btn = e.target.closest && e.target.closest('[data-cd-place], [data-cd-day]');
+    var t = e.target; if (!t || !t.closest) return;
+    var tog = t.closest('[data-cd-toggle]');
+    if (tog) {
+      var sel = tog.closest('.cd-select');
+      e.preventDefault(); e.stopPropagation();
+      var on = !sel.classList.contains('is-open'); closeSelects(sel); setOpen(sel, on); return;
+    }
+    if (!t.closest('.cd-select')) closeSelects(null);
+    var btn = t.closest('[data-cd-place], [data-cd-day]');
     var card = btn && btn.closest('.cd');
     if (!card) return;
+    if (Date.now() - draggedAt < 250) { e.preventDefault(); e.stopPropagation(); return; }
     var cached = readCache(); if (!cached) return;
     e.preventDefault(); e.stopPropagation();
     var campus = card.getAttribute('data-cd-campus'), day = card.getAttribute('data-cd-day');
@@ -183,13 +250,15 @@
     card.setAttribute('data-cd-campus', campus); card.setAttribute('data-cd-day', day);
     card.innerHTML = cardInner(cached.row, campus, day);
     strip = card.querySelector('.cd-days'); if (strip) strip.scrollLeft = left;
-    var again = card.querySelector(kind === 'place' ? '[data-cd-place="' + campus + '"]' : '[data-cd-day="' + day + '"]');
+    updateRail(card);
+    var again = card.querySelector(kind === 'place' ? '.cd-pick' : '[data-cd-day="' + day + '"]');
     if (again) try { again.focus({ preventScroll: true }); } catch (_) {}
   }
   // ao aparecer, o dia escolhido fica visível dentro da faixa de dias
   function revealSelected(card) {
     var on = card.querySelector('.cd-day.is-on'), strip = card.querySelector('.cd-days');
     if (on && strip) strip.scrollLeft = Math.max(0, on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2);
+    updateRail(card);
   }
   function intercept(raw) {
     var query = detect(raw);
@@ -214,6 +283,14 @@
     };
     mod.__cardapioInstalled = true;
     root.document.addEventListener('click', onClick, true);
+    root.document.addEventListener('pointerdown', onDown, true);
+    root.document.addEventListener('pointermove', onMove, true);
+    root.document.addEventListener('pointerup', onUp, true);
+    root.document.addEventListener('pointercancel', onUp, true);
+    root.document.addEventListener('scroll', function (e) {
+      var el = e.target; if (el && el.classList && el.classList.contains('cd-days')) updateRail(el.closest('.cd'));
+    }, true);
+    root.addEventListener('resize', function () { [].forEach.call(root.document.querySelectorAll('.cd'), updateRail); });
     new root.MutationObserver(function (muts) {
       muts.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) (n.matches('.cd') ? [n] : [].slice.call(n.querySelectorAll('.cd'))).forEach(revealSelected); }); });
     }).observe(root.document.body, { childList: true, subtree: true });

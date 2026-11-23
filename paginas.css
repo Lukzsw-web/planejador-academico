@@ -1039,7 +1039,8 @@ html #home-page #search-wrapper + div { margin-bottom: .75rem; }
 @property --fx-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 @keyframes fx-spin { to { --fx-a: 360deg; } }
 :root { --fx-1: #087F5B; --fx-2: #20B486; --fx-3: #65DDB5; --fx-4: #35BBD1; --fx-5: #2878C8; }
-/* O círculo cromático vai de esmeralda a azul e volta a esmeralda (0° a 360°), então a volta completa fecha sem emenda. */
+/* O círculo cromático vai de esmeralda a azul e volta a esmeralda (0° a 360°), então a volta completa fecha sem emenda.
+   O centro do círculo (onde todas as cores se encontram) fica fora das letras e do cálice, para o ponto central nunca aparecer. */
 
 /* Planejador Acadêmico em duas linhas, centralizado (como antes), sem mexer na fonte */
 html #home-page > header.tab-band h1.tab-band-title { max-width: 6.4em; margin-inline: auto !important; text-wrap: balance; }
@@ -1049,7 +1050,7 @@ html #home-page > header.tab-band h1.tab-band-title { max-width: 6.4em; margin-i
   html .tab-band .tab-band-title,
   html #home-page > header.tab-band h1.tab-band-title {
     color: transparent !important; -webkit-text-fill-color: transparent;
-    background-image: conic-gradient(from var(--fx-a), var(--fx-1) 0deg, var(--fx-2) 45deg, var(--fx-3) 90deg, var(--fx-4) 135deg, var(--fx-5) 180deg, var(--fx-4) 225deg, var(--fx-3) 270deg, var(--fx-2) 315deg, var(--fx-1) 360deg);
+    background-image: conic-gradient(from var(--fx-a) at 50% 165%, var(--fx-1) 0deg, var(--fx-2) 45deg, var(--fx-3) 90deg, var(--fx-4) 135deg, var(--fx-5) 180deg, var(--fx-4) 225deg, var(--fx-3) 270deg, var(--fx-2) 315deg, var(--fx-1) 360deg);
     -webkit-background-clip: text; background-clip: text;
     animation: fx-spin 18s linear infinite;
   }
@@ -1059,7 +1060,7 @@ html #home-page > header.tab-band h1.tab-band-title { max-width: 6.4em; margin-i
    Ciclo de 20 s. O <use> original fica oculto; nada de brilho, sombra ou preenchimento extra. */
 @supports ((-webkit-mask-image: url("")) or (mask-image: url(""))) {
   .farma-composer-mark {
-    background-image: conic-gradient(from var(--fx-a), var(--fx-1) 0deg, var(--fx-2) 45deg, var(--fx-3) 90deg, var(--fx-4) 135deg, var(--fx-5) 180deg, var(--fx-4) 225deg, var(--fx-3) 270deg, var(--fx-2) 315deg, var(--fx-1) 360deg);
+    background-image: conic-gradient(from var(--fx-a) at 22% 80%, var(--fx-1) 0deg, var(--fx-2) 45deg, var(--fx-3) 90deg, var(--fx-4) 135deg, var(--fx-5) 180deg, var(--fx-4) 225deg, var(--fx-3) 270deg, var(--fx-2) 315deg, var(--fx-1) 360deg);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z' fill='%23000' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 15.2V19M8.2 20.5h7.6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.5 3.5h13v5.2a6.5 6.5 0 0 1-13 0z' fill='%23000' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M12 15.2V19M8.2 20.5h7.6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
     animation: fx-spin 20s linear infinite;
@@ -1076,3 +1077,6 @@ html.no-anim .tab-band .tab-band-title, html.no-anim #home-page > header.tab-ban
 /* Busca da aba Planejador: mesma distância da faixa e do painel */
 html #home-page #search-wrapper { margin-top: 2.125rem !important; margin-bottom: 0 !important; }
 html #home-page #search-wrapper + div { min-height: 1.5rem; margin-bottom: .0rem; align-items: center; }
+
+/* Balão da tag do menu lateral: sem sombra e sem desfoque */
+html .nav-bubble { box-shadow: none !important; filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-shadow: none !important; }
