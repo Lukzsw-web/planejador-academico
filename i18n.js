@@ -669,6 +669,7 @@ window.I18N_ROWS = [
     ["Detalhes visuais", "Visual details", "Detalles visuales"],
     ["Novo ícone de prato e talheres nas sugestões rápidas.", "New plate and cutlery icon in quick suggestions.", "Nuevo icono de plato y cubiertos en las sugerencias rápidas."],
     ["O balão da tag do menu lateral ficou sem sombra.", "The side menu tag bubble no longer has a shadow.", "El globo de la etiqueta del menú lateral quedó sin sombra."],
+    ["\"BandejApp\" na fonte do cardápio agora é um link para o site do cardápio.", "\"BandejApp\" in the menu source is now a link to the menu website.", "\"BandejApp\" en la fuente del menú ahora es un enlace al sitio del menú."],
     ["O gradiente dos títulos e do cálice não mostra mais o ponto central.", "The gradient on the titles and chalice no longer shows the center point.", "El degradado de los títulos y del cáliz ya no muestra el punto central."],
     ["Removida a legenda com data e restaurante abaixo dos dias.", "Removed the caption with date and restaurant below the days.", "Se quitó la leyenda con fecha y restaurante debajo de los días."]
 ];

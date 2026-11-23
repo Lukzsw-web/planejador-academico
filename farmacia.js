@@ -1065,7 +1065,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     { label: 'Fluxograma em PDF do curso', q: 'Fluxograma do curso',
       ico: '<circle cx="6" cy="5.5" r="2.2"></circle><circle cx="6" cy="18.5" r="2.2"></circle><circle cx="18" cy="10" r="2.2"></circle><path d="M6 7.7v8.6M6 14.5c0-2.8 2.3-4.5 6-4.5h3.8"></path>' },
     { label: 'Cardápio do bandeco hoje', q: 'Cardápio do bandeco hoje',
-      ico: '<g stroke-width="1.8"><path d="M12.04 19.25A9.0 9.0 0 1 1 19.28 11.85"/><path d="M4.70 10.57A5.7 5.7 0 0 1 10.77 4.71"/><path transform="translate(8.6 13.4) rotate(-45)" d="M-2 0a2 2.7 0 1 0 4 0a2 2.7 0 1 0-4 0M0 2.7V9"/><path transform="translate(14.0 9.0) rotate(-45)" d="M-2.2-3.7V-.2a2.2 2.2 0 0 0 4.4 0V-3.7M0-3.7V2M0 2V9.6"/></g>' },
+      ico: '<g stroke-width="1.6"><circle cx="12" cy="12" r="4.7"></circle><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"></circle><path d="M1.8 2.6v4.5c0 1.3 1 2.3 2.2 2.3s2.2-1 2.2-2.3V2.6M4 2.6v6.8M4 9.4V21.4"></path><ellipse cx="20.1" cy="7.2" rx="2.1" ry="3.5"></ellipse><path d="M20.1 10.7V21.4"></path></g>' },
     { label: 'O que você pode fazer?', q: 'O que você pode fazer?',
       ico: '<circle cx="12" cy="12" r="9"></circle><path d="M9.4 9.5a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.3-2.6 4"></path><path d="M12 17.4v.2"></path>' }
   ];

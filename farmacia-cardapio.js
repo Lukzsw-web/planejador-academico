@@ -104,7 +104,7 @@
   // ---------- Cardápio interativo ----------
   // Dentro da resposta: restaurantes (botões), dias de domingo a sábado (cartões) e o cardápio do dia escolhido.
   // Os cliques trocam o conteúdo no próprio cartão, com a última coleta já guardada no aparelho (funciona offline).
-  var PLACES = [['ct', 'Restaurante Central', 'CT 1 / 2 e Letras'], ['pv', 'Praia Vermelha', 'IFCS – Centro'], ['dc', 'Duque de Caxias', ''], ['mc', 'Macaé', '']];
+  var PLACES = [['ct', 'Restaurante Central', 'CT (1 e 2) e Letras inclusos'], ['pv', 'Praia Vermelha', 'IFCS (Centro) incluso'], ['dc', 'Duque de Caxias', ''], ['mc', 'Macaé', '']];
   var WD = { domingo: 'Dom', segunda: 'Seg', terca: 'Ter', quarta: 'Qua', quinta: 'Qui', sexta: 'Sex', sabado: 'Sáb' };
   var MON = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
   function parseDate(str) {
@@ -169,7 +169,7 @@
       '<div class="cd-days-wrap"><div class="cd-days" data-no-tab-swipe="true" role="group" aria-label="Dia da semana">' + dayButtons(row, day) + '</div>' +
       '<div class="cd-rail" data-no-tab-swipe="true" aria-hidden="true"><span class="cd-thumb"></span></div></div>' +
       '<div class="cd-body">' + mealsHTML(row, campus, day) + '</div>' +
-      '<p class="cd-foot">' + foot + 'Fonte: BandejApp UFRJ.</p>';
+      '<p class="cd-foot">' + foot + 'Fonte: <a class="cd-src" href="https://devmobufrj.github.io/BandejApp/Cardapio" target="_blank" rel="noopener noreferrer">BandejApp</a> UFRJ.</p>';
   }
   function buildResponse(row, query) {
     return {
@@ -238,7 +238,7 @@
       var on = !sel.classList.contains('is-open'); closeSelects(sel); setOpen(sel, on); return;
     }
     if (!t.closest('.cd-select')) closeSelects(null);
-    var btn = t.closest('[data-cd-place], [data-cd-day]');
+    var btn = t.closest('button[data-cd-place], button[data-cd-day]');
     var card = btn && btn.closest('.cd');
     if (!card) return;
     if (Date.now() - draggedAt < 250) { e.preventDefault(); e.stopPropagation(); return; }
