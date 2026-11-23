@@ -3,8 +3,8 @@ name: Coletar cardápio do BandejApp
 
 on:
   schedule:
-    # 06:00 e 12:00 no horário de Brasília (UTC-3).
-    - cron: "0 9,15 * * *"
+    # 06:20, 12:20, 17:20 e 23:20 no horário de Brasília (UTC-3).
+    - cron: "20 9,15,20,26 * * * * *"
   workflow_dispatch:
 
 permissions:
