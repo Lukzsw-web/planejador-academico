@@ -263,7 +263,7 @@
   function intercept(raw) {
     var query = detect(raw);
     if (!query) return null;
-    return sync(false).then(function (row) {
+    return sync(true).then(function (row) {
       return buildResponse(row, query);
     }).catch(function () {
       return {
