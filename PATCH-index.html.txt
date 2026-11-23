@@ -1,0 +1,5 @@
+<!-- Dentro de <head>, logo depois de <link rel="stylesheet" href="farmacia.css">: -->
+<link rel="stylesheet" href="farmacia-visual.css">
+
+<!-- No fim do index.html, logo depois de <script src="farmacia-ia.js"></script>: -->
+<script src="farmacia-visual.js"></script>
