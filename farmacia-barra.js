@@ -22,19 +22,27 @@
 
   var form, box, input, bar, send, plus, chip, chipNome, anexosEl, sheet, lista;
   var estado = { opcao: null, anexos: [] };
+  var ocupado = false;   // a FarmacIA está pensando: o envio vira "Parar"
   var seq = 0;
 
   /* ---------- aparência: recolhida × expandida ---------- */
   function sync() {
     if (!input) return;
-    var texto = input.value.trim().length > 0;
-    var expandida = texto || estado.anexos.length > 0;
+    var texto = input.value.trim().length > 0, temAnexo = estado.anexos.length > 0;
+    var foco = box.contains(doc.activeElement);
+    var folha = !!sheet && !sheet.hidden, editor = !!(win.EditorImagem && win.EditorImagem.aberto());
+    // Recolhida só quando não há foco, texto, anexo, resposta em andamento nem janela aberta.
+    var expandida = foco || texto || temAnexo || ocupado || folha || editor;
     box.classList.toggle('is-expandida', expandida);
-    send.hidden = !texto;
+    send.hidden = !expandida;
+    send.classList.toggle('is-stop', ocupado);
+    send.disabled = ocupado ? false : !(texto || temAnexo);
+    var rot = T(ocupado ? 'Parar' : 'Enviar');
+    send.setAttribute('aria-label', rot); send.setAttribute('title', rot);
     chip.hidden = !estado.opcao;
     if (estado.opcao) chipNome.textContent = T(estado.opcao.nome);
     chip.setAttribute('aria-label', estado.opcao ? T('Remover opção selecionada') + ': ' + T(estado.opcao.nome) : T('Remover opção selecionada'));
-    anexosEl.hidden = !estado.anexos.length;
+    anexosEl.hidden = !temAnexo;
     // altura do campo: 1 linha recolhida; cresce com o texto quando expandida
     input.style.height = 'auto';
     if (expandida) input.style.height = Math.min(input.scrollHeight, 140) + 'px';
@@ -90,7 +98,7 @@
     win.clearTimeout(fecharTimer);
     desenharLista();
     sheet.hidden = false; doc.documentElement.classList.add('farma-sheet-on');
-    plus.setAttribute('aria-expanded', 'true');
+    plus.setAttribute('aria-expanded', 'true'); sync();
     win.requestAnimationFrame(function () { win.requestAnimationFrame(function () { sheet.classList.add('is-open'); }); });
     var x = sheet.querySelector('.farma-sheet-x'); if (x) x.focus({ preventScroll: true });
   }
@@ -99,7 +107,7 @@
     sheet.classList.remove('is-open');
     plus.setAttribute('aria-expanded', 'false');
     var reduz = win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches || doc.documentElement.classList.contains('no-anim');
-    fecharTimer = win.setTimeout(function () { sheet.hidden = true; doc.documentElement.classList.remove('farma-sheet-on'); }, reduz ? 0 : 260);
+    fecharTimer = win.setTimeout(function () { sheet.hidden = true; doc.documentElement.classList.remove('farma-sheet-on'); sync(); }, reduz ? 0 : 260);
     if (devolverFoco !== false) { try { plus.focus({ preventScroll: true }); } catch (_) {} }
   }
   function abrirSeletor(id) {
@@ -112,7 +120,8 @@
     if (!f) return;
     fecharFolha(false);
     if (tipo !== 'arquivos' && /^image\//.test(f.type) && win.EditorImagem) {
-      win.EditorImagem.abrir(f, { aoConfirmar: function (blob, nome) { adicionarAnexo(new File([blob], nome, { type: blob.type }), nome); input.focus({ preventScroll: true }); } });
+      win.EditorImagem.abrir(f, { aoConfirmar: function (blob, nome) { adicionarAnexo(new File([blob], nome, { type: blob.type }), nome); try { input.focus({ preventScroll: true }); } catch (_) {} }, aoCancelar: function () { sync(); } });
+      sync();
     } else adicionarAnexo(f);
   }
   function escolherOpcao(id) {
@@ -123,15 +132,19 @@
   }
 
   /* ---------- envio ---------- */
-  function aoEnviar() {
-    var texto = input.value.trim();
-    if (!texto) return;
-    try { doc.dispatchEvent(new CustomEvent('farma:enviar', { detail: { texto: texto, opcao: estado.opcao ? estado.opcao.id : null, anexos: estado.anexos.map(function (a) { return a.arquivo; }) } })); } catch (_) {}
-    // limpa depois que a FarmacIA já leu o texto (o envio dela roda no mesmo ciclo)
-    win.setTimeout(function () {
-      estado.anexos.forEach(function (a) { if (a.url) URL.revokeObjectURL(a.url); });
-      estado.anexos = []; estado.opcao = null; desenharAnexos(); sync();
-    }, 0);
+  function enviar() {
+    if (ocupado) return;
+    var texto = input.value.trim(), anexos = estado.anexos.slice();
+    if (!texto && !anexos.length) return;
+    var det = { texto: texto, opcao: estado.opcao ? estado.opcao.id : null, anexos: anexos.map(function (a) { return a.arquivo; }), tratado: false };
+    // Quem implementar uma opção (ex.: conversor de PDF) escuta este evento, marca det.tratado = true e responde
+    // com FarmacIA.adicionarResposta(html). Sem isso a FarmacIA responde só o texto.
+    try { doc.dispatchEvent(new CustomEvent('farma:enviar', { detail: det })); } catch (_) {}
+    var vista = anexos.map(function (a) { return { url: a.url, nome: a.nome, imagem: a.imagem }; });   // as miniaturas passam para o chat
+    estado.anexos = []; estado.opcao = null; desenharAnexos();
+    input.value = '';
+    if (win.FarmacIA) win.FarmacIA.ask(texto, null, { anexos: vista, opcao: det.opcao, tratado: det.tratado });
+    sync();
   }
 
   function init() {
@@ -148,10 +161,19 @@
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
         e.preventDefault();
-        if (input.value.trim()) { if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); }
+        if (!ocupado && (input.value.trim() || estado.anexos.length)) { if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); }
       }
     });
-    form.addEventListener('submit', aoEnviar, true);
+    // o envio é daqui (texto e/ou anexos); o tratamento antigo do formulário não deve rodar junto
+    form.addEventListener('submit', function (e) { e.preventDefault(); e.stopImmediatePropagation(); enviar(); }, true);
+    send.addEventListener('click', function (e) { if (ocupado) { e.preventDefault(); e.stopPropagation(); if (win.FarmacIA && win.FarmacIA.parar) win.FarmacIA.parar(); } }, true);
+    // tocar nos botões da barra não tira o foco do campo (o teclado e a barra expandida ficam)
+    bar.addEventListener('pointerdown', function (e) { if (e.target.closest && e.target.closest('button')) e.preventDefault(); });
+    anexosEl.addEventListener('pointerdown', function (e) { if (e.target.closest && e.target.closest('button')) e.preventDefault(); });
+    box.addEventListener('focusin', sync);
+    box.addEventListener('focusout', function () { win.setTimeout(sync, 150); });
+    doc.addEventListener('farma:ocupado', function (e) { ocupado = !!(e.detail && e.detail.ocupado); sync(); });
+    ocupado = !!(win.FarmacIA && win.FarmacIA.ocupado && win.FarmacIA.ocupado());
 
     plus.addEventListener('click', function () { if (sheet.hidden) abrirFolha(); else fecharFolha(); });
     chip.addEventListener('click', function () { estado.opcao = null; sync(); input.focus({ preventScroll: true }); });

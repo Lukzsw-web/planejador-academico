@@ -31,7 +31,13 @@
     desfazer: '<path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path>',
     refazer: '<path d="M15 14l5-5-5-5"></path><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"></path>',
     compartilhar: '<circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"></path>',
-    baixar: '<rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M12 8v7M9 12l3 3 3-3"></path>'
+    baixar: '<rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M12 8v7M9 12l3 3 3-3"></path>',
+    voltar: '<path d="M15 5l-7 7 7 7"></path>',
+    cortar: '<path d="M6 2v14a2 2 0 0 0 2 2h14"></path><path d="M18 22V8a2 2 0 0 0-2-2H2"></path>',
+    esq: '<rect x="12.5" y="3" width="8" height="18" rx="1.6" fill="currentColor"></rect><rect x="3.5" y="14.5" width="9" height="6.5" rx="1.6"></rect><path d="M9.5 3.5H6.2a2.2 2.2 0 0 0-2.2 2.2v4M1.8 7.8L4 10l2.2-2.2"></path>',
+    dir: '<rect x="3.5" y="3" width="8" height="18" rx="1.6" fill="currentColor"></rect><rect x="11.5" y="14.5" width="9" height="6.5" rx="1.6"></rect><path d="M14.5 3.5h3.3A2.2 2.2 0 0 1 20 5.7v4M17.8 7.8L20 10l2.2-2.2"></path>',
+    horiz: '<rect x="3" y="4" width="7" height="16" rx="1.6" fill="currentColor"></rect><rect x="14" y="4" width="7" height="16" rx="1.6"></rect><path d="M12 2v20"></path>',
+    vert: '<rect x="4" y="3" width="16" height="7" rx="1.6" fill="currentColor"></rect><rect x="4" y="14" width="16" height="7" rx="1.6"></rect><path d="M2 12h20"></path>'
   };
 
   var ativo = null;   // sessão aberta (só uma por vez)
@@ -68,6 +74,17 @@
     x.translate(0, n.height); x.rotate(-Math.PI / 2); x.drawImage(c, 0, 0);
     return n;
   }
+  function espelhar(c, horizontal) {
+    var n = canvas(c.width, c.height), x = n.getContext('2d');
+    if (horizontal) { x.translate(n.width, 0); x.scale(-1, 1); } else { x.translate(0, n.height); x.scale(1, -1); }
+    x.drawImage(c, 0, 0);
+    return n;
+  }
+  function girar90dir(c) {
+    var n = canvas(c.height, c.width), x = n.getContext('2d');
+    x.translate(n.width, 0); x.rotate(Math.PI / 2); x.drawImage(c, 0, 0);
+    return n;
+  }
   function hsv(h, s, v) {
     var f = function (n) { var k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
     return [Math.round(f(5) * 255), Math.round(f(3) * 255), Math.round(f(1) * 255)];
@@ -91,7 +108,7 @@
       cor: { h: 354, s: .72, v: .9 },
       caneta: { tam: 10, op: 100 }, borracha: { tam: 24, op: 100 },
       corte: { x: 0, y: 0, w: 1, h: 1 },
-      traco: null, quadro: 0, vista: { w: 0, h: 0 }
+      traco: null, quadro: 0, vista: { w: 0, h: 0 }, modo: 'desenho'
     };
     ativo = S;
 
@@ -100,9 +117,12 @@
     root.setAttribute('data-no-tab-swipe', 'true');
     var topo = mk('div', 'fed-top');
     var bX = mk('button', 'fed-btn fed-x', { type: 'button', 'aria-label': T('Cancelar'), title: T('Cancelar') }); bX.innerHTML = ico(I.x);
-    var bGirar = mk('button', 'fed-btn fed-girar', { type: 'button', 'aria-label': T('Girar 90°'), title: T('Girar 90°') }); bGirar.innerHTML = ico(I.girar);
+    var meio = mk('div', 'fed-top-mid');
+    var bCortar = mk('button', 'fed-btn fed-cortar', { type: 'button', 'aria-label': T('Cortar'), title: T('Cortar') }); bCortar.innerHTML = ico(I.cortar);
+    var bGirar = mk('button', 'fed-btn fed-girar', { type: 'button', 'aria-label': T('Girar'), title: T('Girar') }); bGirar.innerHTML = ico(I.girar);
+    meio.appendChild(bCortar); meio.appendChild(bGirar);
     var bOk = mk('button', 'fed-btn fed-ok', { type: 'button', 'aria-label': T('Aplicar'), title: T('Aplicar') }); bOk.innerHTML = ico(I.ok);
-    topo.appendChild(bX); topo.appendChild(bGirar); topo.appendChild(bOk);
+    topo.appendChild(bX); topo.appendChild(meio); topo.appendChild(bOk);
 
     var palco = mk('div', 'fed-stage');
     var cv = mk('canvas', 'fed-cv');
@@ -113,6 +133,7 @@
     palco.appendChild(cv); palco.appendChild(moldura);
 
     var cartao = mk('div', 'fed-card', { role: 'group' }); cartao.hidden = true;
+    var base = mk('div', 'fed-base');
     var barra = mk('div', 'fed-bar', { role: 'toolbar', 'aria-label': T('Ferramentas de desenho') });
     function botao(cls, icone, rotulo) {
       var b = mk('button', 'fed-tool ' + cls, { type: 'button', 'aria-label': T(rotulo), title: T(rotulo) });
@@ -125,8 +146,18 @@
     var sep = mk('span', 'fed-sep', { 'aria-hidden': 'true' });
     var bComp = botao('fed-comp', I.compartilhar, 'Compartilhar');
     var bBaixar = botao('fed-baixar', I.baixar, 'Baixar imagem');
-    [bCaneta, bBorracha, bDesf, bRef, sep, bComp, bBaixar].forEach(function (e) { barra.appendChild(e); });
-    root.appendChild(topo); root.appendChild(palco); root.appendChild(cartao); root.appendChild(barra);
+    [bCaneta, bBorracha, bDesf, bRef, sep, bComp, bBaixar].forEach(function (x) { barra.appendChild(x); });
+    // menu de girar (no lugar do menu flutuante)
+    var giro = mk('div', 'fed-painel fed-giro', { role: 'toolbar', 'aria-label': T('Girar') }); giro.hidden = true;
+    function item(icone, rotulo, acao) {
+      var b = mk('button', 'fed-item', { type: 'button' });
+      b.innerHTML = ico(icone) + '<span>' + T(rotulo) + '</span>';
+      b.addEventListener('click', acao); return b;
+    }
+    // menu de cortar
+    var corteP = mk('div', 'fed-painel fed-corte', { role: 'toolbar', 'aria-label': T('Cortar') }); corteP.hidden = true;
+    base.appendChild(barra); base.appendChild(giro); base.appendChild(corteP);
+    root.appendChild(topo); root.appendChild(palco); root.appendChild(cartao); root.appendChild(base);
     doc.body.appendChild(root);
     doc.documentElement.classList.add('fed-aberto');
 
@@ -218,6 +249,7 @@
     }
     function encerrarTraco() {
       var t = S.traco; if (!t) return;
+      S.traco = null;
       var o = S.ov.getContext('2d');
       o.beginPath(); o.moveTo(t.meio.x, t.meio.y); o.lineTo(t.ult.x, t.ult.y); o.stroke();
       empilhar(S.undo, estadoAtual(true)); S.redo = [];          // guarda o desenho ANTES deste traço
@@ -226,7 +258,7 @@
       d.globalCompositeOperation = t.tipo === 'caneta' ? 'source-over' : 'destination-out';
       d.drawImage(S.ov, 0, 0);
       d.globalAlpha = 1; d.globalCompositeOperation = 'source-over';
-      S.traco = null; S.ov.getContext('2d').clearRect(0, 0, S.ov.width, S.ov.height);
+      S.ov.getContext('2d').clearRect(0, 0, S.ov.width, S.ov.height);
       atualizarHist(); pintar();
     }
 
@@ -253,12 +285,36 @@
       S.corte = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; posicionarMoldura();
     }
 
+    // Modos: 'desenho' (padrão), 'girar' e 'cortar'. A moldura de corte só reage no modo cortar,
+    // e o desenho só no modo desenho (antes a moldura roubava os toques perto das bordas).
+    function atualizarMoldura() {
+      var cheio = S.corte.x <= .001 && S.corte.y <= .001 && S.corte.w >= .999 && S.corte.h >= .999;
+      root.classList.toggle('tem-corte', !cheio);
+    }
+    function definirModo(m) {
+      finalizarTraco(); fecharCartao();
+      S.modo = m;
+      root.classList.toggle('is-cortar', m === 'cortar'); root.classList.toggle('is-girar', m === 'girar');
+      barra.hidden = m !== 'desenho'; giro.hidden = m !== 'girar'; corteP.hidden = m !== 'cortar';
+      var voltar = m !== 'desenho';
+      bX.innerHTML = ico(voltar ? I.voltar : I.x);
+      bX.setAttribute('aria-label', T(voltar ? 'Voltar' : 'Cancelar')); bX.setAttribute('title', T(voltar ? 'Voltar' : 'Cancelar'));
+      bGirar.classList.toggle('is-on', m === 'girar'); bCortar.classList.toggle('is-on', m === 'cortar');
+      atualizarMoldura(); ajustarVista();
+    }
+    function finalizarTraco() { if (S.traco) { try { encerrarTraco(); } catch (_) { S.traco = null; } } arrasto = null; moldura.classList.remove('is-arrasto'); }
+
     palco.addEventListener('pointerdown', function (e) {
       if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      if (S.traco) finalizarTraco();            // um traço que ficou sem "soltar" é concluído, nunca descartado
       fecharCartao();
-      var z = zona(e);
       try { palco.setPointerCapture(e.pointerId); } catch (_) {}
-      if (z) { arrasto = { z: z, x: e.clientX, y: e.clientY, ini: { x: S.corte.x, y: S.corte.y, w: S.corte.w, h: S.corte.h }, id: e.pointerId }; moldura.classList.add('is-arrasto'); e.preventDefault(); return; }
+      if (S.modo === 'cortar') {
+        var z = zona(e);
+        if (z) { arrasto = { z: z, x: e.clientX, y: e.clientY, ini: { x: S.corte.x, y: S.corte.y, w: S.corte.w, h: S.corte.h }, id: e.pointerId }; moldura.classList.add('is-arrasto'); e.preventDefault(); }
+        return;
+      }
+      if (S.modo !== 'desenho') return;
       var r = cv.getBoundingClientRect();
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
       iniciarTraco(e); arrasto = { desenho: true, id: e.pointerId }; e.preventDefault();
@@ -267,18 +323,23 @@
       if (!arrasto || e.pointerId !== arrasto.id) return;
       if (arrasto.desenho) {
         var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
-        if (evs && evs.length) evs.forEach(continuarTraco); else continuarTraco(e);
+        if (evs && evs.length) { for (var i = 0; i < evs.length; i++) continuarTraco(evs[i]); } else continuarTraco(e);
       } else moverMoldura(e);
       e.preventDefault();
     });
-    function soltar(e) {
-      if (!arrasto || (e && e.pointerId !== arrasto.id)) return;
-      if (arrasto.desenho) encerrarTraco(); else moldura.classList.remove('is-arrasto');
+    // Soltar: aceita qualquer fim de toque (soltar, cancelar, perder a captura, sair da janela)
+    function soltar() {
+      if (!arrasto) return;
+      if (arrasto.desenho) encerrarTraco(); else { moldura.classList.remove('is-arrasto'); atualizarMoldura(); }
       arrasto = null;
     }
     palco.addEventListener('pointerup', soltar);
     palco.addEventListener('pointercancel', soltar);
-    palco.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    palco.addEventListener('lostpointercapture', soltar);
+    window.addEventListener('pointerup', soltar, true);
+    window.addEventListener('pointercancel', soltar, true);
+    window.addEventListener('blur', soltar);
+    palco.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
 
     /* ----- cartões (cor, espessura, opacidade) ----- */
     function fecharCartao() { cartao.hidden = true; cartao.innerHTML = ''; bCaneta.classList.remove('is-card'); bBorracha.classList.remove('is-card'); }
@@ -397,7 +458,7 @@
         function () { bOk.disabled = false; toast(T('Não foi possível gerar a imagem.')); });
     }
     function teclas(e) {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!cartao.hidden) fecharCartao(); else cancelar(); return; }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!cartao.hidden) fecharCartao(); else voltar(); return; }
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); e.shiftKey ? refazer() : desfazer(); return; }
       if (e.key === 'Tab') {      // mantém o foco dentro do editor
         var fs = [].filter.call(root.querySelectorAll('button:not([disabled]), input'), function (el) { return el.offsetParent !== null; });
@@ -408,14 +469,24 @@
       }
     }
 
-    bX.addEventListener('click', cancelar);
+    function voltar() { if (S.modo !== 'desenho') definirModo('desenho'); else cancelar(); }
+    bX.addEventListener('click', voltar);
     bOk.addEventListener('click', aplicar);
-    bGirar.addEventListener('click', function () {
-      fecharCartao();
+    // Girar: abre o menu (a imagem NÃO gira ao clicar no botão); cada opção é um passo desfazível
+    function transformar(fn) {
+      finalizarTraco();
       empilhar(S.undo, estadoAtual(false)); S.redo = [];
-      S.base = girar90(S.base); S.draw = girar90(S.draw); camadas();
-      S.corte = { x: 0, y: 0, w: 1, h: 1 }; ajustarVista(); pintar(); atualizarHist();
-    });
+      S.base = fn(S.base); S.draw = fn(S.draw); camadas();
+      S.corte = { x: 0, y: 0, w: 1, h: 1 }; atualizarMoldura(); ajustarVista(); pintar(); atualizarHist();
+    }
+    giro.appendChild(item(I.esq, 'Esquerda', function () { transformar(girar90); }));
+    giro.appendChild(item(I.dir, 'Direita', function () { transformar(girar90dir); }));
+    giro.appendChild(item(I.horiz, 'Horizontal', function () { transformar(function (c) { return espelhar(c, true); }); }));
+    giro.appendChild(item(I.vert, 'Vertical', function () { transformar(function (c) { return espelhar(c, false); }); }));
+    corteP.appendChild(item(I.cortar, 'Redefinir corte', function () { S.corte = { x: 0, y: 0, w: 1, h: 1 }; posicionarMoldura(); atualizarMoldura(); }));
+    bGirar.addEventListener('click', function () { definirModo(S.modo === 'girar' ? 'desenho' : 'girar'); });
+    bCortar.addEventListener('click', function () { definirModo(S.modo === 'cortar' ? 'desenho' : 'cortar'); });
+    root.addEventListener('pointerdown', function (ev) { if (S.traco && !palco.contains(ev.target)) finalizarTraco(); }, true);
     bCaneta.addEventListener('click', function () { escolherFerramenta('caneta'); });
     bBorracha.addEventListener('click', function () { escolherFerramenta('borracha'); });
     bDesf.addEventListener('click', function () { fecharCartao(); desfazer(); });

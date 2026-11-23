@@ -1006,13 +1006,12 @@ html.no-anim .farma-sheet-scrim, html.no-anim .farma-sheet-panel { transition: n
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 .fed-top { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; height: 60px; padding: 0 .5rem; }
-.fed-top .fed-girar { justify-self: center; }
+.fed-top-mid { justify-self: center; display: flex; gap: .35rem; }
 .fed-btn { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--ed-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fed-btn svg { width: 26px; height: 26px; }
-.fed-ok { justify-self: end; background: var(--ed-acc); color: #07130c; }
+.fed-ok { justify-self: end; }
 .fed-ok:disabled { opacity: .5; }
 .fed-btn:active { background: var(--ed-bar-2); }
-.fed-ok:active { background: var(--ed-acc); filter: brightness(.92); }
 .fed-stage { position: relative; min-height: 0; overflow: hidden; }
 .fed-cv { position: absolute; display: block; background: #000; touch-action: none; }
 .fed.is-carregando .fed-cv, .fed.is-carregando .fed-crop { visibility: hidden; }
@@ -1070,3 +1069,37 @@ html.no-anim .farma-sheet-scrim, html.no-anim .farma-sheet-panel { transition: n
 .fed-btn:focus-visible, .fed-tool:focus-visible, .fed-slider input:focus-visible { outline: 2px solid var(--ed-acc); outline-offset: 2px; }
 html.fed-aberto, html.fed-aberto body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .fed-grade { transition: none; } .fed.is-carregando .fed-stage::after { animation-duration: 2s; } }
+
+/* ---------- v0.7.0: barra, parar, anexos no chat, editor (corte/girar) ---------- */
+/* "+" menor: o contorno encolhe, o ícone fica do mesmo tamanho; centro alinhado ao do cálice */
+html #modal-farmacia .farma-composer .farma-plus { width: 34px; height: 34px; border-radius: 9px; }
+html #modal-farmacia .farma-composer .farma-plus svg { width: 22px; height: 22px; }
+html #modal-farmacia .farma-composer-bar { padding: 4px .8rem .6rem .72rem; }
+html #modal-farmacia .farma-composer .farma-opcao { height: 34px; border-radius: 9px; }
+/* enviar x parar */
+.farma-send .farma-ico-stop { display: none; }
+.farma-send.is-stop .farma-ico-seta { display: none; }
+.farma-send.is-stop .farma-ico-stop { display: block; fill: currentColor; }
+html #modal-farmacia .farma-composer .farma-send.is-stop svg { width: 18px; height: 18px; }
+html #modal-farmacia .farma-composer .farma-send:disabled { opacity: .38; }
+html #modal-farmacia .farma-composer .farma-send.is-stop:disabled { opacity: 1; }
+/* anexos dentro da mensagem do usuário */
+#modal-farmacia .farma-msg-anexos { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .4rem; }
+#modal-farmacia .farma-msg-img { display: block; max-width: min(240px, 100%); max-height: 260px; border-radius: 10px; object-fit: cover; }
+#modal-farmacia .farma-msg-arq { display: inline-flex; align-items: center; padding: .35rem .6rem; border-radius: 9px; background: rgba(0, 0, 0, .12); font-size: .84rem; font-weight: 600; }
+#modal-farmacia .farma-user-txt { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+#modal-farmacia .farma-user-txt:empty { display: none; }
+/* editor: V simples; moldura só em modo cortar (ou quando há corte) */
+.fed-btn.is-on { background: var(--ed-bar-2); }
+.fed-crop { display: none; }
+.fed.is-cortar .fed-crop, .fed.tem-corte .fed-crop { display: block; }
+.fed:not(.is-cortar) .fed-h, .fed:not(.is-cortar) .fed-e { display: none; }
+.fed-painel { position: relative; z-index: 2; justify-self: center; display: flex; align-items: stretch; gap: .25rem; margin: .4rem 0 .9rem; padding: .4rem; border-radius: 14px; background: var(--ed-bar); }
+.fed-painel[hidden] { display: none; }
+.fed-bar[hidden] { display: none; }
+.fed-item { min-width: 74px; display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .7rem .6rem .55rem; border: 0; border-radius: 10px; background: transparent; color: var(--ed-ink); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fed-item svg { width: 28px; height: 28px; }
+.fed-item:active { background: var(--ed-bar-2); }
+.fed-item:focus-visible { outline: 2px solid var(--ed-acc); outline-offset: 2px; }
+.fed-corte .fed-item { flex-direction: row; gap: .6rem; padding: .75rem 1rem; }
+.fed-corte .fed-item svg { width: 22px; height: 22px; }

@@ -1832,11 +1832,19 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     }
     if (box) { if (!box.firstChild) box.innerHTML = suggestRowsHTML(); box.hidden = false; }
   }
-  function addUser(text) {
+  function anexosHTML(anexos) {
+    if (!anexos || !anexos.length) return '';
+    return '<div class="farma-msg-anexos">' + anexos.map(function (a) {
+      return a.imagem && a.url
+        ? '<img class="farma-msg-img" src="' + esc(a.url) + '" alt="' + esc(a.nome || tr('Imagem')) + '">'
+        : '<span class="farma-msg-arq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg><span>' + esc(a.nome || tr('Arquivo')) + '</span></span>';
+    }).join('') + '</div>';
+  }
+  function addUser(text, anexos) {
     var el = messagesEl();
     var div = document.createElement('div');
     div.className = 'farma-msg is-user';
-    div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + esc(text) + '</div>';
+    div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + anexosHTML(anexos) + (text ? '<span class="farma-user-txt">' + esc(text) + '</span>' : '') + '</div>';
     el.appendChild(div);
     syncEmpty();
     scrollDown();
@@ -1879,30 +1887,54 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var id = classify(q).id;
     return id === 'unknown' || id === 'info' || id === 'topic' || id === 'glossary' || id === 'fact';
   }
+  // Execução atual da FarmacIA: "parar" invalida a execução em andamento (a resposta, quando chegar, é descartada).
+  var runId = 0, typingAtual = null;
+  function avisarOcupado() { try { document.dispatchEvent(new CustomEvent('farma:ocupado', { detail: { ocupado: busy } })); } catch (_) {} }
+  function parar() {
+    if (!busy) return;
+    runId += 1;
+    if (typingAtual) { typingAtual.remove(); typingAtual = null; }
+    var orqP = window.FarmaMod && window.FarmaMod.orquestrador;
+    try { if (orqP && orqP.cancelar) orqP.cancelar(); } catch (_) {}
+    busy = false; setPlaceholder(); avisarOcupado();
+  }
   function ask(query, display, opts) {
     var q = String(query || '').trim();
     var viaIA = !!(opts && opts.ia);
-    var tema = !viaIA && studyPending && !awaiting && parecerTema(q);
+    var anexos = (opts && opts.anexos) || [];
+    if ((!q && !anexos.length) || busy) return;
+    var tema = !viaIA && !!q && studyPending && !awaiting && parecerTema(q);
     studyPending = viaIA;
-    if (!q || busy) return;
-    busy = true;
-    addUser(display || q);
-    if (window.FarmaVisual) window.FarmaVisual.registrarUsuario(display || q);
+    busy = true; avisarOcupado();
+    var meu = ++runId;
+    var rotulo = display || q || (anexos.some(function (a) { return a.imagem; }) ? tr('Imagem anexada') : tr('Arquivo anexado'));
+    addUser(display || q, anexos);
+    if (window.FarmaVisual) window.FarmaVisual.registrarUsuario(rotulo);
     setChips([]);
-    var typing = addBot('<span class="farma-typing" aria-label="FarmacIA está digitando"><i></i><i></i><i></i></span>', 'is-typing');
+    var typing = typingAtual = addBot('<span class="farma-typing" aria-label="FarmacIA está digitando"><i></i><i></i><i></i></span>', 'is-typing');
     var delay = reduceMotion() ? 0 : 380;
+    var nota = (opts && opts.opcao) ? '<p class="farma-source">' + esc(tr('Essa opção ainda está em preparação. Por enquanto, só respondo perguntas escritas.')) + '</p>'
+      : anexos.length ? '<p class="farma-source">' + esc(tr('Ainda não consigo ler imagens nem arquivos anexados. Escreva sua dúvida em texto que eu respondo.')) + '</p>' : '';
     window.setTimeout(function () {
+      if (meu !== runId) return;
+      var finishNota = function (r) {
+        if (meu !== runId) return;
+        typing.remove(); typingAtual = null;
+        if (r) { var h = r.html + nota; addBot(h); setChips(r.chips); if (window.FarmaVisual) window.FarmaVisual.registrarResposta(h, r.chips); }
+        setPlaceholder();
+        busy = false; avisarOcupado();
+      };
+      if (!q) {   // só anexos, sem texto: não há pergunta para o motor responder
+        if (opts && opts.tratado) { typing.remove(); typingAtual = null; busy = false; avisarOcupado(); return; }
+        finishNota(R(p(esc(tr('Recebi o anexo.'))), []));
+        return;
+      }
       var res;
       try { res = viaIA ? iaIndisponivel() : respond(q); if (tema && res) res.forcarIA = true; } catch (err) {
         console.warn('FarmacIA:', err);
         res = R(p('Tive um problema para responder essa. Tente reformular a pergunta, por favor.'));
       }
-      var finish = function (r) {
-        typing.remove();
-        if (r) { addBot(r.html); setChips(r.chips); if (window.FarmaVisual) window.FarmaVisual.registrarResposta(r.html, r.chips); }
-        setPlaceholder();
-        busy = false;
-      };
+      var finish = finishNota;
       // Camada v2 (farmacia-ia.js): pode assumir perguntas de conteúdo (RAG + IA online) e devolve uma Promise.
       var orq = window.FarmaMod && window.FarmaMod.orquestrador, pending = null;
       try { pending = orq && !(viaIA && awaiting) ? orq.interceptar(q, viaIA ? { id: 'unknown', html: res.html, chips: res.chips, forcarIA: true } : res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
@@ -1926,7 +1958,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     if (window.FarmaVisual) window.FarmaVisual.novaConversa();
     lastSubject = null; lastIntentId = null; choice = null; pronTries = 0; ctx = { id: null, subject: null, listed: [], res: null, rule: null };
     awaiting = needsName() ? 'name' : null;
-    busy = false;
+    runId += 1; typingAtual = null; busy = false; avisarOcupado();
     if (window.FarmaMod && window.FarmaMod.orquestrador) window.FarmaMod.orquestrador.reset();
     if (needsName()) addBot(welcomeHTML());
     setChips(needsName() ? [{ label: 'Prefiro não dizer', q: 'Prefiro não dizer' }] : []);
@@ -1940,7 +1972,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     if (!el || !conv) return;
     el.innerHTML = '';
     lastSubject = null; lastIntentId = null; choice = null; pronTries = 0; ctx = { id: null, subject: null, listed: [], res: null, rule: null };
-    awaiting = null; busy = false;
+    awaiting = null; runId += 1; typingAtual = null; busy = false; avisarOcupado();
     if (window.FarmaMod && window.FarmaMod.orquestrador) window.FarmaMod.orquestrador.reset();
     var VZ = window.FarmaVisual;
     (conv.msgs || []).forEach(function (m) {
@@ -1999,7 +2031,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     var note = $('farma-lang-note');
     if (note && window.I18N && window.I18N.lang !== 'pt') note.hidden = false;
 
-    input.addEventListener('input', function () { send.disabled = !input.value.trim(); });
+    input.addEventListener('input', function () { if (!window.FarmaBarra) send.disabled = !input.value.trim(); });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var v = input.value.trim();
@@ -2047,7 +2079,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   }
 
   // API pública (usada pela navegação e pelos testes).
-  window.FarmacIA = { show: show, restaurar: restaurar, ask: ask, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; },
+  window.FarmacIA = { show: show, restaurar: restaurar, ask: ask, parar: parar, ocupado: function () { return busy; }, adicionarResposta: function (html, chips) { var d = addBot(html); setChips(chips || []); return d; }, reset: reset, respond: respond, classify: classify, _norm: norm, _fuzzy: fuzzyNorm, _state: function () { return { awaiting: awaiting }; },
     // Ganchos para a camada v2 (farmacia-ia.js): só leitura do que o assistente já sabe.
     _findSubjects: findSubjects, _ctx: function () { return ctx; }, _R: R, _p: p, _esc: esc, _chips: exampleChips,
     _perfil: function () { return { nome: userName(), periodo: userPeriod(), turno: userShift(), pronome: UP() ? UP().pronoun() : '' }; },

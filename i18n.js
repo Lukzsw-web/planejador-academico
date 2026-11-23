@@ -704,7 +704,26 @@ window.I18N_ROWS = [
     ["Nova barra de mensagem", "New message bar", "Nueva barra de mensajes"],
     ["O envio agora é uma seta em bola verde dentro da barra e só aparece quando há texto. Ao digitar, o texto sobe e aparece o botão \"+\".", "Send is now an arrow in a green circle inside the bar and only appears when there is text. When you type, the text moves up and the \"+\" button appears.", "El envío ahora es una flecha en un círculo verde dentro de la barra y solo aparece cuando hay texto. Al escribir, el texto sube y aparece el botón \"+\"."],
     ["O \"+\" abre as opções: tirar foto, escolher da galeria, anexar arquivo e o Conversor para PDF.", "The \"+\" opens the options: take a photo, pick from the gallery, attach a file and the PDF converter.", "El \"+\" abre las opciones: tomar una foto, elegir de la galería, adjuntar un archivo y el conversor a PDF."],
-    ["Editor de imagem em tela cheia: cortar, girar, desenhar, apagar, desfazer, compartilhar e baixar.", "Full-screen image editor: crop, rotate, draw, erase, undo, share and download.", "Editor de imagen a pantalla completa: recortar, girar, dibujar, borrar, deshacer, compartir y descargar."]
+    ["Editor de imagem em tela cheia: cortar, girar, desenhar, apagar, desfazer, compartilhar e baixar.", "Full-screen image editor: crop, rotate, draw, erase, undo, share and download.", "Editor de imagen a pantalla completa: recortar, girar, dibujar, borrar, deshacer, compartir y descargar."],
+    ["Parar", "Stop", "Detener"],
+    ["Esquerda", "Left", "Izquierda"],
+    ["Direita", "Right", "Derecha"],
+    ["Horizontal", "Horizontal", "Horizontal"],
+    ["Vertical", "Vertical", "Vertical"],
+    ["Voltar", "Back", "Volver"],
+    ["Cortar", "Crop", "Recortar"],
+    ["Girar", "Rotate", "Girar"],
+    ["Redefinir corte", "Reset crop", "Restablecer recorte"],
+    ["Imagem", "Image", "Imagen"],
+    ["Imagem anexada", "Attached image", "Imagen adjunta"],
+    ["Arquivo anexado", "Attached file", "Archivo adjunto"],
+    ["Recebi o anexo.", "I got the attachment.", "Recibí el adjunto."],
+    ["Essa opção ainda está em preparação. Por enquanto, só respondo perguntas escritas.", "This option is still being prepared. For now I only answer written questions.", "Esta opción aún está en preparación. Por ahora solo respondo preguntas escritas."],
+    ["Ainda não consigo ler imagens nem arquivos anexados. Escreva sua dúvida em texto que eu respondo.", "I can't read attached images or files yet. Write your question as text and I'll answer.", "Todavía no puedo leer imágenes ni archivos adjuntos. Escribe tu duda en texto y te respondo."],
+    ["Envio de imagens e correções no editor", "Sending images and editor fixes", "Envío de imágenes y correcciones en el editor"],
+    ["Agora dá para enviar uma imagem no chat da FarmacIA, mesmo sem texto. Enquanto ela pensa, o botão de enviar vira um quadradinho: toque para parar na hora.", "You can now send an image in the FarmacIA chat, even without text. While it thinks, the send button becomes a small square: tap it to stop right away.", "Ahora puedes enviar una imagen en el chat de FarmacIA, incluso sin texto. Mientras piensa, el botón de enviar se convierte en un cuadradito: tócalo para detener al instante."],
+    ["O \"+\" e o botão de enviar aparecem assim que você toca na caixa de texto.", "The \"+\" and send buttons appear as soon as you tap the text box.", "El \"+\" y el botón de enviar aparecen en cuanto tocas el cuadro de texto."],
+    ["No editor, o desenho e a borracha foram corrigidos e o corte virou um modo próprio. O botão Girar abre um menu (esquerda, direita, horizontal, vertical) e o X vira seta de voltar.", "In the editor, drawing and the eraser were fixed and cropping became its own mode. The Rotate button opens a menu (left, right, horizontal, vertical) and the X turns into a back arrow.", "En el editor se corrigieron el dibujo y el borrador, y el recorte pasó a ser un modo propio. El botón Girar abre un menú (izquierda, derecha, horizontal, vertical) y la X se convierte en flecha de volver."]
 ];
 
 // =====================================================================

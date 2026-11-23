@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
 };
 const PERIODO_COND = 'Escolha Condicionada';
 // ÚNICA fonte da versão do site: index.html, sw.js e o botão "Verificar atualização" leem daqui.
-const APP_VERSION = '0.6.9';
+const APP_VERSION = '0.7.0';
 // Abre o seletor de imagens do sistema. O navegador decide a interface: com accept="image/*" (sem "capture") o Chrome do Android mostra o
 // seletor de fotos, o Safari do iPhone mostra a biblioteca de fotos e o computador mostra a janela comum de arquivos.
 // showPicker() abre o mesmo seletor que click(), mas recusa abrir fora de um toque do usuário; se falhar, volta para click().

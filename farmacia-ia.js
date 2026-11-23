@@ -1589,7 +1589,7 @@
   }
 
   function reset() { M.contexto.reset(); M.ia.cancelar(); pendente = null; primeiro = true; consentMostrado = false; }
-  M.orquestrador = { interceptar: interceptar, reset: reset, _cache: function () { return cache; }, _limparCache: function () { cache = []; } };
+  M.orquestrador = { interceptar: interceptar, reset: reset, cancelar: function () { M.ia.cancelar(); }, _cache: function () { return cache; }, _limparCache: function () { cache = []; } };
 })();
 
 // =====================================================================

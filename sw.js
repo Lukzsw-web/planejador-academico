@@ -36,7 +36,7 @@ async function listAppShell() {
   try {
     const res = await fetch('./index.html', { cache: 'reload' });
     const html = await res.text();
-    for (const m of html.matchAll(/<(?:script[^>]*\ssrc|link[^>]*\shref)="([^"#?]+\.(?:js|css))"/g)) urls.add('./' + m[1].replace(/^\.\//, ''));
+    for (const m of html.matchAll(/<(?:script[^>]*\ssrc|link[^>]*\shref)="([^"#?]+\.(?:js|css))(?:[?#][^"]*)?"/g)) urls.add('./' + m[1].replace(/^\.\//, ''));
   } catch (_) { /* sem rede na instalação: o cache de execução completa depois */ }
   return Array.from(urls);
 }
