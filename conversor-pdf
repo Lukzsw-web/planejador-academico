@@ -1,0 +1,272 @@
+/* =========================================================
+   FarmacIA — Conversor de imagem para PDF
+   Conversão local no navegador. Nenhum arquivo é enviado ao servidor.
+   Integração: evento farma:enviar, opção "pdf".
+   ========================================================= */
+(function () {
+  'use strict';
+
+  var doc = document;
+  var urlsAtivas = [];
+  var MAX_ARQUIVOS = 12;
+  var MAX_BYTES = 20 * 1024 * 1024;
+  var MAX_LADO = 2500;
+  var A4_P = { w: 595.28, h: 841.89 };
+  var A4_L = { w: 841.89, h: 595.28 };
+
+  function escapar(s) {
+    return String(s || '').replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function resposta(html) {
+    if (window.FarmacIA && typeof window.FarmacIA.adicionarResposta === 'function') {
+      window.FarmacIA.adicionarResposta(html);
+    }
+  }
+
+  function lerImagem(arquivo) {
+    return new Promise(function (resolve, reject) {
+      if (typeof createImageBitmap === 'function') {
+        createImageBitmap(arquivo, { imageOrientation: 'from-image' }).then(function (bitmap) {
+          resolve({
+            imagem: bitmap,
+            largura: bitmap.width,
+            altura: bitmap.height,
+            fechar: function () { bitmap.close(); }
+          });
+        }).catch(function () { lerImagemFallback(arquivo).then(resolve, reject); });
+      } else {
+        lerImagemFallback(arquivo).then(resolve, reject);
+      }
+    });
+  }
+
+  function lerImagemFallback(arquivo) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(arquivo);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        resolve({
+          imagem: img,
+          largura: img.naturalWidth,
+          altura: img.naturalHeight,
+          fechar: function () {}
+        });
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('Não foi possível abrir a imagem "' + arquivo.name + '".'));
+      };
+      img.src = url;
+    });
+  }
+
+  function blobJpeg(arquivo) {
+    return lerImagem(arquivo).then(function (info) {
+      return new Promise(function (resolve, reject) {
+        try {
+          var fator = Math.min(1, MAX_LADO / Math.max(info.largura, info.altura));
+          var w = Math.max(1, Math.round(info.largura * fator));
+          var h = Math.max(1, Math.round(info.altura * fator));
+          var canvas = doc.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          var ctx = canvas.getContext('2d', { alpha: false });
+          if (!ctx) throw new Error('Seu navegador não conseguiu preparar a imagem.');
+
+          // Fundo branco preserva corretamente imagens com transparência.
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(info.imagem, 0, 0, w, h);
+
+          canvas.toBlob(function (blob) {
+            info.fechar();
+            canvas.width = 1;
+            canvas.height = 1;
+            if (!blob) return reject(new Error('Não foi possível converter "' + arquivo.name + '".'));
+
+            blob.arrayBuffer().then(function (buf) {
+              resolve({
+                bytes: new Uint8Array(buf),
+                largura: w,
+                altura: h,
+                nome: arquivo.name
+              });
+            }, reject);
+          }, 'image/jpeg', 0.92);
+        } catch (e) {
+          info.fechar();
+          reject(e);
+        }
+      });
+    });
+  }
+
+  function bytesTexto(s) {
+    return new TextEncoder().encode(s);
+  }
+
+  function juntar(partes) {
+    var total = partes.reduce(function (n, p) { return n + p.length; }, 0);
+    var saida = new Uint8Array(total);
+    var pos = 0;
+    partes.forEach(function (p) {
+      saida.set(p, pos);
+      pos += p.length;
+    });
+    return saida;
+  }
+
+  // Gera um PDF 1.4 simples, com uma imagem JPEG por página A4.
+  function montarPdf(imagens) {
+    var objetos = [];
+    var paginas = [];
+    objetos[1] = bytesTexto('<< /Type /Catalog /Pages 2 0 R >>');
+
+    imagens.forEach(function (im, i) {
+      var paginaId = 3 + i * 3;
+      var conteudoId = paginaId + 1;
+      var imagemId = paginaId + 2;
+      var folha = im.largura > im.altura ? A4_L : A4_P;
+      var margem = 24;
+      var areaW = folha.w - margem * 2;
+      var areaH = folha.h - margem * 2;
+      var escala = Math.min(areaW / im.largura, areaH / im.altura);
+      var w = im.largura * escala;
+      var h = im.altura * escala;
+      var x = (folha.w - w) / 2;
+      var y = (folha.h - h) / 2;
+
+      var stream = 'q\n' + w.toFixed(3) + ' 0 0 ' + h.toFixed(3) + ' ' +
+        x.toFixed(3) + ' ' + y.toFixed(3) + ' cm\n/Im0 Do\nQ';
+      var streamBytes = bytesTexto(stream);
+
+      paginas.push(paginaId + ' 0 R');
+      objetos[paginaId] = bytesTexto(
+        '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' +
+        folha.w + ' ' + folha.h +
+        '] /Resources << /XObject << /Im0 ' + imagemId +
+        ' 0 R >> >> /Contents ' + conteudoId + ' 0 R >>'
+      );
+      objetos[conteudoId] = juntar([
+        bytesTexto('<< /Length ' + streamBytes.length + ' >>\nstream\n'),
+        streamBytes,
+        bytesTexto('\nendstream')
+      ]);
+      objetos[imagemId] = juntar([
+        bytesTexto(
+          '<< /Type /XObject /Subtype /Image /Width ' + im.largura +
+          ' /Height ' + im.altura +
+          ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' +
+          im.bytes.length + ' >>\nstream\n'
+        ),
+        im.bytes,
+        bytesTexto('\nendstream')
+      ]);
+    });
+
+    objetos[2] = bytesTexto(
+      '<< /Type /Pages /Kids [' + paginas.join(' ') +
+      '] /Count ' + paginas.length + ' >>'
+    );
+
+    var partes = [bytesTexto('%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n')];
+    var offsets = [0];
+    var pos = partes[0].length;
+
+    for (var id = 1; id < objetos.length; id++) {
+      if (!objetos[id]) continue;
+      offsets[id] = pos;
+      var inicio = bytesTexto(id + ' 0 obj\n');
+      var fim = bytesTexto('\nendobj\n');
+      partes.push(inicio, objetos[id], fim);
+      pos += inicio.length + objetos[id].length + fim.length;
+    }
+
+    var xrefPos = pos;
+    var xref = 'xref\n0 ' + objetos.length + '\n0000000000 65535 f \n';
+    for (var j = 1; j < objetos.length; j++) {
+      xref += String(offsets[j]).padStart(10, '0') + ' 00000 n \n';
+    }
+
+    var trailer = 'trailer\n<< /Size ' + objetos.length +
+      ' /Root 1 0 R >>\nstartxref\n' + xrefPos + '\n%%EOF';
+    partes.push(bytesTexto(xref + trailer));
+    return new Blob([juntar(partes)], { type: 'application/pdf' });
+  }
+
+  function nomePdf(arquivos) {
+    if (arquivos.length === 1) {
+      var base = arquivos[0].name
+        .replace(/\.[^.]+$/, '')
+        .replace(/[^\w-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      return (base || 'imagem') + '.pdf';
+    }
+    return 'imagens-convertidas.pdf';
+  }
+
+  function converter(arquivos) {
+    if (!arquivos.length) {
+      return Promise.reject(new Error('Anexe pelo menos uma imagem para criar o PDF.'));
+    }
+    if (arquivos.length > MAX_ARQUIVOS) {
+      return Promise.reject(new Error('Envie no máximo ' + MAX_ARQUIVOS + ' imagens por vez.'));
+    }
+
+    for (var i = 0; i < arquivos.length; i++) {
+      var f = arquivos[i];
+      if (!f || !/^image\//i.test(f.type || '')) {
+        return Promise.reject(new Error(
+          'Esta versão converte imagens. O arquivo selecionado não é uma imagem compatível.'
+        ));
+      }
+      if (f.size > MAX_BYTES) {
+        return Promise.reject(new Error('"' + f.name + '" ultrapassa o limite de 20 MB por imagem.'));
+      }
+    }
+
+    return Promise.all(arquivos.map(blobJpeg)).then(montarPdf);
+  }
+
+  function tratar(e) {
+    var det = e && e.detail;
+    if (!det || det.opcao !== 'pdf') return;
+
+    // O evento é síncrono: marcar agora impede a resposta genérica da FarmacIA.
+    det.tratado = true;
+    det.texto = '';
+    var arquivos = Array.isArray(det.anexos) ? det.anexos.slice() : [];
+
+    converter(arquivos).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      urlsAtivas.push(url);
+      while (urlsAtivas.length > 8) URL.revokeObjectURL(urlsAtivas.shift());
+
+      var nome = nomePdf(arquivos);
+      resposta(
+        '<p>PDF criado com sucesso. ' + arquivos.length +
+        (arquivos.length === 1 ? ' imagem foi organizada em ' : ' imagens foram organizadas em ') +
+        arquivos.length + (arquivos.length === 1 ? ' página.' : ' páginas.') + '</p>' +
+        '<p><a href="' + url + '" download="' + escapar(nome) +
+        '">Baixar ' + escapar(nome) + '</a></p>' +
+        '<p class="farma-source">A conversão foi feita neste dispositivo. Nenhuma imagem foi enviada a um servidor.</p>'
+      );
+    }).catch(function (erro) {
+      resposta(
+        '<p>Não consegui gerar o PDF: ' +
+        escapar(erro && erro.message ? erro.message : 'erro inesperado') +
+        '</p><p class="farma-source">Confira os arquivos e tente novamente.</p>'
+      );
+    });
+  }
+
+  doc.addEventListener('farma:enviar', tratar);
+
+  window.addEventListener('beforeunload', function () {
+    urlsAtivas.forEach(function (url) { URL.revokeObjectURL(url); });
+  });
+})();
