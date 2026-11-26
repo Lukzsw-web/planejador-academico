@@ -2364,7 +2364,7 @@
     menu.classList.toggle('is-home', vista === 'home');
     if (vista === 'home') {
       menu.setAttribute('aria-label', tx('Menu da FarmacIA'));
-      window.FarmaMenu.home(menu, { fechar: function () { fecharMenu(false); }, nova: function () { fecharMenu(false); var r = doc.getElementById('farma-reset'); if (r) r.click(); } });
+      window.FarmaMenu.home(menu, { fechar: function () { fecharMenu(false); }, abrirConversa: function (id) { var conv = V.historico.continuar(id); fecharMenu(false); if (conv && V.aoContinuar) V.aoContinuar(conv); }, nova: function () { fecharMenu(false); var r = doc.getElementById('farma-reset'); if (r) r.click(); } });
     } else if (vista === 'raiz') {
       menu.setAttribute('aria-label', tx('Configurações da FarmacIA'));
       if (window.FarmaMenu) {

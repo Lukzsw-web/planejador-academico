@@ -759,7 +759,23 @@ window.I18N_ROWS = [
     ["Correções", "Fixes", "Correcciones"],
     ["No editor de imagem, o desenho não sai mais de lado depois de girar a foto.", "In the image editor, drawing no longer comes out sideways after rotating the photo.", "En el editor de imágenes, el dibujo ya no sale de lado tras girar la foto."],
     ["A alça lateral do menu não muda mais de lugar quando você rola a tela.", "The side-menu handle no longer moves when you scroll.", "El tirador del menú lateral ya no cambia de lugar al desplazarte."],
-    ["Fotos aparecem no chat sem a moldura do balão, e a FarmacIA responde quando você só envia mídia.", "Photos show in the chat without the bubble frame, and FarmacIA replies when you send only media.", "Las fotos aparecen en el chat sin el marco del globo, y FarmacIA responde cuando solo envías medios."]
+    ["Fotos aparecem no chat sem a moldura do balão, e a FarmacIA responde quando você só envia mídia.", "Photos show in the chat without the bubble frame, and FarmacIA replies when you send only media.", "Las fotos aparecen en el chat sin el marco del globo, y FarmacIA responde cuando solo envías medios."],
+    ["Conversas anteriores", "Previous chats", "Conversaciones anteriores"],
+    ["Suas conversas aparecem aqui.", "Your chats show up here.", "Tus conversaciones aparecen aquí."],
+    ["Gerenciar perfil", "Manage profile", "Gestionar perfil"],
+    ["Informar", "Enter", "Indicar"],
+    ["Apagar todos os dados", "Delete all data", "Borrar todos los datos"],
+    ["Remove tudo o que o site guardou neste aparelho.", "Removes everything the site stored on this device.", "Elimina todo lo que el sitio guardó en este dispositivo."],
+    ["Apagar todos os dados?", "Delete all data?", "¿Borrar todos los datos?"],
+    ["Isso apaga neste aparelho tudo o que o site guardou: perfil, foto, notas, grade, agenda, configurações, conversas e imagens da FarmacIA. Depois de apagar, não há como desfazer.", "This deletes everything the site stored on this device: profile, photo, notes, schedule, agenda, settings, chats and FarmacIA images. Once deleted, it can't be undone.", "Esto borra en este dispositivo todo lo que el sitio guardó: perfil, foto, notas, horario, agenda, ajustes, conversaciones e imágenes de FarmacIA. Una vez borrado, no se puede deshacer."],
+    ["Sim, apagar", "Yes, delete", "Sí, borrar"],
+    ["Menu lateral com histórico", "Side menu with history", "Menú lateral con historial"],
+    ["O histórico de conversas aparece no menu lateral da FarmacIA, abaixo de Biblioteca e Agenda. Toque no título para abrir a conversa.", "Your chat history now shows in the FarmacIA side menu, below Library and Agenda. Tap a title to open the chat.", "El historial de conversaciones aparece en el menú lateral de FarmacIA, bajo Biblioteca y Agenda. Toca un título para abrirla."],
+    ["Perfil e Nova conversa ficam num rodapé flutuante. Tocar no seu nome abre Meu perfil.", "Profile and New chat sit in a floating footer. Tapping your name opens My profile.", "Perfil y Nueva conversación están en un pie flotante. Tocar tu nombre abre Mi perfil."],
+    ["A Grade atual agora fica em Meu perfil, em Vida acadêmica.", "Current schedule now lives in My profile, under Academic life.", "El Horario actual ahora está en Mi perfil, en Vida académica."],
+    ["\"Limpar perfil\" virou \"Apagar todos os dados\": apaga tudo o que o site guardou neste aparelho, com confirmação.", "\"Clear profile\" became \"Delete all data\": it erases everything the site stored on this device, with confirmation.", "\"Limpiar perfil\" pasó a \"Borrar todos los datos\": borra todo lo que el sitio guardó en este dispositivo, con confirmación."],
+    ["O controle de tema claro/escuro saiu de Aparência.", "The light/dark theme control was removed from Appearance.", "El control de tema claro/oscuro salió de Apariencia."],
+    ["Os títulos das páginas de configurações subiram para o canto superior esquerdo.", "Settings page titles moved to the top-left corner.", "Los títulos de las páginas de ajustes subieron a la esquina superior izquierda."]
 ];
 
 // =====================================================================

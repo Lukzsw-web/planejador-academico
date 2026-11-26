@@ -93,7 +93,7 @@
   var telas = [];
   function pagina() { return doc.getElementById('modal-farmacia'); }
   function abrirTela(titulo, classe) {
-    var pg = pagina(); if (!pg) return null;
+    var pg = doc.body; if (!pg) return null;
     var el = mk('section', 'fmn-tela ' + (classe || ''), { role: 'dialog', 'aria-modal': 'true', 'aria-label': T(titulo) });
     var topo = mk('header', 'fmn-topo');
     var voltar = mk('button', 'fmn-voltar', { type: 'button', 'aria-label': T('Voltar'), title: T('Voltar') }); voltar.innerHTML = ico(I.voltar);
@@ -302,24 +302,60 @@
     var v = mk('span', 'fm-row-val'); if (valor) { var q = mk('span', 'fmn-badge'); q.textContent = valor; v.appendChild(q); } var ch = mk('span', 'fmn-chev'); ch.innerHTML = ico(I.chev); v.appendChild(ch); el.appendChild(v);
     el.addEventListener('click', aoClicar); return el;
   }
-  // Desenha o conteúdo "home" dentro do container do menu. hooks: { fechar, nova }
+  // Abre "Meu perfil" nas Configurações (o perfil mora lá).
+  function abrirPerfil() {
+    try {
+      if (typeof openModal === 'function') openModal('modal-settings');
+      if (typeof openSettingsView === 'function') openSettingsView('profile');
+    } catch (_) {}
+  }
+  function historico(hooks) {
+    var V = win.FarmaVisual, lista = V && V.historico ? V.historico.listar() : [];
+    var nav = mk('nav', 'fmn-hist', { 'aria-label': T('Conversas anteriores') });
+    if (!lista.length) { var v = mk('p', 'fmn-hist-vazio'); v.textContent = T('Suas conversas aparecem aqui.'); nav.appendChild(v); return nav; }
+    lista.forEach(function (c) {
+      var b = mk('button', 'fmn-hist-i', { type: 'button', title: c.titulo || '' });
+      b.textContent = c.titulo || T('Conversa');
+      b.addEventListener('click', function () { hooks.abrirConversa(c.id); });
+      nav.appendChild(b);
+    });
+    return nav;
+  }
+  // Desenha o conteúdo "home" dentro do container do menu. hooks: { fechar, nova, abrirConversa }
   function home(menu, hooks) {
     menu.textContent = '';
     menu.classList.add('is-home');
-    var nGrade = lerGrade().length;
-    menu.appendChild(linha(I.album, 'Biblioteca', function () { abrirBiblioteca(); }));
-    menu.appendChild(linha(I.agenda, 'Agenda', function () { hooks.fechar(); if (win.Notas && win.Notas.open) win.Notas.open(); }));
-    menu.appendChild(linha(I.grade, 'Grade atual', function () { abrirGrade(); }, nGrade ? String(nGrade) : ''));
+    var topo = mk('div', 'fmn-atalhos');
+    topo.appendChild(linha(I.album, 'Biblioteca', function () { abrirBiblioteca(); }));
+    topo.appendChild(linha(I.agenda, 'Agenda', function () { hooks.fechar(); if (win.Notas && win.Notas.open) win.Notas.open(); }));
+    menu.appendChild(topo);
+    menu.appendChild(mk('hr', 'fmn-div'));
+    menu.appendChild(historico(hooks));
     var rodape = mk('div', 'fmn-rodape');
-    var perfil = mk('div', 'fmn-perfil');
+    var perfil = mk('button', 'fmn-perfil', { type: 'button', 'aria-label': T('Gerenciar perfil') });
     var av = mk('span', 'fmn-avatar', { 'aria-hidden': 'true' }), f = foto();
     if (f) { av.style.backgroundImage = 'url("' + f + '")'; av.classList.add('has-foto'); } else av.innerHTML = '<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="36" r="15"></circle><path d="M17 88c2-17 14-26 31-26s29 9 31 26z"></path></svg>';
     var nm = mk('span', 'fmn-nome'); nm.textContent = nomeCurto() || T('Você');
     perfil.appendChild(av); perfil.appendChild(nm);
+    perfil.addEventListener('click', function () { hooks.fechar(); abrirPerfil(); });
     var nova = mk('button', 'fmn-nova', { type: 'button' }); nova.innerHTML = ico(I.mais) + '<span></span>'; nova.lastChild.textContent = T('Nova conversa');
     nova.addEventListener('click', hooks.nova);
     rodape.appendChild(perfil); rodape.appendChild(nova); menu.appendChild(rodape);
   }
+
+  /* Botão "Grade atual" em Meu perfil > Vida acadêmica */
+  function atualizarBotaoGrade() {
+    var v = doc.getElementById('profile-grade-val'); if (!v) return;
+    var n = lerGrade().length;
+    v.textContent = n ? n + ' ' + T(n === 1 ? 'disciplina' : 'disciplinas') : T('Informar');
+  }
+  function ligarBotaoGrade() {
+    var b = doc.getElementById('profile-grade-btn');
+    if (b && !b.getAttribute('data-fmn')) { b.setAttribute('data-fmn', '1'); b.addEventListener('click', function (e) { e.preventDefault(); abrirGrade(); }); }
+    atualizarBotaoGrade();
+  }
+  win.addEventListener('planejador:grade-atual', atualizarBotaoGrade);
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligarBotaoGrade); else ligarBotaoGrade();
 
   win.FarmaMenu = { home: home, dados: dados, Midia: Midia, abrirBiblioteca: abrirBiblioteca, abrirGrade: abrirGrade, fecharTudo: fecharTudo, icones: I };
 })();

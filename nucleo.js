@@ -537,7 +537,7 @@ function handleActionClick(event) {
     case 'settings-open': openSettingsView(el.dataset.value); break;
     case 'settings-back': closeSettingsView(); break;
     case 'set-shift': window.UserProfile.set({ shift: el.dataset.value }); break;
-    case 'profile-clear': openConfirmationModal({ title: T('Limpar perfil?'), message: T('Nome, pronomes, período e turno salvos neste aparelho serão apagados.'), confirmText: T('Limpar'), cancelText: T('Cancelar'), onConfirm: () => { userProfile = { name: '', pronoun: '', pronounText: '', period: '', shift: '' }; saveUserProfile(); updateProfileUI(); } }); break;
+    case 'profile-clear': openConfirmationModal({ title: T('Apagar todos os dados?'), message: T('Isso apaga neste aparelho tudo o que o site guardou: perfil, foto, notas, grade, agenda, configurações, conversas e imagens da FarmacIA. Depois de apagar, não há como desfazer.'), confirmText: T('Sim, apagar'), cancelText: T('Não'), onConfirm: wipeAllSiteData }); break;
     case 'theme-color': pickThemeColor(el.dataset.value); break;
     case 'toggle-no-anim': setNoAnim(!animationsOff()); break;
     case 'toggle-fixed-search': setFixedSearch(!getFixedSearchOn()); break;
@@ -795,3 +795,23 @@ function restoreScrollState() {
   }, { once: true });
 })();
   
+
+
+// Apaga todos os dados do site neste aparelho (localStorage, sessionStorage e bancos IndexedDB) e recarrega.
+// O cache do aplicativo (que permite abrir offline) é mantido: não são dados do usuário.
+async function wipeAllSiteData() {
+  try { sessionStorage.clear(); } catch (_) {}
+  try { localStorage.clear(); } catch (_) {}
+  try {
+    if (indexedDB && indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      await Promise.all((dbs || []).map(d => new Promise(res => {
+        if (!d || !d.name) return res();
+        const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = () => res();
+      })));
+    } else {
+      await new Promise(res => { const r = indexedDB.deleteDatabase('planejador_farmacia_midia_v1'); r.onsuccess = r.onerror = r.onblocked = () => res(); });
+    }
+  } catch (_) {}
+  window.location.reload();
+}

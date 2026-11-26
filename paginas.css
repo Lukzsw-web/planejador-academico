@@ -1080,3 +1080,6 @@ html #home-page #search-wrapper + div { min-height: 1.5rem; margin-bottom: .0rem
 
 /* Balão da tag do menu lateral: sem sombra e sem desfoque */
 html .nav-bubble { box-shadow: none !important; filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; text-shadow: none !important; }
+
+/* v0.7.2: títulos "< Aparência", "< Acessibilidade"... sobem para o canto superior esquerdo, à mesma altura do "< Voltar" do perfil */
+#modal-settings .settings-view:not(.is-profile) .settings-subheader { margin-top: calc(max(.7rem, env(safe-area-inset-top)) - var(--sp-t, 1.35rem)); padding-top: 0; }

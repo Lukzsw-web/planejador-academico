@@ -495,7 +495,7 @@ function updateProfileUI() {
     btn.setAttribute('aria-checked', on ? 'true' : 'false'); btn.classList.toggle('is-selected', on);
   });
   const clear = document.getElementById('profile-clear');
-  if (clear) clear.disabled = !userProfile.name && !userProfile.pronounText && !userProfile.period && !userProfile.shift;
+  if (clear) clear.disabled = false;   // apaga todos os dados do site: sempre disponível
   const heroName = userProfile.name || T('Sem nome');
   ['profile-hero-label', 'profile-mini-name'].forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = heroName; el.classList.toggle('is-empty', !userProfile.name); } });
   const cap = document.getElementById('profile-caption');
