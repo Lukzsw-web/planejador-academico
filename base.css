@@ -2742,7 +2742,7 @@ html.no-anim .nav-drawer, html.no-anim .nav-scrim { transition: none; }
 /* Alça lateral: aba presa à borda esquerda, perto do meio da altura. A parte visível é estreita; a área de
    toque é maior (34 x 112 px) e fica só nela. touch-action:none vale somente aqui. */
 .nav-handle {
-  position: fixed; z-index: 85; left: 0; top: 50%; width: 34px; height: 112px; margin: -56px 0 0; padding: 0; border: 0;
+  position: fixed; z-index: 85; left: 0; top: var(--nav-handle-top, 50%); width: 34px; height: 112px; margin: -56px 0 0; padding: 0; border: 0;
   background: transparent; color: #24564b; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent;
   user-select: none; -webkit-user-select: none; transition: opacity .18s ease;
 }

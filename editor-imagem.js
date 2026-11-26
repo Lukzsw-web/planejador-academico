@@ -72,17 +72,20 @@
   function girar90(c) {
     var n = canvas(c.height, c.width), x = n.getContext('2d');
     x.translate(0, n.height); x.rotate(-Math.PI / 2); x.drawImage(c, 0, 0);
+    x.setTransform(1, 0, 0, 1, 0, 0);   // o contexto guarda a transformação: sem isto, o desenho seguinte saía girado/espelhado
     return n;
   }
   function espelhar(c, horizontal) {
     var n = canvas(c.width, c.height), x = n.getContext('2d');
     if (horizontal) { x.translate(n.width, 0); x.scale(-1, 1); } else { x.translate(0, n.height); x.scale(1, -1); }
     x.drawImage(c, 0, 0);
+    x.setTransform(1, 0, 0, 1, 0, 0);   // o contexto guarda a transformação: sem isto, o desenho seguinte saía girado/espelhado
     return n;
   }
   function girar90dir(c) {
     var n = canvas(c.height, c.width), x = n.getContext('2d');
     x.translate(n.width, 0); x.rotate(Math.PI / 2); x.drawImage(c, 0, 0);
+    x.setTransform(1, 0, 0, 1, 0, 0);   // o contexto guarda a transformação: sem isto, o desenho seguinte saía girado/espelhado
     return n;
   }
   function hsv(h, s, v) {

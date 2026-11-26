@@ -2255,14 +2255,21 @@
     return atual;
   }
   V.novaConversa = function () { atual = null; };
-  V.registrarUsuario = function (texto) {
-    var c = garantirConversa(texto); c.msgs.push({ r: 'u', t: limitar(texto, 2000) }); c.chips = [];
+  V.registrarUsuario = function (texto, extra) {
+    var c = garantirConversa(texto), m = { r: 'u', t: limitar(extra && extra.semTexto ? '' : texto, 2000) };
+    if (extra && extra.imgs && extra.imgs.length) m.i = extra.imgs.slice(0, 10);   // ids das imagens na Biblioteca
+    if (extra && extra.midia) m.md = 1;
+    c.msgs.push(m); c.chips = [];
     // respostas de apresentação ("Prefiro não dizer", "Ele"...) não servem de título: usa a primeira pergunta de verdade
     var banal = /^(prefiro n[aã]o dizer|pular|ele|ela|neutro|sim|n[aã]o)$/i;
     if (banal.test(c.titulo) && !banal.test(String(texto).trim()) && c.msgs.length > 1) c.titulo = limitar(String(texto).replace(/\s+/g, ' ').trim(), 56);
     if (c.msgs.length > MAX_MSG) c.msgs.splice(0, c.msgs.length - MAX_MSG);
     c.atualizado = Date.now(); salvarHist();
   };
+  V.conversaAtualId = function () { return atual ? atual.id : ''; };
+  // quantas mensagens da conversa atual trouxeram imagem (a que acabou de ser registrada inclusive)
+  V.contarMidias = function () { return atual ? atual.msgs.filter(function (m) { return m.r === 'u' && m.md; }).length : 0; };
+  V.fecharMenu = function () { fecharMenu(false); };
   V.registrarResposta = function (html, chips) {
     if (!atual) return;
     var m = { r: 'b' }, h0 = String(html || '');
@@ -2354,9 +2361,16 @@
   function focarPrimeiro() { var f = menu.querySelector('button:not([disabled])'); if (f) f.focus({ preventScroll: true }); }
   function desenharMenu(foco) {
     while (menu.firstChild) menu.removeChild(menu.firstChild);
-    if (vista === 'raiz') {
-      menu.setAttribute('aria-label', tx('Opções da FarmacIA'));
-      var cap = h('div', 'fm-menu-cap', 'Opções da FarmacIA'); cap.setAttribute('role', 'presentation'); menu.appendChild(cap);
+    menu.classList.toggle('is-home', vista === 'home');
+    if (vista === 'home') {
+      menu.setAttribute('aria-label', tx('Menu da FarmacIA'));
+      window.FarmaMenu.home(menu, { fechar: function () { fecharMenu(false); }, nova: function () { fecharMenu(false); var r = doc.getElementById('farma-reset'); if (r) r.click(); } });
+    } else if (vista === 'raiz') {
+      menu.setAttribute('aria-label', tx('Configurações da FarmacIA'));
+      if (window.FarmaMenu) {
+        var capTopo = h('div', 'fm-sub-head'), capVolta = h('button', 'fm-back'); capVolta.type = 'button'; capVolta.setAttribute('aria-label', tx('Voltar ao menu')); capVolta.appendChild(ico('back'));
+        capVolta.addEventListener('click', function () { vista = 'home'; desenharMenu(true); }); capTopo.appendChild(capVolta); capTopo.appendChild(h('strong', null, tx('Configurações'))); menu.appendChild(capTopo);
+      } else { var cap = h('div', 'fm-menu-cap', 'Opções da FarmacIA'); cap.setAttribute('role', 'presentation'); menu.appendChild(cap); }
       var tema = TEMAS.filter(function (t) { return t.id === prefs.tema; })[0] || TEMAS[0], sw = h('span', 'fm-row-sw'); sw.appendChild(h('i', 'fm-swatch')); sw.firstChild.style.background = tema.cor; sw.appendChild(doc.createTextNode(tema.nome));
       menu.appendChild(linhaMenu('size', 'Tamanho da fonte', null, nomeDe(TAMANHOS, prefs.tamanho), function () { vista = 'tamanho'; desenharMenu(true); }));
       menu.appendChild(linhaMenu('theme', 'Tema', null, sw, TEMAS.length > 1 ? function () { vista = 'tema'; desenharMenu(true); } : null));
@@ -2422,7 +2436,7 @@
     menu.appendChild(box);
   }
   function abrirMenu() {
-    if (!menu) return; vista = 'raiz'; desenharMenu(false); menu.hidden = false; btnMenu.setAttribute('aria-expanded', 'true'); mostrarPainel(true); focarPrimeiro();
+    if (!menu) return; vista = window.FarmaMenu ? 'home' : 'raiz'; desenharMenu(false); menu.hidden = false; btnMenu.setAttribute('aria-expanded', 'true'); mostrarPainel(true); focarPrimeiro();
   }
 
   var hist = null, histLista = null, histBusca = null, histLive = null, histSoFav = false, histFavBtn = null, histLimparBtn = null, histLimparTimer = 0;
@@ -2510,11 +2524,12 @@
     var live = h('span', 'fm-sr fm-live'); live.setAttribute('aria-live', 'polite'); drawer.appendChild(live);
     btnMenu.addEventListener('click', function (e) { e.stopPropagation(); if (menu.hidden) abrirMenu(); else fecharMenu(true); });
     var fechar = doc.getElementById('farma-drawer-x'); if (fechar) fechar.addEventListener('click', function () { fecharMenu(true); });
+    var cfg = doc.getElementById('farma-drawer-cfg'); if (cfg) cfg.addEventListener('click', function () { vista = 'raiz'; desenharMenu(true); });
     // composedPath() é calculado no disparo do clique: continua valendo mesmo quando o item tocado já foi redesenhado (troca de subtela).
     doc.addEventListener('click', function (e) {
       if (menu.hidden) return;
       var rota = e.composedPath ? e.composedPath() : [];
-      if (rota.indexOf(drawerPanel) < 0 && rota.indexOf(btnMenu) < 0) fecharMenu(false);
+      if (rota.indexOf(drawerPanel) < 0 && rota.indexOf(btnMenu) < 0 && !rota.some(function (n) { return n.classList && (n.classList.contains('fmn-tela') || n.classList.contains('fmn-vis')); })) fecharMenu(false);
     });
     // Deslizar o painel para a esquerda fecha (abrir é pelo botão ☰).
     var gx = null, gy = null;

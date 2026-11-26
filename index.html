@@ -554,8 +554,11 @@
       <div class="farma-drawer-scrim" data-farma-drawer-close></div>
       <aside id="farma-drawer-panel" class="farma-drawer-panel" role="dialog" aria-modal="true" aria-label="Opções da FarmacIA">
         <div class="farma-drawer-head">
-          <span class="farma-drawer-brand" data-no-i18n><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#farma-hygieia"></use></svg><span>Farmac<span class="farma-title-ia">IA</span></span></span>
-          <button type="button" id="farma-drawer-x" class="farma-drawer-x" aria-label="Fechar menu" title="Fechar">
+          <span class="farma-drawer-brand" data-no-i18n>Farmac<span class="farma-title-ia">IA</span></span>
+          <button type="button" id="farma-drawer-cfg" class="farma-drawer-x farma-drawer-cfg" aria-label="Configurações da FarmacIA" title="Configurações">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <button type="button" id="farma-drawer-x" class="farma-drawer-x" aria-label="Fechar menu" title="Fechar" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
           </button>
         </div>
@@ -899,7 +902,8 @@
       <section class="settings-section" aria-labelledby="settings-notes-title">
         <h3 id="settings-notes-title" class="settings-section-title">Novidades desta versão</h3>
         <div class="settings-card release-notes">
-          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Envio de imagens e correções no editor</h4><ul class="release-list"><li>Agora dá para enviar uma imagem no chat da FarmacIA, mesmo sem texto. Enquanto ela pensa, o botão de enviar vira um quadradinho: toque para parar na hora.</li><li>O "+" e o botão de enviar aparecem assim que você toca na caixa de texto.</li><li>No editor, o desenho e a borracha foram corrigidos e o corte virou um modo próprio. O botão Girar abre um menu (esquerda, direita, horizontal, vertical) e o X vira seta de voltar.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Novo</span><h4 class="release-title">Novo menu lateral da FarmacIA</h4><ul class="release-list"><li>Biblioteca: todas as imagens que você enviou para a FarmacIA ficam guardadas só neste aparelho. Toque numa imagem para ver em tela cheia, localizar na conversa, compartilhar ou baixar.</li><li>Atalho para a Agenda e a nova Grade atual: informe as disciplinas que está cursando e a FarmacIA passa a conhecê-las.</li><li>As configurações da FarmacIA agora ficam na engrenagem do menu. Nova conversa e seu perfil ficam no rodapé.</li></ul></div>
+          <div class="release-group"><span class="release-tag">Ajuste</span><h4 class="release-title">Correções</h4><ul class="release-list"><li>No editor de imagem, o desenho não sai mais de lado depois de girar a foto.</li><li>A alça lateral do menu não muda mais de lugar quando você rola a tela.</li><li>Fotos aparecem no chat sem a moldura do balão, e a FarmacIA responde quando você só envia mídia.</li></ul></div>
         </div>
       </section>
       </div>
@@ -988,6 +992,7 @@
   <script src="farmacia-cardapio.js?v=20261123-2"></script>
   <script src="editor-imagem.js"></script>
   <script src="farmacia-barra.js"></script>
+  <script src="farmacia-menu.js"></script>
   <script src="comunicados.js"></script>
   <script src="notas-janelas.js"></script>
 

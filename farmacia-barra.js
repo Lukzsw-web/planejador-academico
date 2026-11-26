@@ -140,7 +140,7 @@
     // Quem implementar uma opção (ex.: conversor de PDF) escuta este evento, marca det.tratado = true e responde
     // com FarmacIA.adicionarResposta(html). Sem isso a FarmacIA responde só o texto.
     try { doc.dispatchEvent(new CustomEvent('farma:enviar', { detail: det })); } catch (_) {}
-    var vista = anexos.map(function (a) { return { url: a.url, nome: a.nome, imagem: a.imagem }; });   // as miniaturas passam para o chat
+    var vista = anexos.map(function (a) { return { url: a.url, nome: a.nome, imagem: a.imagem, arquivo: a.arquivo }; });   // as miniaturas passam para o chat
     estado.anexos = []; estado.opcao = null; desenharAnexos();
     input.value = '';
     if (win.FarmacIA) win.FarmacIA.ask(texto, null, { anexos: vista, opcao: det.opcao, tratado: det.tratado });

@@ -765,6 +765,18 @@ function initNavHandle() {
   const { handle } = navDrawerEls();
   if (!handle || handle.dataset.navBound) return;
   handle.dataset.navBound = '1';
+  // Posição vertical fixa em pixels: com "top: 50%" a alça acompanhava a barra de endereço do navegador
+  // (a altura da janela muda ao rolar) e parecia se teletransportar. Só recalcula se a largura mudar (girar o aparelho).
+  let hLarg = -1;
+  const fixarAlca = () => {
+    const w = window.innerWidth;
+    if (w === hLarg) return;
+    hLarg = w;
+    document.documentElement.style.setProperty('--nav-handle-top', Math.round(window.innerHeight / 2) + 'px');
+  };
+  fixarAlca();
+  window.addEventListener('resize', fixarAlca, { passive: true });
+  window.addEventListener('orientationchange', () => { hLarg = -1; window.setTimeout(fixarAlca, 250); });
   let g = null;
   handle.addEventListener('pointerdown', event => {
     if (navDrawerOpen || g || (event.pointerType === 'mouse' && event.button !== 0)) return;

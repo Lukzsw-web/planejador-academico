@@ -1103,3 +1103,83 @@ html #modal-farmacia .farma-composer .farma-send.is-stop:disabled { opacity: 1; 
 .fed-item:focus-visible { outline: 2px solid var(--ed-acc); outline-offset: 2px; }
 .fed-corte .fed-item { flex-direction: row; gap: .6rem; padding: .75rem 1rem; }
 .fed-corte .fed-item svg { width: 22px; height: 22px; }
+
+/* ---------- v0.7.1: menu lateral (Biblioteca, Agenda, Grade atual), telas, tags, imagens no chat ---------- */
+.farma-drawer-x[hidden] { display: none; }
+.farma-drawer-cfg svg { width: 24px; height: 24px; }
+#farma-drawer-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.fm-menu.is-home:not([hidden]) { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.fmn-row .fm-row-ico svg { width: 24px; height: 24px; }
+.fmn-row strong { font-size: 1.02rem; font-weight: 700; }
+.fmn-row .fm-row-val { display: inline-flex; align-items: center; gap: .5rem; color: var(--fa-ink-2); }
+.fmn-chev svg { width: 18px; height: 18px; display: block; }
+.fmn-badge { min-width: 24px; height: 24px; padding: 0 .45rem; display: inline-grid; place-items: center; border-radius: 8px; background: var(--fa-press); color: var(--fa-ink); font-size: .8rem; font-weight: 700; }
+.fmn-rodape { margin-top: auto; padding-top: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.fmn-perfil { min-width: 0; display: flex; align-items: center; gap: .55rem; padding: .3rem .8rem .3rem .3rem; border-radius: 12px; background: var(--fa-field); color: var(--fa-ink); }
+.fmn-avatar { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--fa-press) center / cover no-repeat; }
+.fmn-avatar svg { width: 100%; height: 100%; fill: var(--fa-ink-2); opacity: .8; }
+.fmn-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; font-weight: 700; }
+.fmn-nova { flex: 0 0 auto; height: 44px; display: inline-flex; align-items: center; gap: .4rem; padding: 0 1rem 0 .8rem; border: 0; border-radius: 12px; background: var(--fa-mark); color: #fff; font: inherit; font-size: .95rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html.dark .fmn-nova { color: #08130d; }
+.fmn-nova svg { width: 20px; height: 20px; }
+.fmn-nova:active { transform: scale(.97); }
+.fmn-nova:focus-visible, .fmn-voltar:focus-visible, .fmn-thumb:focus-visible, .fmn-fim:focus-visible, .fmn-in:focus-visible, .fmn-sug-i:focus-visible, .fmn-tag-x:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
+html.farma-tela-on .bottom-liquid-nav { opacity: 0; pointer-events: none; transform: translate(-50%, 24px) !important; }
+
+/* telas sobrepostas */
+.fmn-tela { position: absolute; inset: 0; z-index: 70; display: flex; flex-direction: column; background: var(--fa-bg); color: var(--fa-ink); padding-top: env(safe-area-inset-top, 0px); }
+.fmn-topo { flex: 0 0 auto; display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; min-height: 60px; padding: 0 .4rem; }
+.fmn-voltar { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--fa-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fmn-voltar svg { width: 26px; height: 26px; }
+.fmn-voltar:active { background: var(--fa-field); }
+.fmn-titulo { margin: 0; text-align: center; font-size: 1.1rem; font-weight: 700; color: var(--fa-ink); }
+.fmn-corpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .5rem 1rem 1.2rem; }
+.fmn-corpo, .fmn-corpo * { touch-action: pan-y; }
+
+/* biblioteca */
+.fmn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.fmn-thumb { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 8px; overflow: hidden; background: var(--fa-field); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fmn-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.fmn-thumb:active { opacity: .8; }
+.fmn-vazio { display: grid; gap: .35rem; justify-items: center; text-align: center; padding: 20vh 1.5rem 0; color: var(--fa-ink-2); }
+.fmn-vazio[hidden] { display: none; }
+.fmn-vazio strong { color: var(--fa-ink); font-size: 1.05rem; }
+.fmn-vazio span { max-width: 22rem; font-size: .92rem; line-height: 1.4; }
+.fmn-vis-img { position: absolute; left: 12px; top: 12px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: contain; display: block; touch-action: none; }
+.fmn-vis .fed-top { grid-template-columns: 56px 1fr 56px; }
+
+/* grade atual */
+.fmn-campo { position: relative; display: grid; gap: .5rem; }
+.fmn-lab { font-size: .9rem; font-weight: 700; color: var(--fa-ink-2); }
+.fmn-in { width: 100%; height: 54px; padding: 0 1rem; border: 1px solid var(--fa-rule); border-radius: 12px; background: var(--fa-field); color: var(--fa-ink); font: inherit; font-size: 1rem; }
+.fmn-in::placeholder { color: var(--fa-placeholder); }
+.fmn-sug { position: relative; margin-top: .4rem; padding: .35rem; border: 1px solid var(--fa-rule); border-radius: 12px; background: var(--fa-panel); }
+.fmn-sug[hidden] { display: none; }
+.fmn-sug::before { content: ""; position: absolute; left: 22px; top: -7px; width: 12px; height: 12px; background: var(--fa-panel); border-left: 1px solid var(--fa-rule); border-top: 1px solid var(--fa-rule); transform: rotate(45deg); border-top-left-radius: 3px; }
+.fmn-sug-i { position: relative; width: 100%; display: grid; gap: .1rem; padding: .6rem .7rem; border: 0; border-radius: 8px; background: transparent; color: var(--fa-ink); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fmn-sug-i strong { font-size: .98rem; font-weight: 700; line-height: 1.25; }
+.fmn-sug-i small { color: var(--fa-ink-2); font-size: .8rem; }
+.fmn-sug-i.is-on, .fmn-sug-i:active { background: var(--fa-press); }
+.fmn-cont { margin: 1rem 0 .6rem; font-size: .88rem; font-weight: 600; color: var(--fa-ink-2); }
+.fmn-tags { display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: 5.5rem; }
+.fmn-tag { display: inline-flex; align-items: center; gap: .5rem; max-width: 100%; padding: .4rem .35rem .4rem .75rem; border-radius: 10px; font-size: .92rem; font-weight: 700; line-height: 1.25; }
+.fmn-tag-n { min-width: 0; overflow-wrap: anywhere; }
+.fmn-tag-c { font-size: .72rem; font-weight: 700; opacity: .72; letter-spacing: .02em; }
+.fmn-tag-x { flex: 0 0 auto; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: rgba(0, 0, 0, .08); color: inherit; cursor: pointer; }
+.fmn-tag-x svg { width: 14px; height: 14px; }
+html.dark .fmn-tag-x { background: rgba(255, 255, 255, .12); }
+.fmn-c0 { background: #D3F0DA; color: #14532d; } .fmn-c1 { background: #D6E8FB; color: #17426b; } .fmn-c2 { background: #F8E6BE; color: #6b4510; }
+.fmn-c3 { background: #F9D9DF; color: #7a1f33; } .fmn-c4 { background: #E4DCF7; color: #43307a; } .fmn-c5 { background: #CFEFEA; color: #0f4f49; }
+html.dark .fmn-c0 { background: #1f4a31; color: #bfeacb; } html.dark .fmn-c1 { background: #1d3a5a; color: #bcd9f6; } html.dark .fmn-c2 { background: #54401a; color: #f1dba5; }
+html.dark .fmn-c3 { background: #5a2631; color: #f4c3cc; } html.dark .fmn-c4 { background: #3b2f66; color: #d8cdf5; } html.dark .fmn-c5 { background: #164b45; color: #b9ebe4; }
+.fmn-fim { position: absolute; left: 1rem; right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); height: 54px; border: 0; border-radius: 12px; background: var(--fa-mark); color: #fff; font: inherit; font-size: 1.02rem; font-weight: 700; cursor: pointer; }
+html.dark .fmn-fim { color: #08130d; }
+
+/* imagens no chat: a foto sozinha, sem a moldura do balão; o texto vem num balão logo abaixo */
+#modal-farmacia .farma-msg.is-user.has-midia { flex-direction: column; align-items: flex-end; gap: .35rem; }
+#modal-farmacia .farma-msg-anexos { margin: 0; }
+#modal-farmacia .farma-msg-img { max-width: min(260px, 70vw); max-height: 320px; width: auto; height: auto; border-radius: 12px; object-fit: cover; background: var(--fa-field); }
+#modal-farmacia .farma-msg-img.is-missing { min-width: 120px; min-height: 120px; }
+#modal-farmacia .farma-msg.is-achada .farma-msg-img, #modal-farmacia .farma-msg.is-user.is-achada .farma-msg-img { outline: 3px solid var(--fa-mark); outline-offset: 3px; }
+#modal-farmacia .farma-msg.is-achada .farma-msg-img { transition: outline-color .4s ease; }
+.farma-drawer-brand { display: block; }

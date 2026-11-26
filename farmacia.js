@@ -1785,8 +1785,36 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     if (!text) return null;
     var res = null;
     if (awaiting) res = handleAwaiting(text);
+    if (!res) res = respostaPessoal(text);
     if (!res) res = answerText(text);
     return res;
+  }
+  // Perguntas sobre "minha grade" e "minha agenda": respondidas só com o que o aluno guardou neste aparelho.
+  function respostaPessoal(text) {
+    var MN = window.FarmaMenu; if (!MN || !MN.dados) return null;
+    var t = norm(text);
+    var grade = /\b(minha|a minha)\b.{0,20}\bgrade\b.{0,12}\batual\b|\bgrade atual\b|o que (eu )?(estou|to) cursando|(quais|que) (materias|disciplinas) (eu )?(estou|to) (cursando|fazendo)|(minhas|as minhas) (materias|disciplinas) (atuais|deste periodo|desse periodo)/.test(t);
+    var agenda = /\b(minha|minhas|meu|meus)\b.{0,18}\b(agenda|anotacao|anotacoes|notas de estudo)\b|\bo que (eu )?(anotei|tenho anotado)\b/.test(t);
+    if (!grade && !agenda) return null;
+    var d = MN.dados(), out = '', chips = [];
+    if (grade) {
+      if (!d.grade.length) out += p('Você ainda não informou a sua grade atual. Abra o menu lateral (os três risquinhos), toque em <strong>Grade atual</strong> e escolha as disciplinas que está cursando.');
+      else {
+        var cred = d.grade.reduce(function (s, x) { return s + (x.cred || 0); }, 0), ch = d.grade.reduce(function (s, x) { return s + (x.ch || 0); }, 0);
+        out += p('Pelo que você informou, a sua grade atual tem <strong>' + d.grade.length + (d.grade.length === 1 ? ' disciplina' : ' disciplinas') + '</strong> (' + cred + ' créditos, ' + ch + ' h):') +
+          ul(d.grade.map(function (x) { return esc(x.nome) + ' <small>(' + esc(x.codigo) + ')</small>'; }));
+      }
+    }
+    if (agenda) {
+      if (!d.notas.length) out += p('Você ainda não tem anotações na Agenda.');
+      else {
+        var tops = d.notas.slice(0, 5);
+        out += p('Você tem <strong>' + d.notas.length + (d.notas.length === 1 ? ' anotação' : ' anotações') + '</strong> na Agenda' + (d.notas.length > tops.length ? '; as primeiras:' : ':')) +
+          ul(tops.map(function (n) { var tx = n.titulo || n.texto; return esc(tx.length > 90 ? tx.slice(0, 90) + '…' : tx); }));
+      }
+    }
+    out += '<p class="farma-source">' + esc('Isso vem só do que está guardado neste aparelho; não é enviado a ninguém.') + '</p>';
+    return R(out, chips);
   }
 
   // ---------- interface ----------
@@ -1835,19 +1863,35 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
   function anexosHTML(anexos) {
     if (!anexos || !anexos.length) return '';
     return '<div class="farma-msg-anexos">' + anexos.map(function (a) {
-      return a.imagem && a.url
-        ? '<img class="farma-msg-img" src="' + esc(a.url) + '" alt="' + esc(a.nome || tr('Imagem')) + '">'
+      return a.imagem && (a.url || a.midiaId)
+        ? '<img class="farma-msg-img"' + (a.url ? ' src="' + esc(a.url) + '"' : '') + (a.midiaId ? ' data-lib="' + esc(a.midiaId) + '"' : '') + ' alt="' + esc(a.nome || tr('Imagem')) + '">'
         : '<span class="farma-msg-arq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg><span>' + esc(a.nome || tr('Arquivo')) + '</span></span>';
     }).join('') + '</div>';
   }
   function addUser(text, anexos) {
     var el = messagesEl();
     var div = document.createElement('div');
-    div.className = 'farma-msg is-user';
-    div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + anexosHTML(anexos) + (text ? '<span class="farma-user-txt">' + esc(text) + '</span>' : '') + '</div>';
+    var tem = !!(anexos && anexos.length);
+    div.className = 'farma-msg is-user' + (tem ? ' has-midia' : '');
+    var bolha = text ? '<div class="farma-bubble" data-no-i18n><span class="farma-user-txt">' + esc(text) + '</span></div>' : '';
+    div.innerHTML = tem ? anexosHTML(anexos) + bolha : '<div class="farma-bubble" data-no-i18n>' + esc(text) + '</div>';
+    var ids = (anexos || []).filter(function (a) { return a.midiaId; }).map(function (a) { return a.midiaId; });
+    if (ids.length) div.setAttribute('data-mid', ids.join(' '));
     el.appendChild(div);
     syncEmpty();
     scrollDown();
+  }
+  // Respostas da FarmacIA quando alguém manda só mídia (sem texto): a n-ésima mídia da conversa escolhe a fala.
+  var FALAS_MIDIA = [
+    'Oi!\nAinda não posso ler mídias, mas você pode deixar suas fotos guardadas aqui se quiser. Os dados daqui não são compartilhados com ninguém, fica tudo no seu celular!\nQualquer coisa, vai avisando viu. beijinhos da farmacy',
+    'oi entao eu ainda nao posso ler midia ok, mas guarda aí se quiser',
+    'vish gostou mesmo de guardar coisa aqui hein',
+    'Lindo você me usando pra guardar coisa',
+    'Oi! Eu não posso ler mídias mas fica a vontade pra ir mandando mais coisas pra deixar guardado, pra achar depois é só ir no menu lateral clicando nos três risquinhos ali no canto superior esquerdo!\nBeijinhos da farmacy'
+  ];
+  function falaMidia(n) {
+    var t = FALAS_MIDIA[Math.min(Math.max(n, 1), FALAS_MIDIA.length) - 1];
+    return t.split('\n').map(function (l) { return p(esc(l)); }).join('');
   }
   function addBot(html, extraClass) {
     var el = messagesEl();
@@ -1908,8 +1952,17 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     busy = true; avisarOcupado();
     var meu = ++runId;
     var rotulo = display || q || (anexos.some(function (a) { return a.imagem; }) ? tr('Imagem anexada') : tr('Arquivo anexado'));
+    var MN = window.FarmaMenu;
+    anexos.forEach(function (a) { if (a.imagem && a.arquivo && MN) a.midiaId = MN.Midia.novoId(); });
     addUser(display || q, anexos);
-    if (window.FarmaVisual) window.FarmaVisual.registrarUsuario(rotulo);
+    var nMidias = 0;
+    if (window.FarmaVisual) {
+      var VZa = window.FarmaVisual;
+      VZa.registrarUsuario(rotulo, anexos.length ? { semTexto: !(display || q), midia: true, imgs: anexos.filter(function (a) { return a.midiaId; }).map(function (a) { return a.midiaId; }) } : null);
+      nMidias = VZa.contarMidias ? VZa.contarMidias() : 0;
+      var cid = VZa.conversaAtualId ? VZa.conversaAtualId() : '';
+      anexos.forEach(function (a) { if (a.midiaId) MN.Midia.salvar(a.midiaId, a.arquivo, { convId: cid, nome: a.nome }); });
+    }
     setChips([]);
     var typing = typingAtual = addBot('<span class="farma-typing" aria-label="FarmacIA está digitando"><i></i><i></i><i></i></span>', 'is-typing');
     var delay = reduceMotion() ? 0 : 380;
@@ -1926,7 +1979,8 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       };
       if (!q) {   // só anexos, sem texto: não há pergunta para o motor responder
         if (opts && opts.tratado) { typing.remove(); typingAtual = null; busy = false; avisarOcupado(); return; }
-        finishNota(R(p(esc(tr('Recebi o anexo.'))), []));
+        nota = '';
+        finishNota(R(falaMidia(nMidias || 1), []));
         return;
       }
       var res;
@@ -1978,8 +2032,18 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     (conv.msgs || []).forEach(function (m) {
       var div = document.createElement('div');
       if (m.r === 'u') {
-        div.className = 'farma-msg is-user';
-        div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + esc(m.t || '') + '</div>';
+        if (m.md || (m.i && m.i.length)) {
+          var anx = (m.i && m.i.length) ? m.i.map(function (id) { return { imagem: true, midiaId: id, nome: tr('Imagem') }; }) : [{ imagem: false, nome: tr('Arquivo anexado') }];
+          div.className = 'farma-msg is-user has-midia';
+          div.innerHTML = anexosHTML(anx) + (m.t ? '<div class="farma-bubble" data-no-i18n><span class="farma-user-txt">' + esc(m.t) + '</span></div>' : '');
+          if (m.i && m.i.length) div.setAttribute('data-mid', m.i.join(' '));
+          if (window.FarmaMenu) Array.prototype.forEach.call(div.querySelectorAll('img[data-lib]'), function (im) {
+            window.FarmaMenu.Midia.url(im.getAttribute('data-lib')).then(function (u) { if (u) im.src = u; else im.classList.add('is-missing'); });
+          });
+        } else {
+          div.className = 'farma-msg is-user';
+          div.innerHTML = '<div class="farma-bubble" data-no-i18n>' + esc(m.t || '') + '</div>';
+        }
       } else {
         div.className = 'farma-msg is-bot';
         var safe = VZ ? VZ.htmlSeguro(m.h || ('<p>' + esc(m.t || '') + '</p>')) : '<p>' + esc(m.t || '') + '</p>';
