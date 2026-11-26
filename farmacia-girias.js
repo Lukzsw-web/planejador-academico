@@ -1,158 +1,590 @@
-/*
 
-· FarmácIA — Vocabulário de linguagem informal brasileira
-· Arquivo independente. Não altera nem substitui farmacia.js ou farmacia-ia.js.
-· 
-· API global: window.FarmaGirias
-· FarmaGirias.normalizar(texto)
-· FarmaGirias.interpretar(texto) -> { original, normalizado, termos, sinais }
-· FarmaGirias.buscar(texto) -> array de correspondências
-· 
-· Integração: carregue este arquivo depois dos scripts-base da FarmácIA.
-· A aplicação precisa chamar FarmaGirias.interpretar(mensagem) no fluxo de entrada
-· para que o vocabulário seja efetivamente utilizado.
-  */
-  (function (root) {
+/*
+ * FarmácIA — Interpretador linguístico complementar
+ * FarmaGírias v3.0.0
+ *
+ * Carregar depois de farmacia-ia.js.
+ *
+ * Complementa o interpretador principal:
+ * - entende abreviações e gírias;
+ * - reduz letras repetidas;
+ * - corrige erros de digitação conhecidos;
+ * - reconhece diferentes formas de pedir a mesma coisa;
+ * - identifica intenção e modificadores pedagógicos;
+ * - aproveita o contexto da conversa.
+ *
+ * Não substitui nem altera o classificador de segurança,
+ * a extração de medicamentos, doses, unidades ou entidades.
+ */
+
+(function (root) {
   "use strict";
 
-const grupos = {
-saudacao: {
-intencao: "saudacao",
-termos: ["oi", "olá", "ola", "eae", "e aí", "eai", "salve", "opa", "fala", "bom dia", "boa tarde", "boa noite", "tudo bem", "td bem", "tdb", "blz", "beleza"]
-},
-despedida: {
-intencao: "despedida",
-termos: ["tchau", "xau", "chau", "fui", "flw", "falou", "até mais", "até logo", "até amanhã", "vazei", "to indo", "tô indo"]
-},
-agradecimento: {
-intencao: "agradecimento",
-termos: ["obrigado", "obrigada", "obg", "valeu", "vlw", "brigado", "brigada", "brigadão", "tmj", "tamo junto", "agradeço", "gratidão"]
-},
-confirmacao: {
-intencao: "confirmacao",
-termos: ["sim", "ss", "s", "claro", "clr", "pode ser", "pode pá", "pdp", "pdc", "btf", "pse", "vdd", "exatamente", "com certeza", "correto", "isso mesmo", "fechado", "demorou", "dmr", "old", "fé"]
-},
-negacao: {
-intencao: "negacao",
-termos: ["não", "nao", "nn", "nop", "nope", "jamais", "de jeito nenhum", "nem ferrando", "sqn"]
-},
-duvida: {
-intencao: "duvida",
-termos: ["não entendi", "nao entendi", "como assim", "q", "q?", "oq", "o que", "qual diferença", "por quê", "porque", "como funciona", "pode repetir", "explica melhor", "to perdido", "tô perdido"]
-},
-pedido_explicacao: {
-intencao: "pedido_explicacao",
-termos: ["me explica", "explica melhor", "explica de novo", "resume", "faz resumo", "detalha", "exemplifica", "da exemplo", "dá exemplo", "simplifica", "compara", "fala sobre", "pesquisa", "procura", "me ajuda"]
-},
-vocativo: {
-intencao: "vocativo_informal",
-termos: ["mano", "mn", "man", "véi", "vei", "vey", "veyr", "cara", "pô", "viado", "bisha", "bicha", "bi", "klo", "clo", "migles", "migo", "miga", "migue", "parça", "cria", "pae", "pai", "fi", "amiga", "meu nobre", "meu consagrado", "divo", "diva"]
-},
-espanto: {
-intencao: "espanto",
-termos: ["mds", "mddc", "plmds", "plmdds", "slk", "slc", "seloko", "tmlc", "ox", "oxi", "oxe", "nss", "nossa", "oloco", "oloko", "credo", "caramba", "misericórdia", "socorro", "aff", "affs", "eu hein", "jura", "não acredito", "nao acredito", "isso não existe", "isso nao existe", "isso n existe", "é mole", "fala sério", "fala serio"]
-},
-avaliacao_positiva: {
-intencao: "avaliacao_positiva",
-termos: ["hit", "hitar", "brabo", "brabíssimo", "top", "massa", "maneiro", "daora", "irado", "impecável", "perfeito", "icônico", "lendário", "divou", "divei", "arrasou", "serviu", "entregou tudo", "10/10"]
-},
-avaliacao_negativa: {
-intencao: "avaliacao_negativa",
-termos: ["flop", "flopar", "flopado", "paia", "mid", "cringe", "tosco", "podre", "tenebroso", "ridículo", "nada a ver", "ndv", "brisou", "caducou", "viajou", "forçou", "sem nexo"]
-},
-humor: {
-intencao: "humor",
-termos: ["kkk", "kkkk", "ksks", "ksksks", "kakaka", "hahaha", "hehehe", "rs", "rsrs", "akakak", "perdi tudo", "morri", "passei mal", "não tankei", "nao tankei", "n tanko", "brinks", "brincs", "zoeira"]
-},
-abreviacoes: {
-intencao: "abreviacao",
-termos: ["vc", "vcs", "cê", "ce", "pq", "qnd", "qdo", "qd", "qnt", "qt", "qto", "qm", "ql", "qq", "qqr", "tb", "tbm", "tmb", "td", "tds", "hj", "amnh", "agr", "dps", "cmg", "ctg", "aq", "aki", "pf", "pfv", "obg", "vlw", "msm", "mt", "mto", "ngm", "sla", "sdds", "vdd", "gnt", "glr", "nd", "dnv", "qria", "qser", "fzr", "vms", "kd", "ctz", "msg", "ft", "zap", "dm", "rt", "fds"]
-},
-regional_carioca: {
-intencao: "giria_regional",
-termos: ["mermão", "mermao", "caô", "cao", "bolado", "boladona", "menor", "papo reto", "qual foi", "tá ligado", "ta ligado", "já é", "ja e", "partiu", "dá ideia", "da ideia", "vacilou", "vacilão", "esculacho", "meteu essa", "tá de caô", "ta de cao", "desenrolar"]
-},
-redes_e_memes: {
-intencao: "referencia_redes",
-termos: ["biscoito", "biscoitar", "exposed", "shade", "ranço", "ranco", "cancelado", "thread", "post", "mutual", "unfollow", "block", "pov", "trend", "viralizar", "bait", "rage bait", "hater", "fyp", "stalkear", "dix", "daily", "fomo", "delulu", "rizz", "slay", "ate", "gag", "mother", "main character", "pick me", "npc", "aura", "farmar aura", "peak", "cooked", "let him cook", "brainrot", "canon event", "plot twist", "lore", "side eye", "mood", "aesthetic", "based", "no cap", "sus", "goat", "glow up", "red flag", "green flag", "sigma", "skibidi"]
-},
-relacionamento: {
-intencao: "relacionamento",
-termos: ["crush", "contatinho", "ficante", "webnamoro", "ship", "shippar", "friendzone", "ghosting", "emocionado", "emocionada", "gado", "dar moral", "dar bola", "meter o louco", "fazer cu doce", "dar um perdido", "sumir"]
-},
-expressao_ambigua: {
-intencao: "expressao_ambigua",
-termos: ["ko", "oloco", "oloko", "credo", "old", "fds", "att", "bi", "viado", "divo", "diva"]
-}
-};
+  var M = root.FarmaMod = root.FarmaMod || {};
 
-const aliases = new Map();
-Object.keys(grupos).forEach(function (grupo) {
-grupos[grupo].termos.forEach(function (termo) {
-const chave = normalizar(termo);
-if (!aliases.has(chave)) aliases.set(chave, []);
-aliases.get(chave).push({
-termo: termo,
-grupo: grupo,
-intencao: grupos[grupo].intencao
-});
-});
-});
+  if (root.FarmaGirias && root.FarmaGirias.versao === "3.0.0") return;
 
-function normalizar(texto) {
-return String(texto == null ? "" : texto)
-.toLocaleLowerCase("pt-BR")
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g, "")
-.replace(/[’‘]/g, "'")
-.replace(/[“”]/g, '"')
-.replace(/[!?.,;:()[]{}]+/g, " ")
-.replace(/\s+/g, " ")
-.trim();
-}
+  // =========================================================
+  // 1. ABREVIAÇÕES E GÍRIAS
+  // =========================================================
 
-// Versão auxiliar para escrita expressiva: comprime sequências de 3+ letras.
-// A mensagem original é sempre preservada; palavras ortográficas como "massa"
-// e "carro" não são alteradas.
-function normalizarRepeticoes(texto) {
-return String(texto == null ? "" : texto).replace(/([a-záàâãéèêíïóôõöúçñ])\1{2,}/giu, "$1$1");
-}
+  var ABREV = {
+    oq: "o que",
+    oque: "o que",
+    pq: "por que",
+    pqe: "por que",
+    vc: "voce",
+    vcs: "voces",
+    tb: "tambem",
+    tbm: "tambem",
+    tmb: "tambem",
+    td: "tudo",
+    tds: "todos",
+    mt: "muito",
+    mto: "muito",
+    mta: "muita",
+    pra: "para",
+    pro: "para o",
+    qnt: "quanto",
+    qto: "quanto",
+    qnto: "quanto",
+    qts: "quantos",
+    dps: "depois",
+    hj: "hoje",
+    amnh: "amanha",
+    agr: "agora",
+    msm: "mesmo",
+    n: "nao",
+    nn: "nao",
+    nd: "nada",
+    cmg: "comigo",
+    pfv: "por favor",
+    pf: "por favor",
+    pfvr: "por favor",
+    blz: "beleza",
+    vlw: "valeu",
+    obg: "obrigado",
+    obgd: "obrigado",
+    flw: "falou",
+    ta: "esta",
+    tao: "estao",
+    cm: "como",
+    qdo: "quando",
+    qd: "quando",
+    sbr: "sobre",
+    vdd: "verdade",
+    dnv: "de novo",
+    fzr: "fazer",
+    fz: "faz",
+    ngm: "ninguem",
+    mds: "meu deus",
+    mn: "mano",
+    ss: "sim",
+    explik: "explica",
+    xplica: "explica",
+    cmo: "como",
+    dif: "diferenca",
+    difs: "diferencas",
+    resumao: "resumo",
+    rem: "remedio",
+    remedios: "remedio",
+    medic: "medicamento",
+    ab: "antibiotico",
 
-function escaparRegex(texto) {
-return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+    // Gírias informadas pelo usuário.
+    ko: "cao",
+    ox: "oxe",
+    oxi: "oxe",
+    oxe: "oxe",
+    nss: "nossa",
+    divei: "arrasei",
+    divou: "arrasou",
+    plmds: "pelo amor de deus",
+    plmdds: "pelo amor de deus",
+    tmlc: "ta maluco",
+    clr: "claro",
+    pdp: "pode pa",
+    pdc: "pode crer",
+    btf: "boto fe",
+    pse: "pois e",
+    dmr: "demorou",
+    qria: "queria",
+    vms: "vamos",
+    aq: "aqui",
+    aki: "aqui",
+    gnt: "gente",
+    glr: "galera",
+    sla: "sei la",
+    sdds: "saudades",
+    ctz: "certeza",
+    naum: "nao",
 
-function buscar(texto) {
-const original = String(texto == null ? "" : texto);
-const normalizado = normalizar(original);
-const resultado = [];
-const vistos = new Set();
+    // "Old" costuma significar "claro que sim".
+    old: "claro que sim"
+  };
 
-}
+  /*
+   * "smt" não é convertido em uma instrução literal.
+   * É preservado como expressão informal de reprovação.
+   */
 
-function interpretar(texto) {
-const original = String(texto == null ? "" : texto);
-const normalizado = normalizar(original);
-return {
-original: original,
-normalizado: normalizado,
-versaoComRepeticoesReduzidas: normalizarRepeticoes(original),
-termos: buscar(original),
-sinais: {
-temRiso: /(^| )(kk+k+|ksks+|rsrs+|hahaha+|akakak+)( |$)/iu.test(normalizado),
-        temNegacao: /(^| )(nao|nn|nop|nope)( |$)/u.test(normalizado),
-temPergunta: /[?]/u.test(original),
-temExpressaoHostil: /(^| )(smt|se mata(u)?)( |$)/u.test(normalizado)
-}
-};
-}
+  // =========================================================
+  // 2. CORREÇÃO DE ERROS DE ESCRITA
+  // =========================================================
 
-root.FarmaGirias = Object.freeze({
-versao: "1.0.0",
-normalizar: normalizar,
-normalizarRepeticoes: normalizarRepeticoes,
-buscar: buscar,
-interpretar: interpretar,
-grupos: grupos
-});
+  var CORRECOES = {
+    awui: "aqui",
+    naum: "nao",
+    farmacolojia: "farmacologia",
+    interassao: "interacao",
+    explicaa: "explica",
+    medicamentoo: "medicamento",
+    difernca: "diferenca"
+  };
+
+  function minusculo(texto) {
+    return String(texto == null ? "" : texto)
+      .toLocaleLowerCase("pt-BR");
+  }
+
+  function semAcento(texto) {
+    return minusculo(texto)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  // =========================================================
+  // 3. REPETIÇÃO DE LETRAS E RISADAS
+  // =========================================================
+
+  function reduzirRepeticoes(texto) {
+    var s = minusculo(texto);
+
+    /*
+     * Risadas são preservadas como um sinal semântico.
+     * Assim, "kkkkkk" não vira apenas "k".
+     */
+    s = s.replace(
+      /\b(?:k{3,}|(?:ha){2,}h?a*|(?:ks){2,}|(?:rs){2,}|ahah{1,})\b/gi,
+      " risada "
+    );
+
+    /*
+     * Reduz sequências de três ou mais letras iguais.
+     *
+     * ooooooi   -> oi
+     * naaaaaada -> nada
+     * boooom    -> bom
+     * siiiiiim  -> sim
+     * nãããão    -> não
+     *
+     * Repetições ortográficas normais de duas letras
+     * continuam preservadas: massa, carro, assar.
+     */
+    s = s.replace(/([a-zà-ú])\1{2,}/giu, "$1");
+
+    return s;
+  }
+
+  // =========================================================
+  // 4. NORMALIZAÇÃO DE EXPRESSÕES
+  // =========================================================
+
+  var FRASES = [
+    [/\bqual (e )?(a )?utilidade (de|do|da)\b/g, "para que serve"],
+    [/\bserve (pra|para) que\b/g, "para que serve"],
+    [/\bpra que serve\b/g, "para que serve"],
+    [/\bqual (e )?a funcao (de|do|da)\b/g, "funcao"],
+    [/\bo que que e\b/g, "o que e"],
+    [/\bme fala sobre\b/g, "explique"],
+    [/\bme conta sobre\b/g, "explique"],
+    [/\bna pratica\b/g, "exemplo"],
+    [/\bno dia a dia\b/g, "exemplo"],
+    [/\bcomo eu vejo isso na pratica\b/g, "exemplo"],
+    [/\bfaz um resumao\b/g, "resumo"],
+    [/\bresume pra mim\b/g, "resumo"],
+    [/\bresume isso\b/g, "resumo"],
+    [/\bnao entendi nada\b/g, "nao entendi"],
+    [/\bn entendi nd\b/g, "nao entendi nada"],
+    [/\bexplica como se eu fosse iniciante\b/g, "explica de forma simples"],
+    [/\bcomo se eu fosse leigo\b/g, "explica de forma simples"],
+    [/\bcompara os dois\b/g, "compare"],
+    [/\bqual a diferenca entre eles\b/g, "diferenca"],
+    [/\be o outro\b/g, "continuacao outro"],
+    [/\be depois\b/g, "continuacao depois"],
+    [/\be ai\b/g, "continuacao depois"]
+  ];
+
+  function normalizarFrases(texto) {
+    var s = semAcento(texto);
+
+    FRASES.forEach(function (regra) {
+      s = s.replace(regra[0], regra[1]);
+    });
+
+    return s.replace(/\s+/g, " ").trim();
+  }
+
+  function normalizar(texto) {
+    return normalizarFrases(reduzirRepeticoes(texto));
+  }
+
+  // =========================================================
+  // 5. CORREÇÃO APROXIMADA CONTROLADA
+  // =========================================================
+
+  function corrigirToken(token) {
+    if (CORRECOES[token]) return CORRECOES[token];
+
+    if (!token || token.length < 5 || /\d/.test(token)) {
+      return token;
+    }
+
+    if (!M.busca || typeof M.busca.editDistance !== "function") {
+      return token;
+    }
+
+    /*
+     * A correção aproximada só utiliza palavras-pista
+     * do interpretador, nunca o catálogo de medicamentos.
+     */
+    var pistas = M.norma && M.norma.PISTAS
+      ? M.norma.PISTAS
+      : [];
+
+    var melhor = null;
+    var menorDistancia = 2;
+    var empate = false;
+
+    pistas.forEach(function (candidato) {
+      if (candidato.charAt(0) !== token.charAt(0)) return;
+
+      if (Math.abs(candidato.length - token.length) > 1) {
+        return;
+      }
+
+      var distancia = M.busca.editDistance(token, candidato);
+
+      if (distancia < menorDistancia) {
+        menorDistancia = distancia;
+        melhor = candidato;
+        empate = false;
+      } else if (
+        distancia === menorDistancia &&
+        candidato !== melhor
+      ) {
+        empate = true;
+      }
+    });
+
+    return melhor && !empate ? melhor : token;
+  }
+
+  // =========================================================
+  // 6. INTEGRAÇÃO COM O NORMALIZADOR PRINCIPAL
+  // =========================================================
+
+  function instalarNormalizador() {
+    if (
+      !M.norma ||
+      typeof M.norma.analisar !== "function" ||
+      M.norma.analisar._farmaV3
+    ) {
+      return false;
+    }
+
+    var analisarOriginal = M.norma.analisar;
+
+    if (M.norma.ABREV) {
+      Object.keys(ABREV).forEach(function (chave) {
+        M.norma.ABREV[chave] = ABREV[chave];
+      });
+    }
+
+    function analisar(raw) {
+      var original = String(raw == null ? "" : raw);
+
+      var preparado = normalizar(original);
+
+      // Mantém o analisador original como base.
+      var resultado = analisarOriginal(preparado);
+
+      if (!resultado || !Array.isArray(resultado.tokens)) {
+        return resultado;
+      }
+
+      var tokens = [];
+      var corrigidas = (resultado.corrigidas || []).slice();
+
+      resultado.tokens.forEach(function (token) {
+        var corrigido = corrigirToken(token);
+
+        if (corrigido !== token) {
+          corrigidas.push({
+            de: token,
+            para: corrigido,
+            origem: "FarmaGírias"
+          });
+        }
+
+        tokens.push(corrigido);
+      });
+
+      resultado.original = original;
+      resultado.tokens = tokens;
+      resultado.n = tokens.join(" ");
+      resultado.corrigidas = corrigidas;
+      resultado.risada = /\brisada\b/.test(resultado.n);
+
+      return resultado;
+    }
+
+    analisar._farmaV3 = true;
+    M.norma.analisar = analisar;
+
+    return true;
+  }
+
+  // =========================================================
+  // 7. IDENTIFICAÇÃO DA INTENÇÃO DO USUÁRIO
+  // =========================================================
+
+  function detectar(texto) {
+    var n = normalizar(texto);
+
+    return {
+      exemplo: /\b(exemplo|exemplos|na pratica|caso pratico|dia a dia)\b/.test(n),
+
+      resumo: /\b(resumo|resumir|resumao|sintese|em topicos)\b/.test(n),
+
+      exercicio: /\b(questoes|questao|exercicios?|quiz|simulado|flashcards?|me testa|me teste|me pergunta)\b/.test(n),
+
+      comparar: /\b(compar\w*|diferenca|versus|\bvs\b|qual e melhor|qual a diferenca)\b/.test(n),
+
+      reformular: /\b(nao entendi|explica de novo|de outro jeito|de outra forma|mais simples|mais facil|linguagem simples|iniciante|leigo)\b/.test(n),
+
+      aprofundar: /\b(aprofund\w*|mais detalhes|detalha|detalhe|explica melhor|mais a fundo)\b/.test(n),
+
+      explicar: /\b(explica\w*|explique\w*|como funciona|como ocorre|por que|para que serve|funcao)\b/.test(n),
+
+      definir: /\b(o que e|significa|significado|definicao|conceito)\b/.test(n),
+
+      continuar:
+        /\b(isso|disso|nisso|aquilo|esse|essa|ele|ela|eles|elas|deles|delas|o outro|a outra|continuacao|depois|mais)\b/.test(n) ||
+        /^(e |mais |continua|continue|e agora|e ai|como assim)/.test(n),
+
+      risada: /\brisada\b/.test(n),
+
+      reprovacao: /\bsmt\b/.test(n)
+    };
+  }
+
+  function contextoAtivo() {
+    try {
+      return !!(
+        M.contexto &&
+        M.contexto.topico &&
+        M.contexto.topico()
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // =========================================================
+  // 8. INTEGRAÇÃO COM O INTERPRETADOR PRINCIPAL
+  // =========================================================
+
+  function instalarInterpretador() {
+    if (
+      !M.interpretador ||
+      typeof M.interpretador.interpretar !== "function" ||
+      M.interpretador.interpretar._farmaV3
+    ) {
+      return false;
+    }
+
+    var interpretarOriginal = M.interpretador.interpretar;
+
+    function interpretar(raw) {
+      var resultado = interpretarOriginal(raw);
+
+      if (!resultado || typeof resultado !== "object") {
+        return resultado;
+      }
+
+      var sinais = detectar(raw);
+      var temContexto = contextoAtivo();
+
+      resultado.compreensao = {
+        versao: "3.0.0",
+        sinais: sinais,
+        contextoDisponivel: temContexto,
+        textoAnalisado: normalizar(raw)
+      };
+
+      /*
+       * REGRA DE SEGURANÇA:
+       * Se o motor principal sinalizar risco, esta camada não
+       * altera intenção, ação, risco ou classificação.
+       */
+      var v3 = resultado.v3 || {};
+
+      var protegido =
+        v3.acao === "seguranca" ||
+        v3.risco === "pessoal" ||
+        v3.risco === "intoxicacao" ||
+        v3.risco === "urgencia" ||
+        v3.nivelSeguranca === "critico";
+
+      if (protegido) return resultado;
+
+      resultado.modificadores = resultado.modificadores || {};
+
+      // O usuário quer exemplos ou aplicação prática.
+      if (sinais.exemplo) {
+        resultado.modificadores.exemplo = true;
+
+        if (!resultado.intencao) {
+          resultado.intencao = "exemplo";
+        }
+      }
+
+      // O usuário quer um resumo.
+      if (sinais.resumo) {
+        resultado.modificadores.resumo = true;
+        resultado.intencao = "resumo";
+      }
+
+      // O usuário quer exercícios ou perguntas.
+      if (sinais.exercicio) {
+        resultado.intencao = "exercicio";
+      }
+
+      // O usuário quer comparar assuntos.
+      if (sinais.comparar) {
+        var conceitos = resultado.conceitos || [];
+        var farmacos = resultado.farmacos || [];
+
+        if (
+          conceitos.length >= 2 ||
+          farmacos.length >= 2 ||
+          temContexto
+        ) {
+          resultado.intencao = "comparar";
+        }
+      }
+
+      // O usuário não entendeu e quer outra explicação.
+      if (sinais.reformular) {
+        resultado.intencao = "reformular";
+      }
+
+      // O usuário quer aprofundamento.
+      if (sinais.aprofundar) {
+        resultado.intencao = "aprofundar";
+      }
+
+      // Definição ou explicação.
+      if (sinais.definir && !resultado.intencao) {
+        resultado.intencao = "definir";
+      }
+
+      if (sinais.explicar && !resultado.intencao) {
+        resultado.intencao = "explicar";
+      }
+
+      /*
+       * REFERÊNCIAS AO CONTEXTO:
+       * "me explica isso", "e na prática?", "e o outro?",
+       * "continua", "mais exemplos", "e depois?".
+       */
+      if (sinais.continuar && temContexto) {
+        resultado.seguimento = true;
+        resultado.anafora = true;
+
+        if (!resultado.intencao && !sinais.risada) {
+          resultado.intencao = "explicar";
+        }
+      }
+
+      /*
+       * Sem assunto anterior, não inventa o referente
+       * de "isso", "ele", "o outro" ou "aquilo".
+       */
+      if (
+        sinais.continuar &&
+        !temContexto &&
+        !(resultado.conceitos || []).length &&
+        !(resultado.farmacos || []).length
+      ) {
+        resultado.faltaContexto = true;
+      }
+
+      // Risada isolada é uma interação social.
+      if (
+        sinais.risada &&
+        normalizar(raw).replace(/\brisada\b/g, "").trim() === ""
+      ) {
+        resultado.intencao = "social";
+        resultado.pedagogica = false;
+      }
+
+      if (resultado.intencao) {
+        resultado.pedagogica = true;
+      }
+
+      return resultado;
+    }
+
+    interpretar._farmaV3 = true;
+    M.interpretador.interpretar = interpretar;
+
+    return true;
+  }
+
+  // =========================================================
+  // 9. INTEGRAÇÃO AUTOMÁTICA
+  // =========================================================
+
+  function integrar() {
+    return {
+      normalizador: instalarNormalizador(),
+      interpretador: instalarInterpretador()
+    };
+  }
+
+  // =========================================================
+  // 10. API PÚBLICA
+  // =========================================================
+
+  root.FarmaGirias = {
+    versao: "3.0.0",
+
+    integrar: integrar,
+
+    normalizar: normalizar,
+
+    normalizarRepeticoes: reduzirRepeticoes,
+
+    corrigirToken: corrigirToken,
+
+    detectar: detectar,
+
+    interpretar: function (texto) {
+      return {
+        original: String(texto == null ? "" : texto),
+        normalizado: normalizar(texto),
+        sinais: detectar(texto),
+        integrado: !!(
+          M.interpretador &&
+          M.interpretador.interpretar
+        )
+      };
+    }
+  };
+
+  // A integração acontece automaticamente ao carregar o arquivo.
+  integrar();
+
 })(typeof window !== "undefined" ? window : globalThis);
