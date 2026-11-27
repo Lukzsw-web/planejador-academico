@@ -1115,15 +1115,10 @@ html #modal-farmacia .farma-composer .farma-send.is-stop:disabled { opacity: 1; 
 .fmn-chev svg { width: 18px; height: 18px; display: block; }
 .fmn-badge { min-width: 24px; height: 24px; padding: 0 .45rem; display: inline-grid; place-items: center; border-radius: 8px; background: var(--fa-press); color: var(--fa-ink); font-size: .8rem; font-weight: 700; }
 .fmn-rodape { margin-top: auto; padding-top: 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
-.fmn-perfil { min-width: 0; display: flex; align-items: center; gap: .55rem; padding: .3rem .8rem .3rem .3rem; border-radius: 12px; background: var(--fa-field); color: var(--fa-ink); }
 .fmn-avatar { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--fa-press) center / cover no-repeat; }
 .fmn-avatar svg { width: 100%; height: 100%; fill: var(--fa-ink-2); opacity: .8; }
 .fmn-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; font-weight: 700; }
-.fmn-nova { flex: 0 0 auto; height: 44px; display: inline-flex; align-items: center; gap: .4rem; padding: 0 1rem 0 .8rem; border: 0; border-radius: 12px; background: var(--fa-mark); color: #fff; font: inherit; font-size: .95rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-html.dark .fmn-nova { color: #08130d; }
-.fmn-nova svg { width: 20px; height: 20px; }
-.fmn-nova:active { transform: scale(.97); }
-.fmn-nova:focus-visible, .fmn-voltar:focus-visible, .fmn-thumb:focus-visible, .fmn-fim:focus-visible, .fmn-in:focus-visible, .fmn-sug-i:focus-visible, .fmn-tag-x:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
+.fmn-voltar:focus-visible, .fmn-thumb:focus-visible, .fmn-fim:focus-visible, .fmn-in:focus-visible, .fmn-sug-i:focus-visible, .fmn-tag-x:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
 html.farma-tela-on .bottom-liquid-nav { opacity: 0; pointer-events: none; transform: translate(-50%, 24px) !important; }
 
 /* telas sobrepostas */
@@ -1147,6 +1142,9 @@ html.farma-tela-on .bottom-liquid-nav { opacity: 0; pointer-events: none; transf
 .fmn-vazio span { max-width: 22rem; font-size: .92rem; line-height: 1.4; }
 .fmn-vis-img { position: absolute; left: 12px; top: 12px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: contain; display: block; touch-action: none; }
 .fmn-vis .fed-top { grid-template-columns: 56px 1fr 56px; }
+.fmn-vis-data { justify-self: center; display: grid; justify-items: center; gap: .05rem; min-width: 0; text-align: center; color: var(--ed-ink); }
+.fmn-vis-dia { font-size: 1.02rem; font-weight: 750; line-height: 1.2; letter-spacing: -.005em; }
+.fmn-vis-hora { font-size: .8rem; line-height: 1.2; opacity: .72; font-variant-numeric: tabular-nums; }
 
 /* grade atual */
 .fmn-campo { position: relative; display: grid; gap: .5rem; }
@@ -1203,17 +1201,19 @@ html.dark .fmn-tela { --fa-bg: #000; --fa-field: #1b3027; --fa-press: #25423a; -
 .fmn-rodape { position: absolute; left: -.4rem; right: -.4rem; bottom: -.4rem; padding: 0; margin: 0; display: flex; align-items: center; justify-content: space-between; gap: .5rem; pointer-events: none; }
 .fmn-rodape > * { pointer-events: auto; }
 .fmn-perfil, .fmn-nova { height: 56px; border-radius: 999px; }
-/* perfil: vidro, como os botões do centro de controle (imagem de referência) */
-.fmn-perfil { min-width: 0; max-width: 56%; display: flex; align-items: center; gap: .6rem; padding: 0 1.15rem 0 .55rem; font: inherit; cursor: pointer; color: var(--fa-ink); -webkit-tap-highlight-color: transparent;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .42)); border: 1px solid rgba(255, 255, 255, .85);
-  -webkit-backdrop-filter: blur(16px) saturate(1.7); backdrop-filter: blur(16px) saturate(1.7);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(0, 80, 40, .08), 0 8px 22px rgba(10, 60, 30, .16); }
-html.dark .fmn-perfil { background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .08)); border-color: rgba(255, 255, 255, .22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 0 rgba(0, 0, 0, .35), 0 8px 22px rgba(0, 0, 0, .5); }
-.fmn-perfil:active { transform: scale(.97); }
-.fmn-perfil:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
+/* pílulas do rodapé (perfil e novo chat): planas, sem sombra e sem blur; fundo opaco para o histórico não aparecer por baixo */
+.fmn-perfil, .fmn-nova { flex: 0 0 auto; display: flex; align-items: center; gap: .6rem; font: inherit; cursor: pointer; color: var(--fa-ink); -webkit-tap-highlight-color: transparent;
+  background: var(--fa-panel); border: 1px solid var(--fa-rule); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.fmn-perfil { min-width: 0; max-width: 56%; flex-shrink: 1; padding: 0 1.15rem 0 .55rem; }
+.fmn-perfil:active, .fmn-nova:active { transform: scale(.97); }
+.fmn-perfil:focus-visible, .fmn-nova:focus-visible { outline: 2px solid var(--fa-mark); outline-offset: 2px; }
 .fmn-avatar { width: 40px; height: 40px; }
-.fmn-nova { padding: 0 1.2rem 0 1rem; box-shadow: 0 8px 22px rgba(0, 90, 40, .28); }
-html.dark .fmn-nova { box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
+/* novo chat: ícone de recarregar dentro de um círculo + nome em duas linhas (mesma estrutura do perfil) */
+.fmn-nova { padding: 0 1.2rem 0 .55rem; font-weight: 700; }
+.fmn-nova-ico { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--fa-mark); color: #fff; }
+html.dark .fmn-nova-ico { color: #08130d; }
+.fmn-nova-ico svg { width: 21px; height: 21px; }
+.fmn-nova-txt { display: block; font-size: .95rem; line-height: 1.12; text-align: left; }
 
 /* Grade atual em Meu perfil */
 #settings-view-profile .pf-link { width: calc(100% - 2rem); display: flex; align-items: center; gap: .6rem; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; font: inherit; text-align: left; cursor: pointer; color: var(--pa-ink); }

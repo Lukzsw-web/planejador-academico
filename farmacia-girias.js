@@ -530,6 +530,16 @@
         resultado.pedagogica = false;
       }
 
+      // Pedido de cálculo (farmacia-calculo.js): o interpretador só sinaliza; quem resolve é o motor local.
+      try {
+        if (root.FarmaCalculo && root.FarmaCalculo.reconhecer(raw)) {
+          resultado.intencao = "calculo";
+          resultado.modificadores.calculo = true;
+          resultado.pedagogica = false;
+          return resultado;
+        }
+      } catch (_) { /* o motor é opcional */ }
+
       if (resultado.intencao) {
         resultado.pedagogica = true;
       }

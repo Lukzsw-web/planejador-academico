@@ -50,6 +50,8 @@
   function gc(notes) {
     if (!window.indexedDB) return;
     const keep = new Set(); notes.forEach(n => idsOf(n.html).forEach(i => keep.add(i)));
+    // imagens dos eventos do Calendário também contam
+    try { JSON.parse(localStorage.getItem('planejador_calendario_v1') || '[]').forEach(e => idsOf(e && e.html).forEach(i => keep.add(i))); } catch (_) {}
     idb('readonly', s => s.getAllKeys()).then(keys => {
       const drop = (keys || []).filter(k => !keep.has(k)); if (!drop.length) return;
       idb('readwrite', s => { drop.forEach(k => s.delete(k)); return null; }).catch(() => {});
@@ -545,6 +547,10 @@
     $('agenda-close')?.addEventListener('click', closeAgenda);
     $('agenda-new')?.addEventListener('click', create);
     $('agenda-list')?.addEventListener('click', agendaClick);
+    if (window.Selecao && $('agenda-list')) window.Selecao.anexar({
+      container: $('agenda-list'), item: '.ag-item', id: el => { const b = el.querySelector('.ag-bubble'); return b ? b.dataset.id : ''; }, padding: '.ag-bubble',
+      aoExcluir: ids => ids.forEach(agendaDelete)
+    });
     $('agenda-search')?.addEventListener('input', e => { agq.q = e.target.value; renderAgenda(); });
     $('agenda-fav-filter')?.addEventListener('click', () => { agq.fav = !agq.fav; renderAgenda(); });
     $('notas-title-input')?.addEventListener('input', onInput);

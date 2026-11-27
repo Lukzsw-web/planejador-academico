@@ -1083,3 +1083,45 @@ html .nav-bubble { box-shadow: none !important; filter: none !important; -webkit
 
 /* v0.7.2: títulos "< Aparência", "< Acessibilidade"... sobem para o canto superior esquerdo, à mesma altura do "< Voltar" do perfil */
 #modal-settings .settings-view:not(.is-profile) .settings-subheader { margin-top: calc(max(.7rem, env(safe-area-inset-top)) - var(--sp-t, 1.35rem)); padding-top: 0; }
+
+/* ===== Seleção de matérias: bolinha no lugar do quadradinho (Obrigatórias, Escolha Condicionada e "O que puxar?") ===== */
+html .subject-card input[type="checkbox"], html .planner-card input[type="checkbox"], html #modal-planner .planner-card input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none; flex: 0 0 auto; box-sizing: border-box;
+  width: 1.25rem; height: 1.25rem; margin: 0; padding: 0; border-radius: 50%;
+  border: 2px solid #8a948f; background: transparent center / 72% no-repeat; color: transparent;
+  cursor: pointer; transition: background-color .14s ease, border-color .14s ease; --sel: #2e6a5d;
+}
+html.dark .subject-card input[type="checkbox"], html.dark .planner-card input[type="checkbox"] { border-color: #6f7a75; --sel: #41c777; }
+html .subject-card input[type="checkbox"]:checked, html .planner-card input[type="checkbox"]:checked {
+  border-color: var(--sel); background-color: var(--sel);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E");
+}
+html.dark .subject-card input[type="checkbox"]:checked, html.dark .planner-card input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23081b10' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E");
+}
+html .subject-card input[type="checkbox"]:focus-visible, html .planner-card input[type="checkbox"]:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+
+/* ===== Seleção por toque longo (selecao.js) ===== */
+html { --sel-cor: #2e6a5d; --sel-fundo: #fbfaf5; --sel-tinta: #1d2b25; --sel-linha: #8a948f; --sel-sobre: #fff; }
+html.dark { --sel-cor: #41c777; --sel-fundo: #121a16; --sel-tinta: #e8f1ec; --sel-linha: #7b8680; --sel-sobre: #07140c; }
+.sel-on .sel-item { position: relative; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.sel-on .sel-pad { padding-left: 2.9rem !important; }
+.sel-on .sel-item::before { content: ""; position: absolute; z-index: 2; left: .8rem; top: 50%; width: 1.25rem; height: 1.25rem; margin-top: -.625rem; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--sel-linha); background: var(--sel-fundo) center / 70% no-repeat; transition: background-color .12s ease, border-color .12s ease; pointer-events: none; }
+.sel-on .sel-item.sel-canto::before { left: .5rem; top: .5rem; margin-top: 0; }
+.sel-on .sel-item.is-sel::before { border-color: var(--sel-cor); background-color: var(--sel-cor); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E"); }
+html.dark .sel-on .sel-item.is-sel::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2307140c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E"); }
+.sel-on .sel-item.is-sel { outline: 2px solid var(--sel-cor); outline-offset: -2px; }
+.sel-on .sel-item .ag-acts { visibility: hidden; }
+.sel-barra { position: fixed; z-index: 2147482000; left: 0; right: 0; top: 0; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .4rem; min-height: 60px; padding: max(.3rem, env(safe-area-inset-top)) .75rem .3rem .6rem; background: var(--sel-fundo); color: var(--sel-tinta); border-bottom: 1px solid color-mix(in srgb, var(--sel-linha) 45%, transparent); font-family: inherit; }
+.sel-todos { width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sel-bolinha { width: 1.25rem; height: 1.25rem; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--sel-linha); background: transparent center / 70% no-repeat; transition: background-color .12s ease, border-color .12s ease; }
+.sel-todos.is-on .sel-bolinha { border-color: var(--sel-cor); background-color: var(--sel-cor); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E"); }
+html.dark .sel-todos.is-on .sel-bolinha { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2307140c' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E"); }
+.sel-todos:focus-visible, .sel-excluir:focus-visible, .sel-cancelar:focus-visible { outline: 2px solid var(--sel-cor); outline-offset: 2px; }
+.sel-conta { text-align: center; font-size: 1.02rem; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sel-dir { display: flex; align-items: center; gap: .2rem; }
+.sel-excluir, .sel-cancelar { min-height: 44px; padding: 0 .75rem; border: 0; border-radius: 10px; background: transparent; color: var(--sel-tinta); font: inherit; font-size: .95rem; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sel-excluir { color: #b3261e; }
+html.dark .sel-excluir { color: #ff8a80; }
+.sel-excluir:disabled { opacity: .35; cursor: default; }
+.sel-excluir.is-sure { background: #b3261e; color: #fff; }

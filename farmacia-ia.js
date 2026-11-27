@@ -2300,7 +2300,11 @@
     },
     totalFavoritas: function () { return conversas.filter(function (x) { return x.fav; }).length; },
     // apaga tudo (favoritas incluídas) e também a conversa que estava em andamento
-    limpar: function () { conversas = []; atual = null; M.armazenar.apagar(HIST_KEY); }
+    limpar: function () {
+      conversas = []; atual = null; M.armazenar.apagar(HIST_KEY);
+      // Sem histórico não há biblioteca: as imagens guardadas neste aparelho são apagadas junto.
+      try { if (root.FarmaMenu && root.FarmaMenu.Midia && root.FarmaMenu.Midia.limparTudo) root.FarmaMenu.Midia.limparTudo(); } catch (e) { /* a biblioteca fica como estava */ }
+    }
   };
   function rotuloData(ts) {
     var d = new Date(ts), hoje = new Date(), ontem = new Date(); ontem.setDate(hoje.getDate() - 1);
@@ -2453,7 +2457,7 @@
       v.appendChild(h('span', null, soFavVazio ? 'Toque na estrela de uma conversa para fixá-la aqui.' : todas.length ? 'Tente outras palavras do título ou das suas perguntas.' : 'Depois da sua primeira pergunta, a conversa fica guardada aqui, só neste aparelho.')); histLista.appendChild(v); atualizarFerramentasHist(); return;
     }
     itens.forEach(function (c) {
-      var li = h('li', 'fm-h-li'), abrir = h('button', 'fm-h-item'); abrir.type = 'button';
+      var li = h('li', 'fm-h-li'), abrir = h('button', 'fm-h-item'); abrir.type = 'button'; li.setAttribute('data-id', c.id);
       abrir.appendChild(h('span', 'fm-h-title', c.titulo || 'Conversa'));
       abrir.appendChild(h('span', 'fm-h-date', rotuloData(c.atualizado)));
       var pv = previaDe(c); if (pv) abrir.appendChild(h('span', 'fm-h-prev', pv));
@@ -2472,6 +2476,11 @@
         setTimeout(function () { if (del.isConnected) { del.removeAttribute('data-sure'); del.classList.remove('is-sure'); del.textContent = ''; del.appendChild(ico('trash')); del.setAttribute('aria-label', tx('Excluir conversa: {t}', { t: c.titulo || tx('sem título') })); } }, 3200);
       });
       li.appendChild(abrir); li.appendChild(fav); li.appendChild(del); histLista.appendChild(li);
+    });
+    // toque longo seleciona conversas (várias de uma vez); o próprio módulo reaplica as bolinhas a cada novo desenho da lista
+    if (root.Selecao && !histLista._selecao) root.Selecao.anexar({
+      container: histLista, item: '.fm-h-li', id: function (el) { return el.getAttribute('data-id'); }, padding: '.fm-h-item',
+      aoExcluir: function (ids) { ids.forEach(function (i) { V.historico.excluir(i); }); histLive.textContent = ids.length === 1 ? 'Conversa excluída.' : 'Conversas excluídas.'; renderHistorico(); }
     });
     atualizarFerramentasHist();
   }

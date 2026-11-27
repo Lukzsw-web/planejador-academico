@@ -28,9 +28,12 @@
   var I = {
     album: '<rect x="3" y="8" width="12.5" height="13" rx="2.2"></rect><path d="M3 18.2l3.6-3.6 2.8 2.8 1.8-1.8 3.9 3.9"></path><circle cx="17" cy="7.5" r="3.7"></circle><path d="M19.8 10.3l2.4 2.4"></path>',
     agenda: '<rect x="5.2" y="3.4" width="14" height="17.2" rx="2"></rect><path d="M3 7.6h2.2M3 12h2.2M3 16.4h2.2"></path><path d="M9.6 8.2h6M9.6 12h6M9.6 15.8h3.4"></path>',
+    calendario: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.4"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.2h.01M12 17.2h.01"></path>',
+    relogio: '<circle cx="12" cy="13.5" r="7.5"></circle><path d="M12 13.5V9.6M9.5 2.8h5M12 2.8v3.2M19 6.2l1.4 1.4"></path>',
     grade: '<rect x="3" y="4" width="18" height="16" rx="2.2"></rect><path d="M3 9.4h18M3 14.7h18M9 4v16"></path>',
     gear: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>',
     mais: '<path d="M12 5v14M5 12h14"></path>',
+    recarregar: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path>',
     voltar: '<path d="M15 5l-7 7 7 7"></path>',
     x: '<path d="M6 6l12 12M18 6L6 18"></path>',
     chev: '<path d="M9 6l6 6-6 6"></path>',
@@ -83,6 +86,16 @@
         return a.sort(function (x, y) { return y.em - x.em; });
       });
     },
+    remover: function (ids) {
+      ids.forEach(function (id) { delete memoria[id]; if (urls[id]) { try { URL.revokeObjectURL(urls[id]); } catch (_) {} delete urls[id]; } });
+      return tx('readwrite', function (s) { ids.forEach(function (id) { s.delete(id); }); }).then(function () { return true; }, function () { return false; });
+    },
+    // Apaga TODAS as imagens da biblioteca (usado quando o histórico de conversas é apagado).
+    limparTudo: function () {
+      Object.keys(urls).forEach(function (k) { try { URL.revokeObjectURL(urls[k]); } catch (_) {} });
+      memoria = {}; urls = {};
+      return tx('readwrite', function (s) { return s.clear(); }).then(function () { return true; }, function () { return false; });
+    },
     url: function (id) {
       if (urls[id]) return Promise.resolve(urls[id]);
       return Midia.obter(id).then(function (r) { if (!r || !r.blob) return ''; urls[id] = URL.createObjectURL(r.blob); return urls[id]; });
@@ -118,6 +131,16 @@
   }, true);
   function fecharTudo() { while (telas.length) telas[telas.length - 1].fechar(false); if (visualizador) visualizador.fechar(); }
 
+  /* Data da imagem: "Hoje", "Ontem" e "Anteontem" (por dia do calendário, não por 24 h); depois disso, a data por extenso. O horário vai embaixo. */
+  function rotuloImagem(ts, agora) {
+    var d = new Date(ts), n = agora ? new Date(agora) : new Date();
+    var dia = function (x) { return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); };
+    var dif = Math.round((dia(n) - dia(d)) / 86400000);
+    var hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    var titulo = dif === 0 ? 'Hoje' : dif === 1 ? 'Ontem' : dif === 2 ? 'Anteontem' : d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return { titulo: titulo, hora: hora };
+  }
+
   /* =============== Biblioteca =============== */
   var visualizador = null;
   function abrirBiblioteca() {
@@ -127,13 +150,22 @@
     vazio.firstChild.textContent = T('Nenhuma imagem ainda');
     vazio.lastChild.textContent = T('As imagens que você enviar para a FarmacIA ficam guardadas aqui, só neste aparelho.');
     t.corpo.appendChild(vazio); t.corpo.appendChild(grade); vazio.hidden = true;
+    if (win.Selecao) win.Selecao.anexar({
+      container: grade, item: '.fmn-thumb', id: function (el) { return el.getAttribute('data-id'); }, canto: true,
+      aoExcluir: function (ids) {
+        Midia.remover(ids).then(function () {
+          ids.forEach(function (i) { var b = grade.querySelector('.fmn-thumb[data-id="' + i + '"]'); if (b) b.remove(); });
+          if (!grade.children.length) vazio.hidden = false;
+        });
+      }
+    });
     Midia.listar().then(function (lista) {
       if (!t.el.isConnected) return;
       if (!lista.length) { vazio.hidden = false; return; }
       lista.forEach(function (r, i) {
         var b = mk('button', 'fmn-thumb', { type: 'button', 'aria-label': T('Abrir imagem') + ' ' + (i + 1) });
         var im = mk('img', null, { alt: '', loading: 'lazy', decoding: 'async' });
-        b.appendChild(im);
+        b.appendChild(im); b.setAttribute('data-id', r.id);
         Midia.url(r.id).then(function (u) { if (u) im.src = u; });
         b.addEventListener('click', function () { abrirImagem(r, lista, i); });
         grade.appendChild(b);
@@ -149,7 +181,11 @@
     var root = mk('div', 'fed fmn-vis', { role: 'dialog', 'aria-modal': 'true', 'aria-label': T('Imagem') });
     var topo = mk('div', 'fed-top');
     var bX = mk('button', 'fed-btn', { type: 'button', 'aria-label': T('Fechar'), title: T('Fechar') }); bX.innerHTML = ico(I.x);
-    topo.appendChild(bX); topo.appendChild(mk('span')); topo.appendChild(mk('span'));
+    var rot = rotuloImagem(reg.em), cab = mk('div', 'fmn-vis-data');
+    var cabT = mk('strong', 'fmn-vis-dia'), cabH = mk('span', 'fmn-vis-hora');
+    cabT.textContent = /^(Hoje|Ontem|Anteontem)$/.test(rot.titulo) ? T(rot.titulo) : rot.titulo; cabH.textContent = rot.hora;
+    cab.appendChild(cabT); cab.appendChild(cabH);
+    topo.appendChild(bX); topo.appendChild(cab); topo.appendChild(mk('span'));
     var palco = mk('div', 'fed-stage fmn-vis-palco');
     var im = mk('img', 'fmn-vis-img', { alt: reg.nome || T('Imagem') });
     palco.appendChild(im);
@@ -315,9 +351,13 @@
     if (!lista.length) { var v = mk('p', 'fmn-hist-vazio'); v.textContent = T('Suas conversas aparecem aqui.'); nav.appendChild(v); return nav; }
     lista.forEach(function (c) {
       var b = mk('button', 'fmn-hist-i', { type: 'button', title: c.titulo || '' });
-      b.textContent = c.titulo || T('Conversa');
+      b.textContent = c.titulo || T('Conversa'); b.setAttribute('data-id', c.id);
       b.addEventListener('click', function () { hooks.abrirConversa(c.id); });
       nav.appendChild(b);
+    });
+    if (win.Selecao) win.Selecao.anexar({
+      container: nav, item: '.fmn-hist-i', id: function (el) { return el.getAttribute('data-id'); },
+      aoExcluir: function (ids) { ids.forEach(function (i) { V.historico.excluir(i); }); if (nav.parentNode) nav.replaceWith(historico(hooks)); }
     });
     return nav;
   }
@@ -328,6 +368,8 @@
     var topo = mk('div', 'fmn-atalhos');
     topo.appendChild(linha(I.album, 'Biblioteca', function () { abrirBiblioteca(); }));
     topo.appendChild(linha(I.agenda, 'Agenda', function () { hooks.fechar(); if (win.Notas && win.Notas.open) win.Notas.open(); }));
+    topo.appendChild(linha(I.calendario, 'Calendário', function () { hooks.fechar(); if (win.Calendario) win.Calendario.abrir(); }));
+    topo.appendChild(linha(I.relogio, 'Relógio', function () { hooks.fechar(); if (win.Relogio) win.Relogio.abrir(); }));
     menu.appendChild(topo);
     menu.appendChild(mk('hr', 'fmn-div'));
     menu.appendChild(historico(hooks));
@@ -338,7 +380,11 @@
     var nm = mk('span', 'fmn-nome'); nm.textContent = nomeCurto() || T('Você');
     perfil.appendChild(av); perfil.appendChild(nm);
     perfil.addEventListener('click', function () { hooks.fechar(); abrirPerfil(); });
-    var nova = mk('button', 'fmn-nova', { type: 'button' }); nova.innerHTML = ico(I.mais) + '<span></span>'; nova.lastChild.textContent = T('Nova conversa');
+    // Novo chat: o mesmo ícone de recarregar do cabeçalho do chat, num círculo, com o nome em duas linhas.
+    var nova = mk('button', 'fmn-nova', { type: 'button', 'aria-label': T('Nova conversa') });
+    var nIco = mk('span', 'fmn-nova-ico', { 'aria-hidden': 'true' }); nIco.innerHTML = ico(I.recarregar);
+    var nTxt = mk('span', 'fmn-nova-txt', { 'aria-hidden': 'true' }); nTxt.appendChild(doc.createTextNode(T('Novo'))); nTxt.appendChild(mk('br')); nTxt.appendChild(doc.createTextNode(T('Chat')));
+    nova.appendChild(nIco); nova.appendChild(nTxt);
     nova.addEventListener('click', hooks.nova);
     rodape.appendChild(perfil); rodape.appendChild(nova); menu.appendChild(rodape);
   }
@@ -357,5 +403,5 @@
   win.addEventListener('planejador:grade-atual', atualizarBotaoGrade);
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', ligarBotaoGrade); else ligarBotaoGrade();
 
-  win.FarmaMenu = { home: home, dados: dados, Midia: Midia, abrirBiblioteca: abrirBiblioteca, abrirGrade: abrirGrade, fecharTudo: fecharTudo, icones: I };
+  win.FarmaMenu = { rotuloImagem: rotuloImagem, home: home, dados: dados, Midia: Midia, abrirBiblioteca: abrirBiblioteca, abrirGrade: abrirGrade, fecharTudo: fecharTudo, icones: I };
 })();

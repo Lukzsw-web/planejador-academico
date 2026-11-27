@@ -1983,7 +1983,14 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
         finishNota(R(falaMidia(nMidias || 1), []));
         return;
       }
-      var res;
+      var res, calculado = null;
+      // Motor de cálculo offline (farmacia-calculo.js): contas, conversões, farmácia e notas; só assume o que é conta.
+      try { if (!viaIA && !awaiting && !tema && window.FarmaCalculo) calculado = window.FarmaCalculo.tentar(q); } catch (errC) { console.warn('FarmacIA cálculo:', errC); calculado = null; }
+      if (calculado) {
+        var chipsC = calculado.chips || [];
+        finishNota(R(calculado.html, chipsC));
+        return;
+      }
       try { res = viaIA ? iaIndisponivel() : respond(q); if (tema && res) res.forcarIA = true; } catch (err) {
         console.warn('FarmacIA:', err);
         res = R(p('Tive um problema para responder essa. Tente reformular a pergunta, por favor.'));

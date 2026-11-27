@@ -523,6 +523,20 @@ function applyProfilePhoto() {
 // o editor de recorte (arrastar + pinça/controle de zoom, máscara redonda como no X) define o enquadramento.
 function setProfilePhotoFromFile(file) {
   if (!file || !/^image\//.test(file.type)) { showToast({ text: T('Escolha um arquivo de imagem.'), mode: 'error' }); return; }
+  // Mesmo editor de imagem da FarmacIA (cortar, girar, desenhar). Ao confirmar, a imagem editada segue para o recorte redondo.
+  // Sem o editor (ou se ele falhar), vai direto ao recorte, como antes.
+  if (window.EditorImagem && typeof window.EditorImagem.abrir === 'function' && !window.EditorImagem.aberto()) {
+    try {
+      window.EditorImagem.abrir(file, {
+        aoConfirmar: blob => openPhotoCropperFromBlob(blob || file),
+        aoCancelar: () => {}
+      });
+      return;
+    } catch (_) { /* usa o recorte direto */ }
+  }
+  openPhotoCropperFromBlob(file);
+}
+function openPhotoCropperFromBlob(file) {
   const img = new Image(), src = URL.createObjectURL(file);
   img.onload = () => {
     if (!img.naturalWidth || !img.naturalHeight) { URL.revokeObjectURL(src); showToast({ text: T('Não foi possível abrir essa imagem.'), mode: 'error' }); return; }
