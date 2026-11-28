@@ -1487,6 +1487,7 @@
     if (v.motivo === 'antecedente' && rot) return R(p('Você vinha falando de <strong>' + esc(rot) + '</strong>, que é uma área ou um tema amplo, e não um medicamento ou conceito específico. De qual <strong>medicamento ou conceito</strong> você quer saber isso (mecanismo, efeitos, dose, classe)?'), chipsBase);
     if (v.motivo === 'sem_assunto_seg') return R(p('Para responder isso com segurança eu preciso saber <strong>de qual medicamento ou assunto</strong> você está falando. Me diga o nome (por exemplo: dipirona, metformina, TGO).'), chipsBase);
     if (v.motivo === 'sem_assunto') return R(p('Sobre qual <strong>assunto</strong> você quer saber? Me diga o termo (por exemplo: farmacocinética, metformina, TGO) e o que quer dele.'), chipsBase);
+    if (window.FarmaInterp && window.FarmaInterp._ultimo) { try { var e0 = window.FarmaInterp.esclarecer(window.FarmaInterp._ultimo); return R(e0.html, e0.chips); } catch (_) { /* texto padrão abaixo */ } }
     return R(p('Não consegui identificar com clareza o que você quer saber. Pode dizer o <strong>assunto</strong> (um medicamento, um conceito, um exame) e o que você quer dele: explicação, comparação, exemplos?'), chipsBase);
   }
 

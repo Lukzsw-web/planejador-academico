@@ -62,7 +62,7 @@
   function tocar() { pararAviso(); tp.tocando = true; bipeFim = Date.now() + 30000; bipe(); bipeTimer = win.setInterval(function () { if (Date.now() > bipeFim) pararAviso(); else bipe(); }, 1500); }
   function pararAviso() { clearInterval(bipeTimer); bipeTimer = 0; tp.tocando = false; }
 
-  var vista = null, raf = 0, verificador = 0, dormir = 0;
+  var vista = null, raf = 0, verificador = 0;
   function terminou() {
     tp.rodando = false; tp.restante = 0; tocar();
     if (typeof win.showToast === 'function') win.showToast({ text: T('Tempo esgotado.') });
@@ -81,27 +81,31 @@
 
   /* ---------- tela ---------- */
   function abrir(qual) {
-    if (vista) { if (qual) ir(qual === 'temporizador' ? 2 : 1, true); return; }
+    if (vista) { if (qual) ir(qual === 'temporizador' ? 2 : qual === 'agenda' ? 0 : 1, true); return; }
     var voltarFoco = doc.activeElement;
     var root = mk('section', 'rel-root', { role: 'dialog', 'aria-modal': 'true', 'aria-label': T('Relógio') });
     root.setAttribute('data-no-tab-swipe', 'true');
-    var trilho = mk('div', 'rel-trilho'), pAg = mk('div', 'rel-pane rel-pane-ag', { 'aria-hidden': 'true' }), pCr = mk('div', 'rel-pane', { role: 'tabpanel', 'aria-label': T('Cronômetro') }), pTp = mk('div', 'rel-pane', { role: 'tabpanel', 'aria-label': T('Temporizador') });
+    var trilho = mk('div', 'rel-trilho'), pAg = mk('div', 'rel-pane rel-p-ag', { role: 'tabpanel', 'aria-label': T('Agenda do relógio') }), pCr = mk('div', 'rel-pane', { role: 'tabpanel', 'aria-label': T('Cronômetro') }), pTp = mk('div', 'rel-pane', { role: 'tabpanel', 'aria-label': T('Temporizador') });
     trilho.appendChild(pAg); trilho.appendChild(pCr); trilho.appendChild(pTp);
     var nav = mk('nav', 'rel-nav', { role: 'tablist', 'aria-label': T('Relógio') }), ind = mk('span', 'rel-nav-ind', { 'aria-hidden': 'true' });
     nav.appendChild(ind);
     var abas = [['agenda', 'Agenda'], ['crono', 'Cronômetro'], ['ampulheta', 'Temporizador']].map(function (a, i) {
       var b = mk('button', 'rel-nav-b', { type: 'button', role: 'tab', 'aria-label': T(a[1]), title: T(a[1]) });
       b.appendChild(icone(a[0])); nav.appendChild(b);
-      b.addEventListener('click', function () { if (i === 0) irAgenda(); else ir(i, true); });
+      b.addEventListener('click', function () { ir(i, true); });
       return b;
     });
-    root.appendChild(trilho); root.appendChild(nav);
+    var voltar = mk('button', 'rel-voltar', { type: 'button', 'aria-label': T('Voltar') });
+    voltar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"></path></svg><span></span>';
+    voltar.lastChild.textContent = T('Voltar');
+    voltar.addEventListener('click', function () { fechar(); });
+    root.appendChild(trilho); root.appendChild(voltar); root.appendChild(nav);
     doc.body.appendChild(root); doc.documentElement.classList.add('rel-aberto');
-    vista = { root: root, trilho: trilho, voltarFoco: voltarFoco, abas: abas, ind: ind, pane: [pAg, pCr, pTp] };
-    montarCrono(pCr); montarTemp(pTp);
+    vista = { atual: 1, root: root, trilho: trilho, voltarFoco: voltarFoco, abas: abas, ind: ind, pane: [pAg, pCr, pTp] };
+    montarAgenda(pAg); montarCrono(pCr); montarTemp(pTp);
     trilho.addEventListener('scroll', sincronizar, { passive: true });
     doc.addEventListener('keydown', tecla, true);
-    ir(qual === 'temporizador' ? 2 : 1, false);
+    ir(qual === 'temporizador' ? 2 : qual === 'agenda' ? 0 : 1, false);
     root.setAttribute('tabindex', '-1'); root.focus({ preventScroll: true });
     desenhar(true); laco();
   }
@@ -111,17 +115,13 @@
     var t = vista.trilho, w = t.clientWidth || 1, p = Math.max(0, Math.min(2, t.scrollLeft / w)), a = Math.round(p);
     vista.ind.style.transform = 'translateX(' + (p * 100) + '%)';
     vista.abas.forEach(function (b, i) { b.classList.toggle('is-on', i === a); b.setAttribute('aria-selected', String(i === a)); });
-    clearTimeout(dormir);
-    if (p < .02 && !vista.abrindoAgenda) dormir = win.setTimeout(function () { if (vista && vista.trilho.scrollLeft < 4) irAgenda(); }, 90);
+    if (a === 0 && vista.atual !== 0 && vista.ag && !vista.ag.editando) vista.ag.atualizar();
+    vista.atual = a;
   }
-  function irAgenda() {
-    if (!vista || vista.abrindoAgenda) return; vista.abrindoAgenda = true;
-    fechar(true);
-    if (win.Notas && win.Notas.open) win.Notas.open();
-  }
-  function tecla(e) { if (e.key === 'Escape' && vista) { e.preventDefault(); e.stopPropagation(); fechar(); } }
+  function tecla(e) { if (e.key === 'Escape' && vista) { e.preventDefault(); e.stopPropagation(); if (vista.ag && vista.ag.editando) { vista.ag.fecharEditor(); return; } fechar(); } }
   function fechar(semFoco) {
     if (!vista) return;
+    if (vista.ag) vista.ag.descarregar();
     cancelAnimationFrame(raf); clearTimeout(vista.fT); raf = 0; doc.removeEventListener('keydown', tecla, true);
     var vf = vista.voltarFoco; vista.root.remove(); vista = null; doc.documentElement.classList.remove('rel-aberto');
     if (!semFoco && vf && vf.focus && vf.isConnected) { try { vf.focus({ preventScroll: true }); } catch (_) {} }
@@ -146,6 +146,90 @@
       l.setAttribute('class', 'rel-marca' + (maj ? ' maj' : '')); s.appendChild(l);
     }
     cx.appendChild(s); return { cx: cx, svg: s };
+  }
+
+
+  /* ---------- agenda do relógio: anotações guardadas no mesmo caderno da Agenda central (rótulo "Relógio"), com o mesmo editor ---------- */
+  var ROT_AG = 'Relógio';
+  var IC_NOVO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V12"></path><path d="M18.4 2.7a2.1 2.1 0 0 1 2.9 2.9L11.6 15.3 7.7 16.3l1-3.9z"></path></svg>';
+  function nucleoNotas() { var N = win.Notas; return N && N._core && N._core.st ? N._core : null; }
+  function montarAgenda(p) {
+    var C = nucleoNotas(), ag = { editando: null, timer: 0, fecharEditor: fecharEd, descarregar: salvarJa };
+    var tit = mk('h2', 'rel-ag-t'); tit.textContent = T('Agenda do Relógio');
+    var corpo = mk('div', 'rel-ag-corpo');
+    var lista = mk('ul', 'rel-ag-lista', { 'aria-label': T('Anotações do relógio') }), vazio = mk('p', 'rel-ag-vazio');
+    vazio.textContent = T('Nenhuma anotação ainda.');
+    var novo = mk('button', 'rel-ag-novo', { type: 'button', 'aria-label': T('Nova anotação'), title: T('Nova anotação') }); novo.innerHTML = IC_NOVO;
+    var ed = mk('div', 'rel-ag-ed'), ti = mk('input', 'rel-ag-ti', { type: 'text', maxlength: String(C ? C.MAX_TITLE : 80), 'aria-label': T('Título da anotação'), placeholder: T('Título') }),
+        ba = mk('div', 'rel-ag-acoes'), bOk = mk('button', 'rel-ag-b', { type: 'button' }), bDel = mk('button', 'rel-ag-b is-del', { type: 'button' }), st = mk('p', 'rel-ag-status', { role: 'status' });
+    var rico = null;
+    if (C && win.NotasRich) rico = win.NotasRich.create({
+      placeholder: T('Escreva aqui. Fica salvo neste aparelho.'), label: T('Texto da anotação'), maxText: C.MAX_TEXT,
+      onChange: function (html, text) { var n = ag.editando; if (!n) return; n.html = html; n.text = text; agendar(); },
+      onStatus: function (m, warn) { st.textContent = m; st.classList.toggle('is-warn', !!warn); }
+    });
+    bOk.textContent = T('Concluir'); bDel.textContent = T('Excluir');
+    ba.appendChild(bDel); ba.appendChild(bOk); ed.appendChild(ti); if (rico) ed.appendChild(rico.root); ed.appendChild(st); ed.appendChild(ba); ed.hidden = true;
+    corpo.appendChild(lista); corpo.appendChild(vazio); corpo.appendChild(ed);
+    p.appendChild(tit); p.appendChild(corpo); p.appendChild(novo);
+    ag.p = p;
+    function minhas() { return C ? C.st.notes.filter(function (n) { return n.label === ROT_AG && !n.code && C.filled(n); }).sort(function (a, b) { return b.updated - a.updated; }) : []; }
+    function persistir() { if (!C) return; C.save(); try { C.refreshMarks(); if (C.agendaOpen()) C.renderAgenda(); } catch (_) {} try { if (win.NotasRich && win.NotasRich.gc) win.NotasRich.gc(C.st.notes); } catch (_) {} }
+    function aplicar() { var n = ag.editando; if (!n) return; var t = ti.value.slice(0, C.MAX_TITLE); if (t !== n.title) n.title = t; n.updated = Date.now(); }
+    function salvarJa() { if (ag.timer) { clearTimeout(ag.timer); ag.timer = 0; } if (ag.editando) aplicar(); persistir(); }
+    function agendar() { aplicar(); st.textContent = T('Salvando…'); st.classList.remove('is-warn'); if (ag.timer) clearTimeout(ag.timer); ag.timer = win.setTimeout(function () { ag.timer = 0; persistir(); st.textContent = T('Salvo neste aparelho.'); }, 350); }
+    function previa(n) {
+      var t = String(n.text || '').replace(/\s+/g, ' ').trim();
+      if (!t && win.NotasRich && win.NotasRich.hasImg(n.html)) return T('Imagem');
+      return t.slice(0, 90);
+    }
+    function desenharLista() {
+      lista.textContent = ''; var ns = minhas();
+      if (!C) { vazio.hidden = false; vazio.textContent = T('Agenda indisponível neste momento.'); novo.disabled = true; return; }
+      vazio.hidden = !!ns.length; lista.hidden = !ns.length; vazio.textContent = T('Nenhuma anotação ainda.');
+      ns.forEach(function (n) {
+        var li = mk('li'), b = mk('button', 'rel-ag-it', { type: 'button' }), a = mk('strong'), c = mk('span'), d = mk('small');
+        a.textContent = n.title.trim() || previa(n) || T('Anotação');
+        c.textContent = n.title.trim() ? previa(n) : '';
+        try { d.textContent = new Date(n.updated).toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (_) {}
+        b.appendChild(a); if (c.textContent) b.appendChild(c); b.appendChild(d);
+        b.addEventListener('click', function () { abrirEd(n); });
+        li.appendChild(b); lista.appendChild(li);
+      });
+    }
+    function abrirEd(n) {
+      ag.editando = n; ti.value = n.title; if (rico) rico.load(n); st.textContent = '';
+      ed.hidden = false; lista.hidden = true; vazio.hidden = true; novo.hidden = true; tit.hidden = true;
+      p.classList.add('is-editando'); vista && vista.root.classList.add('rel-digitando', 'rel-ed');
+      try { if (n.title || n.text) { if (rico) rico.focus(); } else ti.focus({ preventScroll: true }); } catch (_) {}
+    }
+    function fecharEd() {
+      if (!ag.editando) return; if (ag.timer) { clearTimeout(ag.timer); ag.timer = 0; }
+      aplicar(); var n = ag.editando; ag.editando = null;
+      if (!C.filled(n)) { var i = C.st.notes.indexOf(n); if (i >= 0) C.st.notes.splice(i, 1); }
+      persistir(); ed.hidden = true; novo.hidden = false; tit.hidden = false; p.classList.remove('is-editando');
+      if (doc.activeElement && doc.activeElement.blur) doc.activeElement.blur();
+      if (vista) { vista.root.classList.remove('rel-digitando', 'rel-ed'); win.setTimeout(function () { if (vista) { ir(0, false); corpo.scrollTop = 0; } try { win.scrollTo(0, 0); } catch (_) {} }, 60); }
+      desenharLista();
+    }
+    novo.addEventListener('click', function () {
+      if (!C) return;
+      if (C.st.notes.length >= 60) { vazio.hidden = false; vazio.textContent = T('Limite de anotações atingido.'); return; }
+      var n = { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label: ROT_AG, code: null, title: '', text: '', html: '', fav: false, updated: Date.now() };
+      C.st.notes.push(n); abrirEd(n);
+    });
+    ti.addEventListener('input', agendar);
+    ti.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (rico) rico.focus(); } });
+    bOk.addEventListener('click', fecharEd);
+    bDel.addEventListener('click', function () {
+      if (!bDel.dataset.sure) { bDel.dataset.sure = '1'; bDel.textContent = T('Excluir?'); win.setTimeout(function () { delete bDel.dataset.sure; bDel.textContent = T('Excluir'); }, 3200); return; }
+      delete bDel.dataset.sure; bDel.textContent = T('Excluir');
+      var n = ag.editando; if (!n) return; ag.editando = null; if (ag.timer) { clearTimeout(ag.timer); ag.timer = 0; }
+      var i = C.st.notes.indexOf(n); if (i >= 0) C.st.notes.splice(i, 1);
+      persistir(); ed.hidden = true; novo.hidden = false; tit.hidden = false; p.classList.remove('is-editando'); vista && vista.root.classList.remove('rel-digitando', 'rel-ed'); desenharLista();
+    });
+    ag.atualizar = desenharLista; desenharLista();
+    vista.ag = ag;
   }
 
   /* ---------- cronômetro ---------- */
@@ -178,9 +262,17 @@
   }
   function editarNome(cel, v) {
     cel.textContent = ''; var inp = mk('input', 'rel-nome-in', { type: 'text', maxlength: '24', 'aria-label': T('Nome da marcação'), placeholder: '' });
-    inp.value = v.nome; cel.appendChild(inp); inp.focus();
+    inp.value = v.nome; cel.appendChild(inp);
+    var tr0 = vista && vista.trilho, pos = vista ? vista.atual : 1;
+    if (vista) vista.root.classList.add('rel-digitando');
+    try { inp.focus({ preventScroll: true }); } catch (_) { inp.focus(); }
     var feito = false;
-    function fim() { if (feito) return; feito = true; v.nome = inp.value.trim(); vista && (vista.cr.n = -1); desenhar(true); }
+    function fim() {
+      if (feito) return; feito = true; v.nome = inp.value.trim();
+      if (vista) { vista.cr.n = -1; vista.root.classList.remove('rel-digitando', 'rel-ed'); }
+      desenhar(true);
+      win.setTimeout(function () { if (vista) { ir(pos, false); vista.pane.forEach(function (q) { q.scrollTop = 0; q.scrollLeft = 0; }); } try { win.scrollTo(0, 0); } catch (_) {} }, 60);
+    }
     inp.addEventListener('blur', fim);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } else if (e.key === 'Escape') { e.stopPropagation(); inp.value = v.nome; inp.blur(); } });
   }
@@ -244,7 +336,7 @@
 
   /* roleta: deslizar para cima/baixo; também roda do mouse e setas */
   function roleta(el, chave, max) {
-    var passo = 64, y0 = 0, acc = 0, ult = 0, vel = 0, tUlt = 0, ativo = false, inercia = 0;
+    var passo = 52, y0 = 0, acc = 0, ult = 0, vel = 0, tUlt = 0, ativo = false, inercia = 0;
     function mudar(d) { var n = max + 1; tp[chave] = ((tp[chave] + d) % n + n) % n; desenhar(); try { if (navigator.vibrate) navigator.vibrate(4); } catch (_) {} }
     el.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -300,6 +392,7 @@
         var li = mk('li', 'rel-volta'), a = mk('span'), b = mk('span'), d = mk('button', 'rel-nome', { type: 'button', 'aria-label': T('Nome da marcação') });
         a.textContent = String(v.n); b.textContent = fmtMarca(v.ms);
         if (v.nome) { var tg = mk('span', 'rel-tag'); tg.textContent = v.nome; tg.style.setProperty('--h', v.cor); d.appendChild(tg); }
+        else { var vz = mk('span', 'rel-nome-vz'); vz.textContent = T('Nome'); d.appendChild(vz); }
         d.addEventListener('click', function () { editarNome(d, v); });
         li.appendChild(a); li.appendChild(b); li.appendChild(d); c.lista.appendChild(li);
       });

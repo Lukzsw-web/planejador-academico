@@ -83,6 +83,12 @@ seq("sem contexto", [["e se eu dobrar o volume?", []]].slice(0, 0));
 // ---- 10. não deve sequestrar conversa comum ----
 ["oi tudo bem", "o que é farmacologia", "qual a dose de paracetamol para criança de 10 kg", "quais os créditos de FAR123", "pdc", "posso tomar 500 mg de dipirona em 8 horas", "me explica a disciplina de química 1 do período 2", "dia 25 de agosto tem prova"]
   .forEach(function (s) { nulo("não-cálculo: " + s, s); });
+// ---- 10b. proporção quantidade/volume e frases sem número de verdade ----
+ok("proporção mg/mL", "tenho 500 mg em 10 ml, quanto tem em 2 ml", "100 mg");
+ok("proporção com 'há'", "Tenho 250 mg em 5 mL. Quanto há em 20 mL?", "1.000 mg");
+nulo("meia vida não é conta", "tem como me explicar o que é meia vida de um jeito facil");
+seq("pendência não sequestra pergunta de conteúdo", [["me ajuda com uma conta de diluição", ["C1"]]]);
+(function () { C.limparContexto(); C.tentar("me ajuda com uma conta de diluição"); var r = C.tentar("tem como me explicar o que é meia vida de um jeito facil"); if (!r) pass++; else { fail++; falhas.push("pendência sequestrou: " + txt(r.html).slice(0, 100)); } })();
 // ---- 11. segurança do parser ----
 ["eval(1)", "process.exit()", "constructor.constructor('return 1')()", "__proto__", "this.alert(1)"].forEach(function (s) {
   C.limparContexto(); var r = C.tentar("calcula " + s); // nunca deve executar nada

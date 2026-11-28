@@ -1430,12 +1430,14 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
     return R(html);
   }
 
+  var ultimoOriginal = '';
   function answerUnknown(n) {
     var sugg = suggestionsFor(n);
     if (sugg.length) {
       return R(p('Não tenho certeza se entendi' + (userName() ? ', ' + nameHTML() : '') + '. Você quis dizer algo como:') + p('Ainda estou em beta. Se não for isso, tente citar o nome ou o código da disciplina.'),
         sugg.map(function (s) { return { label: s.q, q: s.q }; }));
     }
+    if (window.FarmaInterp) { try { var esc0 = window.FarmaInterp.esclarecer(ultimoOriginal || n); return R(esc0.html, esc0.chips); } catch (errE) { /* cai no texto padrão */ } }
     return R(p('Não consegui entender essa' + (userName() ? ', ' + nameHTML() : '') + '. Ainda estou em <strong>beta</strong> e conheço pré-requisitos, o seu progresso, sugestões de grade e regras da UFRJ. Tente perguntar de outro jeito ou veja o que eu sei fazer:'), exampleChips());
   }
 
@@ -1973,7 +1975,7 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
       var finishNota = function (r) {
         if (meu !== runId) return;
         typing.remove(); typingAtual = null;
-        if (r) { var h = r.html + nota; addBot(h); setChips(r.chips); if (window.FarmaVisual) window.FarmaVisual.registrarResposta(h, r.chips); }
+        if (r) { var h = (r.pre === false ? '' : preFala) + r.html + nota; addBot(h); setChips(r.chips); if (window.FarmaVisual) window.FarmaVisual.registrarResposta(h, r.chips); }
         setPlaceholder();
         busy = false; avisarOcupado();
       };
@@ -1983,7 +1985,15 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
         finishNota(R(falaMidia(nMidias || 1), []));
         return;
       }
-      var res, calculado = null;
+      var res, calculado = null, qc = q, preFala = '';
+      // Camada central de interpretação (farmacia-interpretacao.js): normaliza, entende conversa/gíria/pedido de ajuda e reescreve
+      // frases com ruído ("n entendi oq é X") para a forma que os classificadores entendem. O texto original continua no balão.
+      try {
+        var it0 = (!viaIA && !awaiting && !tema && window.FarmaInterp) ? window.FarmaInterp.preparar(q) : null;
+        if (it0 && it0.resposta) { finishNota(R(it0.resposta.html, it0.resposta.chips || [])); return; }
+        if (it0 && it0.canonico) { qc = it0.canonico; if (it0.prefixo) preFala = '<p>' + esc(it0.prefixo) + '</p>'; }
+      } catch (errI) { console.warn('FarmacIA interpretação:', errI); qc = q; preFala = ''; }
+      ultimoOriginal = q; if (window.FarmaInterp) window.FarmaInterp._ultimo = q;
       // Motor de cálculo offline (farmacia-calculo.js): contas, conversões, farmácia e notas; só assume o que é conta.
       try { if (!viaIA && !awaiting && !tema && window.FarmaCalculo) calculado = window.FarmaCalculo.tentar(q); } catch (errC) { console.warn('FarmacIA cálculo:', errC); calculado = null; }
       if (calculado) {
@@ -1991,14 +2001,14 @@ window.FarmaEmentas = {"BMW103":["Visão integrada da anatomia, histologia e emb
         finishNota(R(calculado.html, chipsC));
         return;
       }
-      try { res = viaIA ? iaIndisponivel() : respond(q); if (tema && res) res.forcarIA = true; } catch (err) {
+      try { res = viaIA ? iaIndisponivel() : respond(qc); if (tema && res) res.forcarIA = true; } catch (err) {
         console.warn('FarmacIA:', err);
         res = R(p('Tive um problema para responder essa. Tente reformular a pergunta, por favor.'));
       }
       var finish = finishNota;
       // Camada v2 (farmacia-ia.js): pode assumir perguntas de conteúdo (RAG + IA online) e devolve uma Promise.
       var orq = window.FarmaMod && window.FarmaMod.orquestrador, pending = null;
-      try { pending = orq && !(viaIA && awaiting) ? orq.interceptar(q, viaIA ? { id: 'unknown', html: res.html, chips: res.chips, forcarIA: true } : res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
+      try { pending = orq && !(viaIA && awaiting) ? orq.interceptar(qc, viaIA ? { id: 'unknown', html: res.html, chips: res.chips, forcarIA: true } : res) : null; } catch (err2) { console.warn('FarmacIA v2:', err2); pending = null; }
       if (pending && typeof pending.then === 'function') {
         pending.then(function (r2) { finish(r2 || res); }, function (err3) { console.warn('FarmacIA v2:', err3); finish(res); });
       } else finish(res);

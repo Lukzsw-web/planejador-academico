@@ -331,7 +331,7 @@
   defU("comprimento", "m", { km: 1000, m: 1, cm: 0.01, mm: 1e-3, um: 1e-6, nm: 1e-9 });
   defU("tempo", "s", { s: 1, ms: 1e-3, min: 60, h: 3600, d: 86400, sem: 604800 });
   defU("quantidade", "mol", { mol: 1, mmol: 1e-3, umol: 1e-6, nmol: 1e-9, kmol: 1e3 });
-  defU("pressao", "Pa", { pa: 1, kpa: 1e3, mpa: 1e6, atm: 101325, mmhg: 133.322368, torr: 133.322368, bar: 1e5, mbar: 100, psi: 6894.757 });
+  defU("pressao", "Pa", { pa: 1, kpa: 1e3, mpa: 1e6, atm: 101325, mmhg: 133.322368421, torr: 133.322368421, bar: 1e5, mbar: 100, psi: 6894.757 });
   defU("energia", "J", { j: 1, kj: 1e3, cal: 4.184, kcal: 4184, wh: 3600, kwh: 3.6e6 });
   defU("farmaceutica", "UI", { ui: 1 });
   defU("gotas", "gota", { gota: 1 });
@@ -702,6 +702,7 @@
     // meia-vida <-> ke e decaimento
     var kv = /\b(?:ke|kel|constante de eliminacao)\s*(?:=|de|e|igual a)?\s*(-?\d+(?:[.,]\d+)?)/.exec(n);
     var th = tempos[0];
+    if (kv && th && Math.abs(th.v - lerNumero(kv[1])) < 1e-12) th = null;   // "ke = 0,1 h⁻¹": o "h" é a unidade de ke, não um tempo informado
     if (/\b(quanto resta|restam|sobra|concentracao apos|depois de|apos|decorridas?|passadas?)\b/.test(n) && (th || kv) && massas.length) {
       var th2 = tempos[0], tt = tempos[1] || null;
       if (!tt) return pedir("Preciso do tempo decorrido (além da meia-vida) para calcular quanto resta.");
@@ -711,7 +712,7 @@
     }
     if (t12 && th) { var tm = th.v; if (tm <= 0) erro("DOMINIO", "A meia-vida precisa ser positiva.");
       return res({ id: "ke", titulo: "Constante de eliminação", formula: "ke = ln 2 / t½  ≈ 0,693 / t½", dados: ["t½ = " + fq(th.v, th.un)], passos: ["ke = 0,693147 ÷ " + f(tm)], resultado: "ke = " + f(LN2 / tm, { sig: 6 }) + " " + th.un.rot + "⁻¹" }); }
-    if (kv && !t12) { var kx = lerNumero(kv[1]); if (kx <= 0) erro("DOMINIO", "ke precisa ser positivo."); return res({ id: "t12", titulo: "Meia-vida", formula: "t½ = ln 2 / ke", dados: ["ke = " + f(kx) + " (por unidade de tempo)"], passos: ["t½ = 0,693147 ÷ " + f(kx)], resultado: "t½ = " + f(LN2 / kx, { sig: 6 }) + " (na mesma unidade de tempo de ke)" }); }
+    if (kv && (!t12 || !th)) { var kx = lerNumero(kv[1]); var uk = /\b(?:ke|kel)\s*(?:=|de|e|igual a)?\s*-?\d+(?:[.,]\d+)?\s*([a-z]+)\s*(?:\^?\s*-1|⁻¹)/.exec(n); if (kx <= 0) erro("DOMINIO", "ke precisa ser positivo."); return res({ id: "t12", titulo: "Meia-vida", formula: "t½ = ln 2 / ke", dados: ["ke = " + f(kx) + " (por unidade de tempo)"], passos: ["t½ = 0,693147 ÷ " + f(kx)], resultado: "t½ = " + f(LN2 / kx, { sig: 6 }) + (uk ? " " + uk[1] : " (na mesma unidade de tempo de ke)") }); }
     return pedir("Qual é a meia-vida (ex.: 6 h) ou a constante de eliminação ke?");
   }
 
@@ -1101,7 +1102,33 @@
   }
 
   // ======================= 14. ENCAMINHAMENTO =======================
-  var SOLUCIONADORES = [solConversao, solMolar, solDiluicao, solPorcentagem, solPH, solConcentracao, solFarmacocinetica, solFarmacotecnica,
+  // "tenho 500 mg em 10 mL, quanto tem em 2 mL?": a quantidade é proporcional ao volume (regra de três direta)
+  function solProporcaoVolume(c) {
+    var n = c.n, qs = c.qs;
+    if (/\b(diluic|dilui\w*|c1|v1)\b/.test(n)) return null;
+    if (!/\bquanto\b.*\b(tem|ha|existe|existem|contem|fica|ficaria|tera|vai ter|sobra)\b.*\b(em|nos|nas|nesse|nessa|nesses|numa?|num|dentro de|a cada)\b/.test(n)) return null;
+    var vols = porDim(qs, "volume"); if (vols.length < 2) return null;
+    var outra = qs.filter(function (q) { return q.un && q.un.dim !== "volume"; })[0]; if (!outra) return null;
+    var v1 = converter(vols[0].v, vols[0].un, { dim: "volume", f: 1e-3, rot: "mL" }), v2 = converter(vols[1].v, vols[1].un, { dim: "volume", f: 1e-3, rot: "mL" });
+    if (v1 === 0) erro("DIV0", "O volume de referência não pode ser zero.");
+    var x = outra.v * v2 / v1;
+    return res({ id: "proporcao", titulo: "Proporção entre quantidade e volume", formula: "x = quantidade × V₂ ÷ V₁",
+      dados: [fq(outra.v, outra.un) + " em " + fq(vols[0].v, vols[0].un), "volume pedido = " + fq(vols[1].v, vols[1].un)],
+      passos: ["Concentração constante: " + f(outra.v) + " " + outra.un.rot + " ÷ " + f(v1) + " mL", "x = " + f(outra.v) + " × " + f(v2) + " ÷ " + f(v1)], resultado: "x = " + fq(x, outra.un) });
+  }
+  // "3 cartelas com 10 comprimidos cada; usei 7; quantos restam?" (multiplicação e subtração em enunciado curto)
+  function solProblemaTexto(c) {
+    var n = c.n, m = /\b(\d+(?:[.,]\d+)?)\s+([a-z]+)\s+(?:com|de|contendo|tem|tendo)\s+(\d+(?:[.,]\d+)?)\s+([a-z]+)\s+cada\b/.exec(n);
+    if (!m || /\d\s*(?:mg|g|ml|l|%|mcg|ug)\b/.test(n)) return null;
+    var grupos = lerNumero(m[1]), por = lerNumero(m[3]), total = grupos * por;
+    var ret = new RegExp("\\b(?:usad\\w+|tomad\\w+|retirad\\w+|vendid\\w+|consumid\\w+|gast\\w+|perdid\\w+|usei|tomei|vendi|gastei|retirei|foram)\\s+(?:usad\\w+\\s+|tomad\\w+\\s+|retirad\\w+\\s+|vendid\\w+\\s+|consumid\\w+\\s+)?(\\d+(?:[.,]\\d+)?)\\s+" + m[4].slice(0, 4)).exec(n);
+    var pede = /\b(quant\w+ rest\w*|sobr\w+|quant\w+ fic\w+|quant\w+ falt\w+)\b/.test(n), tot = /\b(quant\w+ (?:ha|tem|existem|sao|tenho)|no total|total)\b/.test(n);
+    if (ret && pede) { var k = lerNumero(ret[1]), r = total - k;
+      return res({ id: "problema", titulo: "Problema de enunciado", dados: [f(grupos) + " " + m[2] + " × " + f(por) + " " + m[4] + " cada", "retirados/usados: " + f(k)], passos: [f(grupos) + " × " + f(por) + " = " + f(total), f(total) + " − " + f(k) + " = " + f(r)], resultado: f(r) + " " + m[4] + " restam" }); }
+    if (tot || pede) return res({ id: "problema", titulo: "Problema de enunciado", dados: [f(grupos) + " " + m[2] + " × " + f(por) + " " + m[4] + " cada"], passos: [f(grupos) + " × " + f(por) + " = " + f(total)], resultado: f(total) + " " + m[4] + " no total" });
+    return null;
+  }
+  var SOLUCIONADORES = [solProblemaTexto, solProporcaoVolume, solConversao, solMolar, solDiluicao, solPorcentagem, solPH, solConcentracao, solFarmacocinetica, solFarmacotecnica,
     solRegraDeTres, solInteiros, solFracoes, solNotacao, solCombinatoria, solProbabilidade, solMatriz, solEquacao,
     solAcademico, solEstatistica, solExpressao];
 
@@ -1117,13 +1144,19 @@
   }
   function pareceCalculo(c) {
     if (c.n.split(" ").length > 70) return false;
-    if (/\d/.test(c.n)) return true;
+    if (temNumeroReal(c)) return true;
     return /\b(massa molar|massa molecular|peso molecular|avogadro|fatorial|mmc|mdc|raiz|logaritmo|quanto (?:eu )?(?:preciso|tenho que|devo) tirar)\b/.test(c.n) || (memo.ultimo && /^(e |mas |entao |agora |se )/.test(c.n));
   }
 
+  // número de verdade na frase: dígito ou número por extenso (não conta "um"/"uma"/"meia"/"meio", que aparecem em "meia vida", "de um jeito")
+  function temNumeroReal(c) {
+    if (/\d/.test(c.orig)) return true;
+    var t = normalizar(c.orig).replace(/\bmeia vida\b|\bde (?:um|uma) (?:jeito|forma|maneira|modo|exemplo)\b|\b(?:meia|meio)\b|\bum pouco\b|\b(?:um|uma) (?:conceito|assunto|medicamento|remedio|farmaco)\b/g, " ");
+    return /\d/.test(numerosPorExtenso(t));
+  }
   function resolverCtx(c) {
     // dados que faltavam numa pergunta anterior: junta com a nova mensagem
-    if (memo.pend && Date.now() - memo.pend.t < 5 * 60 * 1000 && /\d/.test(c.n) && c.n.split(" ").length <= 25) {
+    if (memo.pend && Date.now() - memo.pend.t < 5 * 60 * 1000 && temNumeroReal(c) && c.n.split(" ").length <= 25) {
       var junto = contexto(memo.pend.orig + " " + c.orig);
       var r = rodar(junto, true);
       if (r && r.ok) { memo.pend = null; return r; }

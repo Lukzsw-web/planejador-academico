@@ -1,5 +1,5 @@
 /* Calendário do Planejador Acadêmico.
- * - Meses em trilhos (deslizar para o lado troca de mês; de 1900 a 2100, páginas montadas só quando chegam perto).
+ * - Meses em trilhos (deslizar para o lado troca de mês; 20 anos para trás e 30 para a frente, páginas montadas só quando chegam perto).
  * - Datas comemorativas e feriados do Brasil calculados por ano (inclui Páscoa, Carnaval, Dia das Mães/Pais...), em tags coloridas.
  * - Botão redondo com o número de hoje (volta ao mês atual) e lupa (busca por data comemorativa ou evento).
  * - Tocar num dia abre "Resumo do dia" | "Agendar" (trocam por toque ou por deslize). Agendar usa o mesmo editor das anotações da Agenda.
@@ -10,7 +10,7 @@
   'use strict';
   var doc = document, win = window;
   var KEY = 'planejador_calendario_v1';
-  var MIN_Y = 1900, MAX_Y = 2100, MAX_EV = 400, MAX_TITULO = 80, MAX_TEXTO = 20000;
+  var ANO0 = new Date().getFullYear(), MIN_Y = ANO0 - 20, MAX_Y = ANO0 + 30, MAX_EV = 400, MAX_TITULO = 80, MAX_TEXTO = 20000;
   var NMESES = (MAX_Y - MIN_Y + 1) * 12;
 
   function T(x) { return typeof win.T === 'function' ? win.T(x) : x; }
@@ -179,6 +179,7 @@
       clearTimeout(cal.tmr);
       cal.tmr = win.setTimeout(function () { var i = indiceVisivel(); cal.atual = i; [i - 1, i, i + 1].forEach(garantir); atualizarTitulo(i); limparLonge(i); }, 70);
       var i2 = indiceVisivel(); if (i2 !== cal.atual) { cal.atual = i2; atualizarTitulo(i2); }
+      [i2 - 1, i2, i2 + 1].forEach(garantir);   // monta na hora: nenhuma página vazia aparece durante o deslize
     }, { passive: true });
     trilho.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('.cal-dia-cel'); if (!b) return;
@@ -191,6 +192,9 @@
     win.addEventListener('resize', aoRedimensionar);
     doc.addEventListener('keydown', teclas, true);
     root.setAttribute('tabindex', '-1'); root.focus({ preventScroll: true });
+    // em aparelhos lentos o layout termina depois da abertura: reposiciona e garante que o mês atual está montado
+    var refazer = function () { if (!cal) return; var w = cal.trilho.clientWidth; if (!w) return; garantir(cal.atual - 1); garantir(cal.atual); garantir(cal.atual + 1); cal.trilho.scrollTo({ left: cal.atual * w, behavior: 'auto' }); };
+    win.requestAnimationFrame(function () { refazer(); win.setTimeout(refazer, 120); });
   }
   function aoRedimensionar() { if (cal) cal.trilho.scrollTo({ left: cal.atual * cal.trilho.clientWidth, behavior: 'auto' }); }
   function teclas(e) {
